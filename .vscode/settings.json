@@ -3,5 +3,6 @@
     "activityBar.background": "#362D10",
     "titleBar.activeBackground": "#4C3F17",
     "titleBar.activeForeground": "#FCFAF5"
-  }
+  },
+  "mgcb.pipelineToolPath": "\"C:\\Program Files (x86)\\MSBuild\\MonoGame\\v3.0\\Tools\\Pipeline.exe\""
 }
