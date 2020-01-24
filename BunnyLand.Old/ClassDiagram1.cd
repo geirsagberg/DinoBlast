@@ -1,0 +1,83 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ClassDiagram MajorVersion="1" MinorVersion="1">
+  <Class Name="BunnyLand.GameInit">
+    <Position X="12.25" Y="4" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAQAEAAEAQAAAwAAAAAAAAAAAAABAAgAAAgACAAAAAQ=</HashCode>
+      <FileName>GameInit.cs</FileName>
+    </TypeIdentifier>
+    <ShowAsAssociation>
+      <Property Name="Controller" />
+      <Property Name="Model" />
+      <Property Name="View" />
+    </ShowAsAssociation>
+  </Class>
+  <Class Name="BunnyLand.Controller.ControllerComponent" Collapsed="true">
+    <Position X="11" Y="8.75" Width="1.75" />
+    <TypeIdentifier>
+      <HashCode>AAQAAACJAAAAAQAAAAAIAEAACAABAAIAAAoAAAABQAA=</HashCode>
+      <FileName>Controller\ControllerComponent.cs</FileName>
+    </TypeIdentifier>
+    <ShowAsAssociation>
+      <Property Name="View" />
+      <Property Name="Model" />
+    </ShowAsAssociation>
+  </Class>
+  <Class Name="BunnyLand.Model.ModelComponent">
+    <Position X="5.5" Y="3.5" Width="2.25" />
+    <TypeIdentifier>
+      <HashCode>CAYggIAggSgAAaAQEAAwBAAEJAQjAQgMBFAAgACMAAA=</HashCode>
+      <FileName>Model\ModelComponent.cs</FileName>
+    </TypeIdentifier>
+    <ShowAsAssociation>
+      <Field Name="collisionEngine" />
+      <Property Name="View" />
+      <Property Name="Controller" />
+    </ShowAsAssociation>
+  </Class>
+  <Class Name="BunnyLand.View.ViewComponent" Collapsed="true">
+    <Position X="9.25" Y="7" Width="1.75" />
+    <NestedTypes>
+      <Struct Name="BunnyLand.View.ViewComponent.Line" Collapsed="true">
+        <TypeIdentifier>
+          <NewMemberFileName>View\ViewComponent.cs</NewMemberFileName>
+        </TypeIdentifier>
+      </Struct>
+      <Class Name="BunnyLand.View.ViewComponent.Explosion" Collapsed="true">
+        <TypeIdentifier>
+          <NewMemberFileName>View\ViewComponent.cs</NewMemberFileName>
+        </TypeIdentifier>
+      </Class>
+    </NestedTypes>
+    <TypeIdentifier>
+      <HashCode>AAACAAAWAYBgAwEAAAAAAwIABAAAgAggQMhAQACAAAA=</HashCode>
+      <FileName>View\ViewComponent.cs</FileName>
+    </TypeIdentifier>
+    <ShowAsAssociation>
+      <Property Name="Model" />
+      <Property Name="Controller" />
+    </ShowAsAssociation>
+  </Class>
+  <Class Name="BunnyLand.Model.PhysicsEngine" Collapsed="true">
+    <Position X="14.75" Y="3.5" Width="1.5" />
+    <Members>
+      <Field Name="_GravityConstant" Hidden="true" />
+      <Field Name="_GravityField" Hidden="true" />
+    </Members>
+    <TypeIdentifier>
+      <HashCode>AAAAgAAQAAACAAAAAAQAAACgAAAABAAABAACAAAAAEA=</HashCode>
+      <FileName>Model\PhysicsEngine.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="BunnyLand.Model.CollisionEngine">
+    <Position X="2" Y="5.75" Width="2.25" />
+    <TypeIdentifier>
+      <HashCode>AAAIAIAAAAAQEABAAAAAAAAAAAAAAACCEAAAAAAYAgA=</HashCode>
+      <FileName>Model\CollisionEngine.cs</FileName>
+    </TypeIdentifier>
+    <ShowAsAssociation>
+      <Field Name="model" />
+    </ShowAsAssociation>
+  </Class>
+  <Font Name="Segoe UI" Size="9" />
+</ClassDiagram>
