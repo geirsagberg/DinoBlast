@@ -13,7 +13,7 @@ namespace BunnyLand.Models
 {
     public static class Sprites
     {
-        public static Texture2D[] BodyParts = new Texture2D[10]; 
+        public static Texture2D[] BodyParts = new Texture2D[10];
         public static Texture2D BlackHoleSprite { get; set; }
         public static Texture2D BackgroundTex { get; set; }
         public static Texture2D BulletSprite { get; set; }
@@ -75,27 +75,26 @@ namespace BunnyLand.Models
 
         public static void LoadContent(Microsoft.Xna.Framework.Content.ContentManager Content, bool loadHighresTextures)
         {
-            
-            Sprites.BlackHoleSprite = Content.Load<Texture2D>("Textures/black-hole");
-            Sprites.BulletSprite = Content.Load<Texture2D>("Textures/bullet");
-            Sprites.BunnySpritesheet = Content.Load<Texture2D>("Textures/PlayerAnimation");
-            Sprites.SpriteFont = Content.Load<SpriteFont>("Fonts/SpriteFont1");
-            Sprites.MenuRegularFont = Content.Load<SpriteFont>("Fonts/menuRegular");
-            Sprites.MenuSelectedFont = Content.Load<SpriteFont>("Fonts/menuSelected");
-            Sprites.TestMap = Content.Load<Texture2D>("Textures/totoro");
-            Sprites.ExplosionSpritesheet = Content.Load<Texture2D>("Textures/Explotion");
-            Sprites.BloodSprite = Content.Load<Texture2D>("Textures/blood");
-            Sprites.BloodSprite2 = Content.Load<Texture2D>("Textures/blood2");
-            Sprites.BodyParts[0] = Content.Load<Texture2D>("Textures/Bodyparts/Body");
-            Sprites.BodyParts[1] = Content.Load<Texture2D>("Textures/Bodyparts/Ear1");
-            Sprites.BodyParts[2] = Content.Load<Texture2D>("Textures/Bodyparts/Ear2");
-            Sprites.BodyParts[3] = Content.Load<Texture2D>("Textures/Bodyparts/Eye1");
-            Sprites.BodyParts[4] = Content.Load<Texture2D>("Textures/Bodyparts/Eye2");
-            Sprites.BodyParts[5] = Sprites.BodyParts[6] = Content.Load<Texture2D>("Textures/Bodyparts/Foot");
-            Sprites.BodyParts[7] = Sprites.BodyParts[8] = Content.Load<Texture2D>("Textures/Bodyparts/Hand");
-            Sprites.BodyParts[9] = Content.Load<Texture2D>("Textures/Bodyparts/Head");
-            Sprites.MenuBackground = Content.Load<Texture2D>("Textures/Menu/cutebunnies");
-            Sprites.HandgunWeaponSpritesheet = Content.Load<Texture2D>("Textures/Handweapon");
+            BlackHoleSprite = Content.Load<Texture2D>("Textures/black-hole");
+            BulletSprite = Content.Load<Texture2D>("Textures/bullet");
+            BunnySpritesheet = Content.Load<Texture2D>("Textures/PlayerAnimation");
+            SpriteFont = Content.Load<SpriteFont>("Fonts/SpriteFont1");
+            MenuRegularFont = Content.Load<SpriteFont>("Fonts/menuRegular");
+            MenuSelectedFont = Content.Load<SpriteFont>("Fonts/menuSelected");
+            TestMap = Content.Load<Texture2D>("Textures/totoro");
+            ExplosionSpritesheet = Content.Load<Texture2D>("Textures/Explotion");
+            BloodSprite = Content.Load<Texture2D>("Textures/blood");
+            BloodSprite2 = Content.Load<Texture2D>("Textures/blood2");
+            BodyParts[0] = Content.Load<Texture2D>("Textures/Bodyparts/Body");
+            BodyParts[1] = Content.Load<Texture2D>("Textures/Bodyparts/Ear1");
+            BodyParts[2] = Content.Load<Texture2D>("Textures/Bodyparts/Ear2");
+            BodyParts[3] = Content.Load<Texture2D>("Textures/Bodyparts/Eye1");
+            BodyParts[4] = Content.Load<Texture2D>("Textures/Bodyparts/Eye2");
+            BodyParts[5] = BodyParts[6] = Content.Load<Texture2D>("Textures/Bodyparts/Foot");
+            BodyParts[7] = BodyParts[8] = Content.Load<Texture2D>("Textures/Bodyparts/Hand");
+            BodyParts[9] = Content.Load<Texture2D>("Textures/Bodyparts/Head");
+            MenuBackground = Content.Load<Texture2D>("Textures/Menu/cutebunnies");
+            HandgunWeaponSpritesheet = Content.Load<Texture2D>("Textures/Handweapon");
 
             // Load planet textures
             Planets = loadAllTexturesInFolder(Content, "Textures/Planets");
@@ -105,7 +104,7 @@ namespace BunnyLand.Models
             BackGrounds_5_4 = loadAllTexturesInFolder(Content, "Textures/GameBackgrounds/5-4");
             BackGrounds_16_9 = loadAllTexturesInFolder(Content, "Textures/GameBackgrounds/16-9");
             BackGrounds_16_10 = loadAllTexturesInFolder(Content, "Textures/GameBackgrounds/16-10");
-            
+
             // Load terrain backgrounds
             if(loadHighresTextures)
                 TerrainBackgrounds = loadAllTexturesInFolder(Content, "Textures/Terrain");

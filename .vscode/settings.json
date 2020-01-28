@@ -4,5 +4,14 @@
     "titleBar.activeBackground": "#4C3F17",
     "titleBar.activeForeground": "#FCFAF5"
   },
-  "mgcb.pipelineToolPath": "\"C:\\Program Files (x86)\\MSBuild\\MonoGame\\v3.0\\Tools\\Pipeline.exe\""
+  "mgcb.pipelineToolPath": "\"C:\\Program Files (x86)\\MSBuild\\MonoGame\\v3.0\\Tools\\Pipeline.exe\"",
+  "nuke.buildProjectPattern": "*build/*build*.csproj",
+  "nuke.codeLens.runTarget": {
+    "enabled": true,
+    "skipDependencies": false
+  },
+  "nuke.codeLens.debugTarget": {
+    "enabled": true,
+    "skipDependencies": false
+  }
 }

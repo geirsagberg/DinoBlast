@@ -1,5 +1,5 @@
-﻿using System;
-using Microsoft.Extensions.Configuration;
+using System;
+using BunnyLand.DesktopGL.Resources;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
@@ -9,12 +9,11 @@ namespace BunnyLand.DesktopGL
 {
     public class BunnyGame : Game
     {
-        private readonly GameSettings settings;
         private readonly GraphicsDeviceManager graphics;
-        private SpriteBatch spriteBatch = null!;
-        private Texture2D blackHoleTexture = null!;
+        private readonly GameSettings settings;
         private Vector2 blackHolePosition;
         private float blackHoleRotation;
+        private SpriteBatch spriteBatch = null!;
 
         public BunnyGame(GameSettings settings)
         {
@@ -22,7 +21,10 @@ namespace BunnyLand.DesktopGL
             graphics = new GraphicsDeviceManager(this);
             Content.RootDirectory = "Content";
             IsMouseVisible = true;
+            Textures = new Textures(Content);
         }
+
+        public Textures Textures { get; }
 
         protected override void Initialize()
         {
@@ -37,8 +39,7 @@ namespace BunnyLand.DesktopGL
         {
             spriteBatch = new SpriteBatch(GraphicsDevice);
 
-            // TODO: use this.Content to load your game content here
-            blackHoleTexture = Content.Load<Texture2D>("black-hole");
+            Textures.Load();
         }
 
         protected override void Update(GameTime gameTime)
@@ -54,7 +55,6 @@ namespace BunnyLand.DesktopGL
             var touchState = TouchPanel.GetState();
 
 
-
             base.Update(gameTime);
         }
 
@@ -64,8 +64,9 @@ namespace BunnyLand.DesktopGL
 
             // TODO: Add your drawing code here
             spriteBatch.Begin();
-            spriteBatch.Draw(blackHoleTexture, blackHolePosition, null, Color.White, blackHoleRotation,
-                new Vector2(blackHoleTexture.Width / 2f, blackHoleTexture.Height / 2f), Vector2.One, SpriteEffects.FlipHorizontally,
+            spriteBatch.Draw(Textures.blackhole, blackHolePosition, null, Color.White, blackHoleRotation,
+                new Vector2(Textures.blackhole.Width / 2f, Textures.blackhole.Height / 2f), Vector2.One,
+                SpriteEffects.FlipHorizontally,
                 0f);
             spriteBatch.End();
 
