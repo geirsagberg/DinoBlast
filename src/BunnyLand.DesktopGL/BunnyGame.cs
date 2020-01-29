@@ -1,4 +1,6 @@
 using System;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using BunnyLand.DesktopGL.Resources;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
@@ -22,9 +24,15 @@ namespace BunnyLand.DesktopGL
             Content.RootDirectory = "Content";
             IsMouseVisible = true;
             Textures = new Textures(Content);
+            SpriteFonts = new SpriteFonts(Content);
+            SoundEffects = new SoundEffects(Content);
+            Songs = new Songs(Content);
         }
 
-        public Textures Textures { get; }
+        private Textures Textures { get; }
+        private SpriteFonts SpriteFonts { get; }
+        private SoundEffects SoundEffects { get; }
+        private Songs Songs { get; }
 
         protected override void Initialize()
         {
@@ -40,6 +48,7 @@ namespace BunnyLand.DesktopGL
             spriteBatch = new SpriteBatch(GraphicsDevice);
 
             Textures.Load();
+            SpriteFonts.Load();
         }
 
         private string debugText = "";
@@ -56,7 +65,7 @@ namespace BunnyLand.DesktopGL
 
             var touchState = TouchPanel.GetState();
 
-
+            debugText = JsonSerializer.Serialize(touchState);
 
             base.Update(gameTime);
         }
@@ -71,7 +80,7 @@ namespace BunnyLand.DesktopGL
                 new Vector2(Textures.blackhole.Width / 2f, Textures.blackhole.Height / 2f), Vector2.One,
                 SpriteEffects.FlipHorizontally,
                 0f);
-            // spriteBatch.DrawString();
+            spriteBatch.DrawString(SpriteFonts.Verdana, debugText, Vector2.Zero, Color.Black);
             spriteBatch.End();
 
             base.Draw(gameTime);

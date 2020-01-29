@@ -53,7 +53,7 @@ namespace BunnyLand.DesktopGL.Resources
 
             foreach (var path in Directory.EnumerateFiles(contentPath, $"*.{extension}", enumerationOptions)) {
                 textWriter.Write($@"
-        [Description(""{FilePathToRelativePath(path)}"")]
+        [Description(""{FilePathToRelativePath(path, extension)}"")]
         public {propertyType} {FilePathToPropertyName(path, extension)} {{ get; set; }}");
             }
 
@@ -63,10 +63,10 @@ namespace BunnyLand.DesktopGL.Resources
 ");
         }
 
-        private static string FilePathToRelativePath(string path)
+        private static string FilePathToRelativePath(string path, string extension)
         {
             return path.Replace("\\", "/", StringComparison.OrdinalIgnoreCase).Split("Content/").Last()
-                .Replace(".png", "", StringComparison.OrdinalIgnoreCase);
+                .Replace($".{extension}", "", StringComparison.OrdinalIgnoreCase);
         }
 
         private static readonly Regex InvalidPropertyNameRegex = new Regex("[^a-zA-Z0-9]");
