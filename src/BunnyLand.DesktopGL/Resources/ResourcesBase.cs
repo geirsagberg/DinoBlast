@@ -1,10 +1,11 @@
-using System;
+using System.ComponentModel;
 using System.Linq;
+using System.Reflection;
 using Microsoft.Xna.Framework.Content;
 
 namespace BunnyLand.DesktopGL.Resources
 {
-    public abstract class ResourcesBase : IDisposable
+    public abstract class ResourcesBase<T>
     {
         protected readonly ContentManager ContentManager;
 
@@ -13,14 +14,15 @@ namespace BunnyLand.DesktopGL.Resources
             ContentManager = contentManager;
         }
 
-        public void Dispose()
+        public void Load()
         {
-            foreach (IDisposable? disposable in GetType().GetProperties()
-                .Where(p => typeof(IDisposable).IsAssignableFrom(p.PropertyType)).Select(p => p.GetValue(this))) {
-                disposable?.Dispose();
+            foreach (var propertyInfo in GetType().GetProperties().Where(p => p.PropertyType == typeof(T))) {
+                var file = propertyInfo.GetCustomAttribute<DescriptionAttribute>()?.Description;
+                if (file != null) {
+                    var texture = ContentManager.Load<T>(file);
+                    propertyInfo.SetValue(this, texture);
+                }
             }
         }
-
-        public abstract void Load();
     }
 }

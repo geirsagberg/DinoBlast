@@ -42,6 +42,8 @@ namespace BunnyLand.DesktopGL
             Textures.Load();
         }
 
+        private string debugText = "";
+
         protected override void Update(GameTime gameTime)
         {
             if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed ||
@@ -53,6 +55,7 @@ namespace BunnyLand.DesktopGL
             blackHoleRotation += Convert.ToSingle(gameTime.ElapsedGameTime.TotalMilliseconds * 0.001);
 
             var touchState = TouchPanel.GetState();
+
 
 
             base.Update(gameTime);
@@ -68,6 +71,7 @@ namespace BunnyLand.DesktopGL
                 new Vector2(Textures.blackhole.Width / 2f, Textures.blackhole.Height / 2f), Vector2.One,
                 SpriteEffects.FlipHorizontally,
                 0f);
+            // spriteBatch.DrawString();
             spriteBatch.End();
 
             base.Draw(gameTime);

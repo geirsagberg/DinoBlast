@@ -62,8 +62,18 @@ class Build : NukeBuild
             var root = Solution.GetProject("BunnyLand.DesktopGL")?.Directory;
             var contentPath = root / "Content";
             var resourcesPath = root / "Resources";
-            var destinationFile = resourcesPath / "Textures.generated.cs";
-            using var textWriter = File.CreateText(destinationFile);
-            Generator.WriteTextures(contentPath, textWriter);
+
+            void Generate(Action<string, TextWriter> write)
+            {
+                var className = write.Method.Name.Replace("Write", "");
+                var destinationFile = resourcesPath / $"{className}.generated.cs";
+                using var textWriter = File.CreateText(destinationFile);
+                write(contentPath, textWriter);
+            }
+
+            Generate(Generator.WriteTextures);
+            Generate(Generator.WriteSoundEffects);
+            Generate(Generator.WriteSpriteFonts);
+            Generate(Generator.WriteSongs);
         });
 }
