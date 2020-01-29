@@ -12,11 +12,11 @@ namespace BunnyLand.DesktopGL.Resources
         {
         }
 
-        [Description("Audio/Music/sleighride.mp3")]
+        [Description("Audio/Music/sleighride")]
         public Song sleighride { get; set; }
-        [Description("Audio/Music/spongebob.mp3")]
+        [Description("Audio/Music/spongebob")]
         public Song spongebob { get; set; }
-        [Description("Audio/Music/theatreland.mp3")]
+        [Description("Audio/Music/theatreland")]
         public Song theatreland { get; set; }
     }
 }

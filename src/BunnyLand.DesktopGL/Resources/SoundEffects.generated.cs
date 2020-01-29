@@ -12,19 +12,19 @@ namespace BunnyLand.DesktopGL.Resources
         {
         }
 
-        [Description("Audio/empty.wav")]
+        [Description("Audio/empty")]
         public SoundEffect empty { get; set; }
-        [Description("Audio/grenade.wav")]
+        [Description("Audio/grenade")]
         public SoundEffect grenade { get; set; }
-        [Description("Audio/ouch1.wav")]
+        [Description("Audio/ouch1")]
         public SoundEffect ouch1 { get; set; }
-        [Description("Audio/reload.wav")]
+        [Description("Audio/reload")]
         public SoundEffect reload { get; set; }
-        [Description("Audio/shotgun.wav")]
+        [Description("Audio/shotgun")]
         public SoundEffect shotgun { get; set; }
-        [Description("Audio/smg.wav")]
+        [Description("Audio/smg")]
         public SoundEffect smg { get; set; }
-        [Description("Audio/splat1.wav")]
+        [Description("Audio/splat1")]
         public SoundEffect splat1 { get; set; }
     }
 }

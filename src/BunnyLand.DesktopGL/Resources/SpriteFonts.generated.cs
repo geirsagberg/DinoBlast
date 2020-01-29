@@ -12,11 +12,11 @@ namespace BunnyLand.DesktopGL.Resources
         {
         }
 
-        [Description("Fonts/menuRegular.spritefont")]
+        [Description("Fonts/menuRegular")]
         public SpriteFont menuRegular { get; set; }
-        [Description("Fonts/menuSelected.spritefont")]
+        [Description("Fonts/menuSelected")]
         public SpriteFont menuSelected { get; set; }
-        [Description("Fonts/Verdana.spritefont")]
+        [Description("Fonts/Verdana")]
         public SpriteFont Verdana { get; set; }
     }
 }
