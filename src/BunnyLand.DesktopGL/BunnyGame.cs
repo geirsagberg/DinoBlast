@@ -1,11 +1,10 @@
 using System;
 using System.Text.Json;
-using System.Text.Json.Serialization;
+using BunnyLand.DesktopGL.Extensions;
 using BunnyLand.DesktopGL.Resources;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
-using Microsoft.Xna.Framework.Input.Touch;
 
 namespace BunnyLand.DesktopGL
 {
@@ -52,6 +51,8 @@ namespace BunnyLand.DesktopGL
         }
 
         private string debugText = "";
+        private MouseState previousMouseState;
+        private Vector2 startDragPosition;
 
         protected override void Update(GameTime gameTime)
         {
@@ -63,9 +64,17 @@ namespace BunnyLand.DesktopGL
 
             blackHoleRotation += Convert.ToSingle(gameTime.ElapsedGameTime.TotalMilliseconds * 0.001);
 
-            var touchState = TouchPanel.GetState();
+            var mouseState = Mouse.GetState();
 
-            debugText = JsonSerializer.Serialize(touchState);
+            if (previousMouseState.LeftButton == ButtonState.Released && mouseState.LeftButton == ButtonState.Pressed) {
+                startDragPosition = mouseState.Position.ToVector2();
+            } else if (previousMouseState.LeftButton == ButtonState.Pressed &&
+                mouseState.LeftButton == ButtonState.Released)
+                startDragPosition = default;
+
+            previousMouseState = mouseState;
+
+            debugText = JsonSerializer.Serialize(mouseState);
 
             base.Update(gameTime);
         }
@@ -81,6 +90,8 @@ namespace BunnyLand.DesktopGL
                 SpriteEffects.FlipHorizontally,
                 0f);
             spriteBatch.DrawString(SpriteFonts.Verdana, debugText, Vector2.Zero, Color.Black);
+            if (previousMouseState.LeftButton == ButtonState.Pressed)
+                spriteBatch.DrawLine(Color.Chartreuse, startDragPosition, previousMouseState.Position.ToVector2());
             spriteBatch.End();
 
             base.Draw(gameTime);
