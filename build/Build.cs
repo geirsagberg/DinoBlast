@@ -1,3 +1,5 @@
+using System;
+using System.IO;
 using BunnyLand.ResourceGenerator;
 using Nuke.Common;
 using Nuke.Common.Execution;
@@ -5,8 +7,6 @@ using Nuke.Common.Git;
 using Nuke.Common.ProjectModel;
 using Nuke.Common.Tools.DotNet;
 using Nuke.Common.Utilities.Collections;
-using System;
-using System.IO;
 using static Nuke.Common.IO.FileSystemTasks;
 using static Nuke.Common.IO.PathConstruction;
 using static Nuke.Common.Tools.DotNet.DotNetTasks;
@@ -17,11 +17,10 @@ using static Nuke.Common.Tools.DotNet.DotNetTasks;
 class Build : NukeBuild
 {
     /// Support plugins are available for:
-    ///   - JetBrains ReSharper        https://nuke.build/resharper
-    ///   - JetBrains Rider            https://nuke.build/rider
-    ///   - Microsoft VisualStudio     https://nuke.build/visualstudio
-    ///   - Microsoft VSCode           https://nuke.build/vscode
-
+    /// - JetBrains ReSharper        https://nuke.build/resharper
+    /// - JetBrains Rider            https://nuke.build/rider
+    /// - Microsoft VisualStudio     https://nuke.build/visualstudio
+    /// - Microsoft VSCode           https://nuke.build/vscode
     public static int Main() => Execute<Build>(x => x.Compile);
 
     [Parameter("Configuration to build - Default is 'Debug' (local) or 'Release' (server)")]
@@ -29,6 +28,7 @@ class Build : NukeBuild
 
     [Solution] readonly Solution Solution;
     [GitRepository] readonly GitRepository GitRepository;
+    readonly string BunnyLandDesktopGLPath = "BunnyLand.DesktopGL";
 
     AbsolutePath SourceDirectory => RootDirectory / "src";
     AbsolutePath TestsDirectory => RootDirectory / "tests";
@@ -59,9 +59,8 @@ class Build : NukeBuild
 
     Target GenerateResources => _ => _
         .Executes(() => {
-            var root = Solution.GetProject("BunnyLand.DesktopGL")?.Directory;
-            var contentPath = root / "Content";
-            var resourcesPath = root / "Resources";
+            var contentPath = BunnyLandProjectRoot / "Content";
+            var resourcesPath = BunnyLandProjectRoot / "Resources";
 
             void Generate(Action<string, TextWriter> write)
             {
@@ -76,4 +75,11 @@ class Build : NukeBuild
             Generate(Generator.WriteSpriteFonts);
             Generate(Generator.WriteSongs);
         });
+
+    Target Watch => _ => _
+        .Executes(() => {
+            DotNet("watch run", BunnyLandProjectRoot);
+        });
+
+    AbsolutePath BunnyLandProjectRoot => Solution.GetProject(BunnyLandDesktopGLPath)?.Directory;
 }

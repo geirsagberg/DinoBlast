@@ -6,7 +6,7 @@ namespace BunnyLand.DesktopGL.Extensions
 {
     public static class SpriteBatchExtensions
     {
-        private static Texture2D lineTexture;
+        private static Texture2D lineTexture = null!;
         public static void DrawLine(this SpriteBatch spriteBatch, Color color, Vector2 start, Vector2 end,
             float width = 1, float layerDepth = 0)
         {
