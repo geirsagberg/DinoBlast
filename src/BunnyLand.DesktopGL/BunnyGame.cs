@@ -1,35 +1,81 @@
 using System;
 using System.Diagnostics;
 using BunnyLand.DesktopGL.Resources;
+using BunnyLand.DesktopGL.Scenes;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 using Nez;
 using Nez.Sprites;
 
 namespace BunnyLand.DesktopGL
 {
+    // public class BlackHole : Entity
+    // {
+    //     public override void Update()
+    //     {
+    //         Transform.Rotation += 0.01f;
+    //
+    //         base.Update();
+    //     }
+    // }
+
+    public class BlackHoleRotator : Component, IUpdatable
+    {
+        public void Update()
+        {
+            Transform.Rotation -= Time.DeltaTime;
+        }
+    }
+
     public class BunnyGame : Core
     {
+        private readonly GameSettings gameSettings;
+
         public BunnyGame(GameSettings gameSettings) : base(gameSettings.Width, gameSettings.Height,
             gameSettings.FullScreen, windowTitle: "Bunnyland")
         {
+            this.gameSettings = gameSettings;
         }
 
         protected override void Initialize()
         {
             base.Initialize();
             Window.AllowUserResizing = true;
-            var scene = Scene.CreateWithDefaultRenderer(Color.CornflowerBlue);
 
-            var textures = new Textures(scene.Content);
-            var sw = Stopwatch.StartNew();
-            textures.Load();
-            Console.WriteLine("Loaded textures in: " + sw.Elapsed);
+            Scene.SetDefaultDesignResolution(gameSettings.Width, gameSettings.Height, Scene.SceneResolutionPolicy.NoBorderPixelPerfect);
+            DefaultSamplerState = SamplerState.AnisotropicClamp;
 
-            var blackHole = scene.CreateEntity("blackHole");
-            blackHole.AddComponent(new SpriteRenderer(textures.blackhole));
-            blackHole.Transform.Position = Screen.Center;
+            var scene = CreateBattleScene();
 
             Scene = scene;
+        }
+
+        private Scene CreateBattleScene()
+        {
+            var scene = new BattleScene(gameSettings);
+            return scene;
+            // var scene = Scene.CreateWithDefaultRenderer(Color.CornflowerBlue);
+            // var textures = new Textures(scene.Content);
+            // var sw = Stopwatch.StartNew();
+            // textures.Load();
+            // Console.WriteLine("Loaded textures in: " + sw.Elapsed);
+            //
+            //
+            //
+            // AddBlackHole(scene, textures);
+            //
+            //
+            //
+            //
+            // return scene;
+        }
+
+        private static void AddBlackHole(Scene scene, Textures textures)
+        {
+            var blackHole = scene.CreateEntity("blackHole");
+            blackHole.AddComponent(new SpriteRenderer(textures.blackhole));
+            blackHole.AddComponent(new BlackHoleRotator());
+            blackHole.Transform.Position = Screen.Center;
         }
 
         // private readonly GraphicsDeviceManager graphics;

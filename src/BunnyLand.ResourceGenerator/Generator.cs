@@ -47,11 +47,8 @@ namespace BunnyLand.DesktopGL.Resources
         {{
         }}
 ");
-            var enumerationOptions = new EnumerationOptions {
-                RecurseSubdirectories = true
-            };
 
-            foreach (var path in Directory.EnumerateFiles(contentPath, $"*.{extension}", enumerationOptions)) {
+            foreach (var path in Directory.EnumerateFiles(contentPath, $"*.{extension}", EnumerationOptions)) {
                 textWriter.Write($@"
         [Description(""{FilePathToRelativePath(path, extension)}"")]
         public {propertyType} {FilePathToPropertyName(path, extension)} {{ get; set; }}");
@@ -70,6 +67,10 @@ namespace BunnyLand.DesktopGL.Resources
         }
 
         private static readonly Regex InvalidPropertyNameRegex = new Regex("[^a-zA-Z0-9]");
+
+        private static readonly EnumerationOptions EnumerationOptions = new EnumerationOptions {
+            RecurseSubdirectories = true
+        };
 
         private static string FilePathToPropertyName(string path, string extension)
         {
