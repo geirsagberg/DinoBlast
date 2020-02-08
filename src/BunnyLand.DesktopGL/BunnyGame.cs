@@ -1,82 +1,132 @@
 using System;
-using System.Diagnostics;
+using BunnyLand.DesktopGL.Extensions;
 using BunnyLand.DesktopGL.Resources;
-using BunnyLand.DesktopGL.Scenes;
+using BunnyLand.DesktopGL.Systems;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
-using Nez;
-using Nez.Sprites;
+using MonoGame.Extended.Entities;
 
 namespace BunnyLand.DesktopGL
 {
-    // public class BlackHole : Entity
-    // {
-    //     public override void Update()
-    //     {
-    //         Transform.Rotation += 0.01f;
-    //
-    //         base.Update();
-    //     }
-    // }
-
-    public class BlackHoleRotator : Component, IUpdatable
-    {
-        public void Update()
-        {
-            Transform.Rotation -= Time.DeltaTime;
-        }
-    }
-
-    public class BunnyGame : Core
+    public class BunnyGame : Game
     {
         private readonly GameSettings gameSettings;
+        private IServiceScope? serviceScope;
+        private World world = null!;
 
-        public BunnyGame(GameSettings gameSettings) : base(gameSettings.Width, gameSettings.Height,
-            gameSettings.FullScreen, windowTitle: "Bunnyland")
+        protected GraphicsDeviceManager Graphics { get; }
+
+        private new IServiceProvider Services { get; set; } = null!;
+
+        public BunnyGame(GameSettings gameSettings)
         {
+            IsMouseVisible = true;
+            Graphics = new GraphicsDeviceManager(this) {
+                PreferredBackBufferWidth = gameSettings.Width,
+                PreferredBackBufferHeight = gameSettings.Height
+            };
+            Content.RootDirectory = "Content";
             this.gameSettings = gameSettings;
+        }
+
+        private void ConfigureServices(ServiceCollection services)
+        {
+            services.Scan(scan => {
+                scan.FromAssemblyOf<BunnyGame>()
+                    .AddClasses().AsSelf().WithScopedLifetime();
+            });
+            services.AddSingleton(gameSettings);
+            services.AddSingleton(GraphicsDevice);
+            services.AddSingleton(Content);
+            services.AddTransient<WorldBuilder>();
+            services.AddTransient<SpriteBatch>();
+
+            services.AddSingleton(provider => provider.BuildWorld()
+                .AddSystemService<BattleFieldSystem>()
+                .AddSystemService<RenderSystem>()
+                .AddSystemService<PlayerSystem>()
+                .Build());
+            services.AddSingleton(provider => {
+                var textures = new Textures(provider.GetRequiredService<ContentManager>());
+                textures.Load();
+                return textures;
+            });
+        }
+
+        protected override void LoadContent()
+        {
+            world = Services.GetRequiredService<World>();
+
+            Services.GetRequiredService<EntityFactory>().CreatePlayer();
         }
 
         protected override void Initialize()
         {
+            InitializeServices();
+
             base.Initialize();
-            Window.AllowUserResizing = true;
-
-            Scene.SetDefaultDesignResolution(gameSettings.Width, gameSettings.Height, Scene.SceneResolutionPolicy.NoBorderPixelPerfect);
-            DefaultSamplerState = SamplerState.AnisotropicClamp;
-
-            var scene = CreateBattleScene();
-
-            Scene = scene;
         }
 
-        private Scene CreateBattleScene()
+        private void InitializeServices()
         {
-            var scene = new BattleScene(gameSettings);
-            return scene;
-            // var scene = Scene.CreateWithDefaultRenderer(Color.CornflowerBlue);
-            // var textures = new Textures(scene.Content);
-            // var sw = Stopwatch.StartNew();
-            // textures.Load();
-            // Console.WriteLine("Loaded textures in: " + sw.Elapsed);
-            //
-            //
-            //
-            // AddBlackHole(scene, textures);
-            //
-            //
-            //
-            //
-            // return scene;
+            var services = new ServiceCollection();
+            ConfigureServices(services);
+            var provider = services.BuildServiceProvider();
+            serviceScope = provider.CreateScope();
+            Services = serviceScope.ServiceProvider;
         }
 
-        private static void AddBlackHole(Scene scene, Textures textures)
+        protected override void Update(GameTime gameTime)
         {
-            var blackHole = scene.CreateEntity("blackHole");
-            blackHole.AddComponent(new SpriteRenderer(textures.blackhole));
-            blackHole.AddComponent(new BlackHoleRotator());
-            blackHole.Transform.Position = Screen.Center;
+            world.Update(gameTime);
+
+            base.Update(gameTime);
         }
+
+        protected override void Draw(GameTime gameTime)
+        {
+            world.Draw(gameTime);
+
+            base.Draw(gameTime);
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            serviceScope?.Dispose();
+
+            base.Dispose(disposing);
+        }
+
+        //
+        // private Scene CreateBattleScene()
+        // {
+        //     var scene = new BattleScene(gameSettings);
+        //     return scene;
+        //     // var scene = Scene.CreateWithDefaultRenderer(Color.CornflowerBlue);
+        //     // var textures = new Textures(scene.Content);
+        //     // var sw = Stopwatch.StartNew();
+        //     // textures.Load();
+        //     // Console.WriteLine("Loaded textures in: " + sw.Elapsed);
+        //     //
+        //     //
+        //     //
+        //     // AddBlackHole(scene, textures);
+        //     //
+        //     //
+        //     //
+        //     //
+        //     // return scene;
+        // }
+        //
+        // private static void AddBlackHole(Scene scene, Textures textures)
+        // {
+        //     var blackHole = scene.CreateEntity("blackHole");
+        //     blackHole.AddComponent(new SpriteRenderer(textures.blackhole));
+        //     blackHole.AddComponent(new BlackHoleRotator());
+        //     blackHole.Transform.Position = Screen.Center;
+        // }
 
         // private readonly GraphicsDeviceManager graphics;
         // private readonly GameSettings settings;
