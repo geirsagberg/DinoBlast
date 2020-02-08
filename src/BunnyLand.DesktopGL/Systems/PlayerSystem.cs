@@ -8,36 +8,6 @@ using MonoGame.Extended.Input;
 
 namespace BunnyLand.DesktopGL.Systems
 {
-    public class Player
-    {
-        //public  Type { get; set; }
-    }
-
-    public class BattleFieldSystem : EntityProcessingSystem
-    {
-        private ComponentMapper<Transform2> transformMapper = null!;
-
-        public BattleFieldSystem() : base(Aspect.All(typeof(Transform2)))
-        {
-        }
-
-        public override void Initialize(IComponentMapperService mapperService)
-        {
-            transformMapper = mapperService.GetMapper<Transform2>();
-        }
-
-        protected override void OnEntityAdded(int entityId)
-        {
-            var transform = transformMapper.Get(entityId);
-            transform.Position = new Vector2(100, 100);
-        }
-
-        public override void Process(GameTime gameTime, int entityId)
-        {
-            var transform = transformMapper.Get(entityId);
-        }
-    }
-
     public class PlayerSystem : EntityProcessingSystem
     {
         private ComponentMapper<AnimatedSprite> spriteMapper = null!;
@@ -86,21 +56,6 @@ namespace BunnyLand.DesktopGL.Systems
                 transform.Position = transform.Position.Translate(0, unit);
             }
         }
-    }
-
-    public enum PlayerState
-    {
-        Idle,
-        MovingRight,
-        MovingLeft,
-    }
-
-    public enum PlayerInputType
-    {
-        None,
-        Jump,
-        Move,
-        Aim
     }
 
     //public class StateMachine<TState, TEvents>

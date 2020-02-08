@@ -1,12 +1,14 @@
 using System;
 using BunnyLand.DesktopGL.Extensions;
 using BunnyLand.DesktopGL.Resources;
+using BunnyLand.DesktopGL.Screens;
 using BunnyLand.DesktopGL.Systems;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using MonoGame.Extended.Entities;
+using MonoGame.Extended.Screens;
 
 namespace BunnyLand.DesktopGL
 {
@@ -14,7 +16,6 @@ namespace BunnyLand.DesktopGL
     {
         private readonly GameSettings gameSettings;
         private IServiceScope? serviceScope;
-        private World world = null!;
 
         protected GraphicsDeviceManager Graphics { get; }
 
@@ -25,7 +26,8 @@ namespace BunnyLand.DesktopGL
             IsMouseVisible = true;
             Graphics = new GraphicsDeviceManager(this) {
                 PreferredBackBufferWidth = gameSettings.Width,
-                PreferredBackBufferHeight = gameSettings.Height
+                PreferredBackBufferHeight = gameSettings.Height,
+                PreferMultiSampling = true
             };
             Content.RootDirectory = "Content";
             this.gameSettings = gameSettings;
@@ -33,6 +35,9 @@ namespace BunnyLand.DesktopGL
 
         private void ConfigureServices(ServiceCollection services)
         {
+            // Configure services here if they should live for the entire game. Handles Dependency Injection and instance creation.
+            // Services that are added and removed dynamically must use GameServiceContainer, which only supports adding and retrieving instances, not creating.
+
             services.Scan(scan => {
                 scan.FromAssemblyOf<BunnyGame>()
                     .AddClasses().AsSelf().WithScopedLifetime();
@@ -40,10 +45,11 @@ namespace BunnyLand.DesktopGL
             services.AddSingleton(gameSettings);
             services.AddSingleton(GraphicsDevice);
             services.AddSingleton(Content);
+            services.AddSingleton<Game>(this);
             services.AddTransient<WorldBuilder>();
             services.AddTransient<SpriteBatch>();
 
-            services.AddSingleton(provider => provider.BuildWorld()
+            services.AddSingleton(provider => provider.CreateWorld()
                 .AddSystemService<BattleFieldSystem>()
                 .AddSystemService<RenderSystem>()
                 .AddSystemService<PlayerSystem>()
@@ -53,20 +59,23 @@ namespace BunnyLand.DesktopGL
                 textures.Load();
                 return textures;
             });
+            services.AddSingleton<ScreenManager>();
         }
 
-        protected override void LoadContent()
-        {
-            world = Services.GetRequiredService<World>();
-
-            Services.GetRequiredService<EntityFactory>().CreatePlayer();
-        }
+        private T GetService<T>() => Services.GetRequiredService<T>();
 
         protected override void Initialize()
         {
             InitializeServices();
 
             base.Initialize();
+        }
+
+        protected override void LoadContent()
+        {
+            Services.RegisterComponent<World>();
+            var screenManager = Services.RegisterComponent<ScreenManager>();
+            screenManager.LoadScreen(GetService<BattleScreen>());
         }
 
         private void InitializeServices()
@@ -78,144 +87,11 @@ namespace BunnyLand.DesktopGL
             Services = serviceScope.ServiceProvider;
         }
 
-        protected override void Update(GameTime gameTime)
-        {
-            world.Update(gameTime);
-
-            base.Update(gameTime);
-        }
-
-        protected override void Draw(GameTime gameTime)
-        {
-            world.Draw(gameTime);
-
-            base.Draw(gameTime);
-        }
-
         protected override void Dispose(bool disposing)
         {
             serviceScope?.Dispose();
 
             base.Dispose(disposing);
         }
-
-        //
-        // private Scene CreateBattleScene()
-        // {
-        //     var scene = new BattleScene(gameSettings);
-        //     return scene;
-        //     // var scene = Scene.CreateWithDefaultRenderer(Color.CornflowerBlue);
-        //     // var textures = new Textures(scene.Content);
-        //     // var sw = Stopwatch.StartNew();
-        //     // textures.Load();
-        //     // Console.WriteLine("Loaded textures in: " + sw.Elapsed);
-        //     //
-        //     //
-        //     //
-        //     // AddBlackHole(scene, textures);
-        //     //
-        //     //
-        //     //
-        //     //
-        //     // return scene;
-        // }
-        //
-        // private static void AddBlackHole(Scene scene, Textures textures)
-        // {
-        //     var blackHole = scene.CreateEntity("blackHole");
-        //     blackHole.AddComponent(new SpriteRenderer(textures.blackhole));
-        //     blackHole.AddComponent(new BlackHoleRotator());
-        //     blackHole.Transform.Position = Screen.Center;
-        // }
-
-        // private readonly GraphicsDeviceManager graphics;
-        // private readonly GameSettings settings;
-        // private Vector2 blackHolePosition;
-        // private float blackHoleRotation;
-        // private SpriteBatch spriteBatch = null!;
-        //
-        // public BunnyGame(GameSettings settings)
-        // {
-        //     this.settings = settings;
-        //     graphics = new GraphicsDeviceManager(this);
-        //     Content.RootDirectory = "Content";
-        //     IsMouseVisible = true;
-        //     Textures = new Textures(Content);
-        //     SpriteFonts = new SpriteFonts(Content);
-        //     SoundEffects = new SoundEffects(Content);
-        //     Songs = new Songs(Content);
-        // }
-        //
-        // private Textures Textures { get; }
-        // private SpriteFonts SpriteFonts { get; }
-        // private SoundEffects SoundEffects { get; }
-        // private Songs Songs { get; }
-        //
-        // protected override void Initialize()
-        // {
-        //
-        //     // TODO: Add your initialization logic here
-        //     blackHolePosition = new Vector2(graphics.PreferredBackBufferWidth / 2f,
-        //         graphics.PreferredBackBufferHeight / 2f);
-        //
-        //     base.Initialize();
-        // }
-        //
-        // protected override void LoadContent()
-        // {
-        //     spriteBatch = new SpriteBatch(GraphicsDevice);
-        //
-        //     Textures.Load();
-        //     SpriteFonts.Load();
-        // }
-        //
-        // private string debugText = "";
-        // private MouseState previousMouseState;
-        // private Vector2 startDragPosition;
-        //
-        // protected override void Update(GameTime gameTime)
-        // {
-        //     if (!IsActive) return;
-        //
-        //     if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed ||
-        //         Keyboard.GetState().IsKeyDown(Keys.Escape))
-        //         Exit();
-        //
-        //     // TODO: Add your update logic here
-        //
-        //     blackHoleRotation += Convert.ToSingle(gameTime.ElapsedGameTime.TotalMilliseconds * 0.001);
-        //
-        //     var mouseState = Mouse.GetState();
-        //
-        //     if (previousMouseState.LeftButton == ButtonState.Released && mouseState.LeftButton == ButtonState.Pressed) {
-        //         startDragPosition = mouseState.Position.ToVector2();
-        //     } else if (previousMouseState.LeftButton == ButtonState.Pressed &&
-        //         mouseState.LeftButton == ButtonState.Released)
-        //         startDragPosition = default;
-        //
-        //     previousMouseState = mouseState;
-        //
-        //     debugText = JsonSerializer.Serialize(mouseState);
-        //
-        //     base.Update(gameTime);
-        // }
-        //
-        // protected override void Draw(GameTime gameTime)
-        // {
-        //     GraphicsDevice.Clear(Color.CornflowerBlue);
-        //
-        //     // TODO: Add your drawing code here
-        //     spriteBatch.Begin();
-        //     spriteBatch.Draw(Textures.blackhole, blackHolePosition, null, Color.White, blackHoleRotation,
-        //         new Vector2(Textures.blackhole.Width / 2f, Textures.blackhole.Height / 2f), Vector2.One,
-        //         SpriteEffects.FlipHorizontally,
-        //         0f);
-        //     spriteBatch.DrawString(SpriteFonts.Verdana, debugText, Vector2.Zero, Color.Black);
-        //     if (previousMouseState.LeftButton == ButtonState.Pressed)
-        //         spriteBatch.DrawLine(Color.Chartreuse, startDragPosition, previousMouseState.Position.ToVector2());
-        //     spriteBatch.End();
-        //
-        //     base.Draw(gameTime);
-        // }
     }
 }

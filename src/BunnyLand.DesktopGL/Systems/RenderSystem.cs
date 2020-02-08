@@ -31,12 +31,15 @@ namespace BunnyLand.DesktopGL.Systems
 
         public override void Draw(GameTime gameTime)
         {
+            var elapsedSeconds = gameTime.GetElapsedSeconds();
+
             spriteBatch.Begin();
             foreach (var entity in ActiveEntities) {
                 var sprite = animatedSpriteMapper.GetOrNull(entity)
                     ?? spriteMapper.Get(entity);
-                if (sprite is AnimatedSprite animatedSprite)
-                    animatedSprite.Update(gameTime.GetElapsedSeconds());
+                if (sprite is AnimatedSprite animatedSprite) {
+                    animatedSprite.Update(elapsedSeconds);
+                }
 
                 var transform = transformMapper.Get(entity);
 
