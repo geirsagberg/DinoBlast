@@ -32,28 +32,29 @@ namespace BunnyLand.DesktopGL
             return animatedSprite;
         }
 
-        public Entity CreatePlayer(Vector2 vector2)
+        public Entity CreatePlayer(Vector2 position)
         {
             var entity = world.CreateEntity();
-            var transform2 = new Transform2(vector2);
-            entity.Attach(transform2);
+            var transform = new Transform2(position);
+            entity.Attach(transform);
             var animatedSprite = GetPlayerSprite();
             entity.Attach(animatedSprite);
-            entity.Attach(new CollisionBody(new CircleF(Point2.Zero, 15), transform2));
+            entity.Attach(new CollisionBody(new CircleF(Point2.Zero, 15), transform));
             entity.Attach(new Player());
-            entity.Attach(new Movable());
+            entity.Attach(new Movable(transform));
             return entity;
         }
 
-        public Entity CreatePlanet(Vector2 position)
+        public Entity CreatePlanet(Vector2 position, float mass, float scale = 1)
         {
             var entity = world.CreateEntity();
-            var transform2 = new Transform2(position);
-            entity.Attach(transform2);
+            var transform = new Transform2(position, scale: new Vector2(scale));
+            entity.Attach(transform);
             var sprite = new Sprite(textures.redplanet);
             entity.Attach(sprite);
-            var boundingRectangle = sprite.GetBoundingRectangle(position, 0, Vector2.One);
-            entity.Attach(new CollisionBody(new CircleF(Point2.Zero, boundingRectangle.Width / 2f), transform2));
+            var boundingRectangle = sprite.GetBoundingRectangle(position, 0, new Vector2(scale));
+            entity.Attach(new CollisionBody(new CircleF(Point2.Zero, boundingRectangle.Width / 2f), transform));
+            entity.Attach(new GravityPoint(transform, mass));
             return entity;
         }
     }

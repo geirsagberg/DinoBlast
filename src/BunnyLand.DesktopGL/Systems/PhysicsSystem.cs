@@ -30,11 +30,14 @@ namespace BunnyLand.DesktopGL.Systems
             var movable = movableMapper.Get(entityId);
             var body = bodyMapper.MaybeGet(entityId);
 
-            movable.Velocity += movable.Acceleration;
-            movable.Velocity = movable.Velocity.Truncate(10).Scale(0.9f);
-            transform.Position += movable.Velocity -
+            movable.Velocity += movable.Acceleration + movable.GravityPull;
+            const float maxSpeed = 10;
+            const float inertiaRatio = 0.95f;
+            movable.Velocity = movable.Velocity.Truncate(maxSpeed) * inertiaRatio;
+            const int fps = 60;
+            transform.Position += (movable.Velocity -
                 body.Match(some => some.CollisionInfo.Match(info => info.PenetrationVector, Vector2.Zero),
-                    Vector2.Zero);
+                    Vector2.Zero)) * gameTime.GetElapsedSeconds() * fps;
         }
     }
 }

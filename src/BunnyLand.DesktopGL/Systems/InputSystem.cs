@@ -67,10 +67,11 @@ namespace BunnyLand.DesktopGL.Systems
 
             var keys = pressedKeys[player.PlayerIndex];
 
+            var accelerationMultiplier = keys.Contains(PlayerKey.Jump) ? 2f : 0.5f;
             movable.Acceleration = player.StandingOn switch {
                 StandingOn.Nothing => new Vector2(
                     (keys.Contains(PlayerKey.Left) ? -1 : 0) + (keys.Contains(PlayerKey.Right) ? 1 : 0),
-                    (keys.Contains(PlayerKey.Up) ? -1 : 0) + (keys.Contains(PlayerKey.Down) ? 1 : 0)).NormalizedOrZero(),
+                    (keys.Contains(PlayerKey.Up) ? -1 : 0) + (keys.Contains(PlayerKey.Down) ? 1 : 0)).NormalizedOrZero() * accelerationMultiplier,
                 StandingOn.Planet => Vector2.Zero,
                 _ => Vector2.Zero
             };

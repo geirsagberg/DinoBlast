@@ -17,7 +17,8 @@ namespace BunnyLand.DesktopGL.Screens
 
         public override void LoadContent()
         {
-            entityFactory.CreatePlanet(new Vector2(400, 400));
+            entityFactory.CreatePlanet(new Vector2(400, 400), 5000, 0.5f);
+            entityFactory.CreatePlanet(new Vector2(800, 300), 8000, 0.8f);
             entityFactory.CreatePlayer(new Vector2(100,100));
         }
 

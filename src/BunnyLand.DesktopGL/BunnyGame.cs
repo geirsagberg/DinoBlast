@@ -58,6 +58,11 @@ namespace BunnyLand.DesktopGL
                 textures.Load();
                 return textures;
             });
+            services.AddSingleton(provider => {
+                var spriteFonts = new SpriteFonts(provider.GetRequiredService<ContentManager>());
+                spriteFonts.Load();
+                return spriteFonts;
+            });
             services.AddSingleton<ScreenManager>();
             services.AddSingleton(new CollisionComponent(new RectangleF(Point2.Zero, new Size2(10000, 10000))));
             services.AddSingleton(new KeyboardListener(new KeyboardListenerSettings {RepeatPress = false}));
@@ -74,6 +79,7 @@ namespace BunnyLand.DesktopGL
                 .AddSystemService<BattleFieldSystem>()
                 .AddSystemService<RenderSystem>()
                 .AddSystemService<PlayerSystem>()
+                .AddSystemService<GravitySystem>()
                 .AddSystemService<PhysicsSystem>()
                 .AddSystemService<CollisionSystem>()
                 .Build();

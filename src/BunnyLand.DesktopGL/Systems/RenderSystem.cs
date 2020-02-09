@@ -1,5 +1,6 @@
 using BunnyLand.DesktopGL.Components;
 using BunnyLand.DesktopGL.Extensions;
+using BunnyLand.DesktopGL.Resources;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using MonoGame.Extended;
@@ -13,15 +14,18 @@ namespace BunnyLand.DesktopGL.Systems
     public class RenderSystem : EntityDrawSystem
     {
         private readonly SpriteBatch spriteBatch;
-        private ComponentMapper<AnimatedSprite> animatedSpriteMapper = null!;
-        private ComponentMapper<Sprite> spriteMapper = null!;
-        private ComponentMapper<Transform2> transformMapper = null!;
+        private readonly SpriteFonts spriteFonts;
+        private ComponentMapper<AnimatedSprite> animatedSpriteMapper;
         private ComponentMapper<CollisionBody> collisionMapper;
+        private ComponentMapper<Movable> movableMapper;
+        private ComponentMapper<Sprite> spriteMapper;
+        private ComponentMapper<Transform2> transformMapper;
 
-        public RenderSystem(SpriteBatch spriteBatch) : base(Aspect.All(typeof(Transform2))
+        public RenderSystem(SpriteBatch spriteBatch, SpriteFonts spriteFonts) : base(Aspect.All(typeof(Transform2))
             .One(typeof(AnimatedSprite), typeof(Sprite)))
         {
             this.spriteBatch = spriteBatch;
+            this.spriteFonts = spriteFonts;
         }
 
         public override void Initialize(IComponentMapperService mapperService)
@@ -30,6 +34,7 @@ namespace BunnyLand.DesktopGL.Systems
             animatedSpriteMapper = mapperService.GetMapper<AnimatedSprite>();
             spriteMapper = mapperService.GetMapper<Sprite>();
             collisionMapper = mapperService.GetMapper<CollisionBody>();
+            movableMapper = mapperService.GetMapper<Movable>();
         }
 
         public override void Draw(GameTime gameTime)
@@ -56,10 +61,16 @@ namespace BunnyLand.DesktopGL.Systems
                     }
 
                     collisionBody.CollisionInfo.IfSome(info => {
-                        spriteBatch.DrawLine(transform.WorldPosition, transform.WorldPosition + info.PenetrationVector, Color.Aquamarine);
+                        spriteBatch.DrawLine(transform.WorldPosition, transform.WorldPosition + info.PenetrationVector,
+                            Color.Aquamarine);
                     });
                 }
+
+                movableMapper.MaybeGet(entity).IfSome(movable => spriteBatch.DrawLine(transform.WorldPosition,
+                    transform.WorldPosition + movable.GravityPull * 1000, Color.Azure));
             }
+
+            spriteBatch.DrawString(spriteFonts.Verdana, "AWSD: Move, Space: Boost", Vector2.One, Color.White);
 
             spriteBatch.End();
         }
