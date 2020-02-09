@@ -1,14 +1,31 @@
+using LanguageExt;
 using MonoGame.Extended;
+using MonoGame.Extended.Collisions;
 
 namespace BunnyLand.DesktopGL.Components
 {
-    public class CollisionBody
+    public class CollisionBody : ICollisionActor
     {
-        public Size2 Size { get; set; }
+        private readonly IShapeF bounds;
+        private readonly Transform2 transform;
+        public Option<CollisionEventArgs> CollisionInfo { get; set; }
 
-        public CollisionBody(Size2 size)
+        public IShapeF Bounds {
+            get {
+                bounds.Position = transform.Position;
+                return bounds;
+            }
+        }
+
+        public CollisionBody(IShapeF bounds, Transform2 transform)
         {
-            Size = size;
+            this.bounds = bounds;
+            this.transform = transform;
+        }
+
+        public void OnCollision(CollisionEventArgs collisionInfo)
+        {
+            CollisionInfo = collisionInfo;
         }
     }
 }

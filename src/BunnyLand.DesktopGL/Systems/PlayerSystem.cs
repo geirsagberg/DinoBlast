@@ -1,3 +1,6 @@
+using System;
+using BunnyLand.DesktopGL.Components;
+using BunnyLand.DesktopGL.Enums;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
 using MonoGame.Extended;
@@ -12,8 +15,10 @@ namespace BunnyLand.DesktopGL.Systems
     {
         private ComponentMapper<AnimatedSprite> spriteMapper = null!;
         private ComponentMapper<Transform2> transformMapper = null!;
+        private ComponentMapper<Player> playerMapper;
+        private ComponentMapper<CollisionBody> collisionMapper;
 
-        public PlayerSystem() : base(Aspect.All(typeof(Transform2), typeof(AnimatedSprite)))
+        public PlayerSystem() : base(Aspect.All(typeof(Transform2), typeof(AnimatedSprite), typeof(Player), typeof(CollisionBody)))
         {
         }
 
@@ -21,40 +26,21 @@ namespace BunnyLand.DesktopGL.Systems
         {
             transformMapper = mapperService.GetMapper<Transform2>();
             spriteMapper = mapperService.GetMapper<AnimatedSprite>();
-
-            //input
-
-            //// States
-
-            // Idle
-
-
-            // Triggers
+            playerMapper = mapperService.GetMapper<Player>();
+            collisionMapper = mapperService.GetMapper<CollisionBody>();
         }
 
         public override void Process(GameTime gameTime, int entityId)
         {
             var transform = transformMapper.Get(entityId);
+            var player = playerMapper.Get(entityId);
+            var body = collisionMapper.Get(entityId);
 
             var state = KeyboardExtended.GetState();
 
             var unit = gameTime.GetElapsedSeconds() * 100;
 
-            if (state.IsKeyDown(Keys.A)) {
-                transform.Position = transform.Position.Translate(-unit, 0);
-            }
 
-            if (state.IsKeyDown(Keys.D)) {
-                transform.Position = transform.Position.Translate(unit, 0);
-            }
-
-            if (state.IsKeyDown(Keys.W)) {
-                transform.Position = transform.Position.Translate(0, -unit);
-            }
-
-            if (state.IsKeyDown(Keys.S)) {
-                transform.Position = transform.Position.Translate(0, unit);
-            }
         }
     }
 

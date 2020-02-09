@@ -1,5 +1,3 @@
-using System;
-using System.Linq;
 using BunnyLand.DesktopGL.Components;
 using BunnyLand.DesktopGL.Extensions;
 using BunnyLand.DesktopGL.Resources;
@@ -37,18 +35,25 @@ namespace BunnyLand.DesktopGL
         public Entity CreatePlayer(Vector2 vector2)
         {
             var entity = world.CreateEntity();
-            entity.Attach(new Transform2(vector2));
-            entity.Attach(GetPlayerSprite());
-            entity.Attach(new CollisionBody(new Size2(20, 30)));
+            var transform2 = new Transform2(vector2);
+            entity.Attach(transform2);
+            var animatedSprite = GetPlayerSprite();
+            entity.Attach(animatedSprite);
+            entity.Attach(new CollisionBody(new CircleF(Point2.Zero, 15), transform2));
+            entity.Attach(new Player());
+            entity.Attach(new Movable());
             return entity;
         }
 
         public Entity CreatePlanet(Vector2 position)
         {
             var entity = world.CreateEntity();
-            entity.Attach(new Transform2(position));
-            entity.Attach(new Sprite(textures.redplanet));
-            entity.Attach(new CollisionBody());
+            var transform2 = new Transform2(position);
+            entity.Attach(transform2);
+            var sprite = new Sprite(textures.redplanet);
+            entity.Attach(sprite);
+            var boundingRectangle = sprite.GetBoundingRectangle(position, 0, Vector2.One);
+            entity.Attach(new CollisionBody(new CircleF(Point2.Zero, boundingRectangle.Width / 2f), transform2));
             return entity;
         }
     }

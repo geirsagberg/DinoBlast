@@ -4,6 +4,7 @@ using LanguageExt;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Xna.Framework;
 using MonoGame.Extended.Animations.SpriteSheets;
+using MonoGame.Extended.Collisions;
 using MonoGame.Extended.Entities;
 
 namespace BunnyLand.DesktopGL.Extensions
@@ -43,5 +44,11 @@ namespace BunnyLand.DesktopGL.Extensions
                     Math.Abs(range.End.Value - range.Start.Value)).ToArray(), frameDuration, isLooping, isReversed,
                 isPingPong);
 
+        public static void Deconstruct(this CollisionEventArgs collisionInfo, out ICollisionActor other,
+            out Vector2 penetrationVector)
+        {
+            other = collisionInfo.Other;
+            penetrationVector = collisionInfo.PenetrationVector;
+        }
     }
 }
