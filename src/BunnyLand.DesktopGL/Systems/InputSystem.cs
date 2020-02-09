@@ -16,7 +16,7 @@ namespace BunnyLand.DesktopGL.Systems
     {
         private readonly GamePadListener gamePadListener;
         private readonly KeyboardListener keyboardListener;
-        private readonly KeyMap keyMap;
+        private readonly IKeyMap keyMap;
 
         private readonly Dictionary<PlayerIndex, HashSet<PlayerKey>> pressedKeys = Enum.GetValues(typeof(PlayerIndex))
             .Cast<PlayerIndex>().ToDictionary(i => i, _ => new HashSet<PlayerKey>());
@@ -25,7 +25,7 @@ namespace BunnyLand.DesktopGL.Systems
 
         private ComponentMapper<Player> playerMapper;
 
-        public InputSystem(KeyboardListener keyboardListener, GamePadListener gamePadListener, KeyMap keyMap) : base(
+        public InputSystem(KeyboardListener keyboardListener, GamePadListener gamePadListener, IKeyMap keyMap) : base(
             Aspect.All(typeof(Player), typeof(Movable)))
         {
             this.keyboardListener = keyboardListener;

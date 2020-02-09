@@ -57,5 +57,12 @@ namespace BunnyLand.DesktopGL
             entity.Attach(new GravityPoint(transform, mass));
             return entity;
         }
+
+        public Entity CreateLevel(float width, float height)
+        {
+            var entity = world.CreateEntity();
+            entity.Attach(new Level(new RectangleF(0, 0, width, height)));
+            return entity;
+        }
     }
 }

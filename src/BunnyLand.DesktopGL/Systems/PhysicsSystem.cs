@@ -1,5 +1,6 @@
 ﻿using BunnyLand.DesktopGL.Components;
 using BunnyLand.DesktopGL.Extensions;
+using LanguageExt;
 using Microsoft.Xna.Framework;
 using MonoGame.Extended;
 using MonoGame.Extended.Entities;
@@ -10,11 +11,19 @@ namespace BunnyLand.DesktopGL.Systems
     public class PhysicsSystem : EntityProcessingSystem
     {
         private ComponentMapper<CollisionBody> bodyMapper;
+        private ComponentMapper<Level> levelMapper;
         private ComponentMapper<Movable> movableMapper;
         private ComponentMapper<Transform2> transformMapper;
 
+        public Option<Level> Level { get; set; }
+
         public PhysicsSystem() : base(Aspect.All(typeof(Transform2), typeof(Movable)))
         {
+        }
+
+        protected override void OnEntityAdded(int entityId)
+        {
+            levelMapper.MaybeGet(entityId).IfSome(level => Level = level);
         }
 
         public override void Initialize(IComponentMapperService mapperService)
@@ -22,6 +31,7 @@ namespace BunnyLand.DesktopGL.Systems
             transformMapper = mapperService.GetMapper<Transform2>();
             movableMapper = mapperService.GetMapper<Movable>();
             bodyMapper = mapperService.GetMapper<CollisionBody>();
+            levelMapper = mapperService.GetMapper<Level>();
         }
 
         public override void Process(GameTime gameTime, int entityId)
@@ -29,15 +39,21 @@ namespace BunnyLand.DesktopGL.Systems
             var transform = transformMapper.Get(entityId);
             var movable = movableMapper.Get(entityId);
             var body = bodyMapper.MaybeGet(entityId);
+            var collisionVector = body.Some(someBody => someBody.CollisionInfo
+                .Some(info => info.PenetrationVector)
+                .None(Vector2.Zero)
+            ).None(Vector2.Zero);
 
-            movable.Velocity += movable.Acceleration + movable.GravityPull;
-            const float maxSpeed = 10;
-            const float inertiaRatio = 0.95f;
+            const float bounce = 0.5f;
+            movable.Velocity += movable.Acceleration + movable.GravityPull - collisionVector
+                - collisionVector.NormalizedOrZero() * movable.Velocity.Length() * bounce;
+            const float maxSpeed = 100;
+            const float inertiaRatio = 0.99f;
             movable.Velocity = movable.Velocity.Truncate(maxSpeed) * inertiaRatio;
             const int fps = 60;
-            transform.Position += (movable.Velocity -
-                body.Match(some => some.CollisionInfo.Match(info => info.PenetrationVector, Vector2.Zero),
-                    Vector2.Zero)) * gameTime.GetElapsedSeconds() * fps;
+            transform.Position += (movable.Velocity - collisionVector) * gameTime.GetElapsedSeconds() * fps;
+
+            Level.IfSome(level => transform.Wrap(level.Bounds));
         }
     }
 }

@@ -24,7 +24,7 @@ namespace BunnyLand.DesktopGL.Extensions
         public static WorldBuilderService CreateWorld(this IServiceProvider serviceProvider) =>
             new WorldBuilderService(serviceProvider);
 
-        public static T RegisterComponent<T>(this IServiceProvider serviceProvider) where T : IGameComponent
+        public static T RegisterGameComponent<T>(this IServiceProvider serviceProvider) where T : IGameComponent
         {
             var component = serviceProvider.GetRequiredService<T>();
             var components = serviceProvider.GetRequiredService<Game>().Components;

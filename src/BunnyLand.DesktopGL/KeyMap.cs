@@ -4,7 +4,12 @@ using Microsoft.Xna.Framework.Input;
 
 namespace BunnyLand.DesktopGL
 {
-    public class KeyMap
+    public interface IKeyMap
+    {
+        Option<(PlayerIndex index, PlayerKey key)> GetKey(Keys keys);
+    }
+
+    public class KeyMap : IKeyMap
     {
         public Option<(PlayerIndex index, PlayerKey key)> GetKey(Keys keys) => keys switch {
             Keys.A => (PlayerIndex.One, PlayerKey.Left),

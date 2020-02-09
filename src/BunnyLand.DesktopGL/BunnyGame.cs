@@ -43,7 +43,9 @@ namespace BunnyLand.DesktopGL
 
             services.Scan(scan => {
                 scan.FromAssemblyOf<BunnyGame>()
-                    .AddClasses().AsSelf().WithScopedLifetime();
+                    .AddClasses().AsSelf().WithScopedLifetime()
+                    .AddClasses().AsImplementedInterfaces().WithScopedLifetime()
+                    ;
             });
             services.AddSingleton(gameSettings);
             services.AddSingleton(GraphicsDevice);
@@ -96,10 +98,10 @@ namespace BunnyLand.DesktopGL
 
         protected override void LoadContent()
         {
-            Services.RegisterComponent<InputListenerComponent>();
-            Services.RegisterComponent<World>();
-            Services.RegisterComponent<CollisionComponent>();
-            Services.RegisterComponent<ScreenManager>();
+            Services.RegisterGameComponent<InputListenerComponent>();
+            Services.RegisterGameComponent<World>();
+            Services.RegisterGameComponent<CollisionComponent>();
+            Services.RegisterGameComponent<ScreenManager>();
 
             LoadScreen<BattleScreen>();
         }
