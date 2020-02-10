@@ -7,6 +7,7 @@
         Up,
         Down,
         Fire,
-        Jump
+        Jump,
+        ToggleBrake
     }
 }

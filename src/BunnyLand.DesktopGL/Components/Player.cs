@@ -11,5 +11,7 @@ namespace BunnyLand.DesktopGL.Components
         public StandingOn StandingOn { get; set; }
         public PlayerState State { get; set; }
         public Facing Facing { get; set; }
+        public bool IsBraking { get; set; } = true;
+        public float BrakePower { get; set; } = 0.1f;
     }
 }

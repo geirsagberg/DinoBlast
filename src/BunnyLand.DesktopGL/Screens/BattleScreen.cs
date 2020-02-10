@@ -8,19 +8,21 @@ namespace BunnyLand.DesktopGL.Screens
     {
         private readonly EntityFactory entityFactory;
         private readonly World world;
+        private readonly GameSettings gameSettings;
 
-        public BattleScreen(Game game, EntityFactory entityFactory, World world) : base(game)
+        public BattleScreen(Game game, EntityFactory entityFactory, World world, GameSettings gameSettings) : base(game)
         {
             this.entityFactory = entityFactory;
             this.world = world;
+            this.gameSettings = gameSettings;
         }
 
         public override void LoadContent()
         {
-            entityFactory.CreatePlanet(new Vector2(400, 400), 5000, 0.5f);
-            entityFactory.CreatePlanet(new Vector2(800, 300), 8000, 0.8f);
+            entityFactory.CreatePlanet(new Vector2(400, 400), 8000, 0.5f);
+            entityFactory.CreatePlanet(new Vector2(800, 300), 12000, 0.8f);
             entityFactory.CreatePlayer(new Vector2(100, 100));
-            entityFactory.CreateLevel(1280, 720);
+            entityFactory.CreateLevel(gameSettings.Width, gameSettings.Height);
         }
 
         public override void Update(GameTime gameTime)

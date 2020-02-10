@@ -11,7 +11,7 @@ namespace BunnyLand.DesktopGL.Extensions
 {
     public static class MonoGameExtendedExtensions
     {
-        public static Option<T> MaybeGet<T>(this ComponentMapper<T> mapper, int entityId) where T : class
+        public static Option<T> TryGet<T>(this ComponentMapper<T> mapper, int entityId) where T : class
         {
             return mapper.Has(entityId) ? Option<T>.Some(mapper.Get(entityId)) : Option<T>.None;
         }

@@ -20,12 +20,15 @@ namespace BunnyLand.DesktopGL.Systems
         private ComponentMapper<CollisionBody> collisionMapper;
         private ComponentMapper<Level> levelMapper;
         private ComponentMapper<Movable> movableMapper;
+        private ComponentMapper<Player> playerMapper;
         private ComponentMapper<Sprite> spriteMapper;
         private ComponentMapper<Transform2> transformMapper;
 
         public Option<Level> Level { get; set; }
 
         private GraphicsDevice GraphicsDevice => spriteBatch.GraphicsDevice;
+
+        public Option<Player> Player { get; set; }
 
         public RenderSystem(SpriteBatch spriteBatch, SpriteFonts spriteFonts) : base(Aspect.All(typeof(Transform2))
             .One(typeof(AnimatedSprite), typeof(Sprite)))
@@ -42,11 +45,13 @@ namespace BunnyLand.DesktopGL.Systems
             collisionMapper = mapperService.GetMapper<CollisionBody>();
             movableMapper = mapperService.GetMapper<Movable>();
             levelMapper = mapperService.GetMapper<Level>();
+            playerMapper = mapperService.GetMapper<Player>();
         }
 
         protected override void OnEntityAdded(int entityId)
         {
-            levelMapper.MaybeGet(entityId).IfSome(level => Level = level);
+            levelMapper.TryGet(entityId).IfSome(level => Level = level);
+            playerMapper.TryGet(entityId).IfSome(player => Player = player);
         }
 
         public override void Draw(GameTime gameTime)
@@ -71,7 +76,11 @@ namespace BunnyLand.DesktopGL.Systems
                 DrawGravityPull(entity, transform);
             }
 
-            spriteBatch.DrawString(spriteFonts.Verdana, "AWSD: Move, Space: Boost", Vector2.One, Color.White);
+            spriteBatch.DrawString(spriteFonts.Verdana, "AWSD: Move, Space: Boost, Shift: Toggle Brake/Glide",
+                Vector2.One, Color.White);
+            Player.IfSome(player => spriteBatch.DrawString(spriteFonts.Verdana,
+                "Brakes: " + (player.IsBraking ? "On" : "Off"), new Vector2(1, 30), Color.White));
+
 
             spriteBatch.End();
         }
@@ -118,7 +127,7 @@ namespace BunnyLand.DesktopGL.Systems
 
         private void DrawGravityPull(int entity, Transform2 transform)
         {
-            movableMapper.MaybeGet(entity).IfSome(movable => spriteBatch.DrawLine(transform.WorldPosition,
+            movableMapper.TryGet(entity).IfSome(movable => spriteBatch.DrawLine(transform.WorldPosition,
                 transform.WorldPosition + movable.GravityPull * 1000, Color.Azure));
         }
     }

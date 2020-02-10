@@ -14,6 +14,8 @@ namespace BunnyLand.DesktopGL.Components
         public float GravityMultiplier { get; set; }
         public Vector2 GravityPull { get; set; }
 
+        public float BrakingForce { get; set; }
+
         public Movable(Transform2 transform, float gravityMultiplier = 1)
         {
             Transform = transform;

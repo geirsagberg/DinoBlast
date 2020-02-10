@@ -26,7 +26,7 @@ namespace BunnyLand.DesktopGL.Systems
 
         protected override void OnEntityAdded(int entityId)
         {
-            gravityPointMapper.MaybeGet(entityId).IfSome(points.Add);
+            gravityPointMapper.TryGet(entityId).IfSome(points.Add);
         }
 
         public override void Process(GameTime gameTime, int entityId)

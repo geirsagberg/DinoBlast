@@ -18,6 +18,7 @@ namespace BunnyLand.DesktopGL
             Keys.S => (PlayerIndex.One, PlayerKey.Down),
             Keys.Space => (PlayerIndex.One, PlayerKey.Jump),
             Keys.LeftControl => (PlayerIndex.One, PlayerKey.Fire),
+            Keys.LeftShift => (PlayerIndex.One, PlayerKey.ToggleBrake),
             _ => Option<(PlayerIndex, PlayerKey)>.None
         };
     }

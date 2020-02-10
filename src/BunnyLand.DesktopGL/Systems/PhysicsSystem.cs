@@ -1,4 +1,5 @@
-﻿using BunnyLand.DesktopGL.Components;
+﻿using System;
+using BunnyLand.DesktopGL.Components;
 using BunnyLand.DesktopGL.Extensions;
 using LanguageExt;
 using Microsoft.Xna.Framework;
@@ -23,7 +24,7 @@ namespace BunnyLand.DesktopGL.Systems
 
         protected override void OnEntityAdded(int entityId)
         {
-            levelMapper.MaybeGet(entityId).IfSome(level => Level = level);
+            levelMapper.TryGet(entityId).IfSome(level => Level = level);
         }
 
         public override void Initialize(IComponentMapperService mapperService)
@@ -38,17 +39,25 @@ namespace BunnyLand.DesktopGL.Systems
         {
             var transform = transformMapper.Get(entityId);
             var movable = movableMapper.Get(entityId);
-            var body = bodyMapper.MaybeGet(entityId);
+            var body = bodyMapper.TryGet(entityId);
             var collisionVector = body.Some(someBody => someBody.CollisionInfo
                 .Some(info => info.PenetrationVector)
                 .None(Vector2.Zero)
             ).None(Vector2.Zero);
 
+            var originalVelocity = movable.Velocity;
+
             const float bounce = 0.5f;
-            movable.Velocity += movable.Acceleration + movable.GravityPull - collisionVector
+            var deltaVelocity =
+                movable.Acceleration +
+                movable.GravityPull - collisionVector
                 - collisionVector.NormalizedOrZero() * movable.Velocity.Length() * bounce;
+            movable.Velocity += deltaVelocity;
+
+            movable.Velocity = movable.Velocity.SubtractLength(Math.Min(movable.Velocity.Length(), movable.BrakingForce));
+
             const float maxSpeed = 100;
-            const float inertiaRatio = 0.99f;
+            const float inertiaRatio = 1;
             movable.Velocity = movable.Velocity.Truncate(maxSpeed) * inertiaRatio;
             const int fps = 60;
             transform.Position += (movable.Velocity - collisionVector) * gameTime.GetElapsedSeconds() * fps;

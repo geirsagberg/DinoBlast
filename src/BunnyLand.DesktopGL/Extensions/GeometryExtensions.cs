@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using Microsoft.Xna.Framework;
 using MonoGame.Extended;
 
@@ -21,6 +22,10 @@ namespace BunnyLand.DesktopGL.Extensions
 
         public static bool Contains(this RectangleF first, RectangleF second) =>
             first.Contains(second.TopLeft) && first.Contains(second.BottomRight);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Vector2 SubtractLength(this Vector2 vector, float length) =>
+            vector.NormalizedCopy() * (vector.Length() - length);
 
         public static void Wrap(this Transform2 transform, RectangleF levelSize)
         {
