@@ -25,6 +25,8 @@ namespace BunnyLand.DesktopGL.Systems
 
         public Option<Level> Level { get; set; }
 
+        private GraphicsDevice GraphicsDevice => spriteBatch.GraphicsDevice;
+
         public RenderSystem(SpriteBatch spriteBatch, SpriteFonts spriteFonts) : base(Aspect.All(typeof(Transform2))
             .One(typeof(AnimatedSprite), typeof(Sprite)))
         {
@@ -49,13 +51,12 @@ namespace BunnyLand.DesktopGL.Systems
 
         public override void Draw(GameTime gameTime)
         {
-            spriteBatch.GraphicsDevice.Clear(Color.Black);
+            GraphicsDevice.Clear(Color.Black);
             var elapsedSeconds = gameTime.GetElapsedSeconds();
 
             spriteBatch.Begin();
             foreach (var entity in ActiveEntities) {
-                var sprite = animatedSpriteMapper.GetOrNull(entity)
-                    ?? spriteMapper.Get(entity);
+                var sprite = animatedSpriteMapper.Get(entity) ?? spriteMapper.Get(entity);
                 if (sprite is AnimatedSprite animatedSprite) {
                     animatedSprite.Update(elapsedSeconds);
                 }
@@ -63,49 +64,62 @@ namespace BunnyLand.DesktopGL.Systems
                 var transform = transformMapper.Get(entity);
 
                 spriteBatch.Draw(sprite, transform);
+                // spriteBatch.DrawRectangle(sprite.GetBoundingRectangle(transform), Color.Beige);
 
-                Level.IfSome(level => {
-                    var bounds = sprite.GetBoundingRectangle(transform);
-
-                    if (level.Bounds.Contains(bounds.TopLeft) ^ level.Bounds.Contains(bounds.BottomRight)) {
-                        if (bounds.Top < 0) {
-                            spriteBatch.Draw(sprite, transform.Position + level.Bounds.HeightVector(),
-                                transform.Rotation, transform.Scale);
-                        } else if (bounds.Bottom >= level.Bounds.Bottom) {
-                            spriteBatch.Draw(sprite, transform.Position - level.Bounds.HeightVector(),
-                                transform.Rotation, transform.Scale);
-                        }
-
-                        if (bounds.Left < 0) {
-                            spriteBatch.Draw(sprite, transform.Position + level.Bounds.WidthVector(),
-                                transform.Rotation, transform.Scale);
-                        } else if (bounds.Right >= level.Bounds.Right) {
-                            spriteBatch.Draw(sprite, transform.Position - level.Bounds.WidthVector(),
-                                transform.Rotation, transform.Scale);
-                        }
-                    }
-                });
-
-
-                var collisionBody = collisionMapper.Get(entity);
-                if (collisionBody != null) {
-                    if (collisionBody.Bounds is CircleF circle) {
-                        spriteBatch.DrawCircle(circle, 32, Color.Aqua);
-                    }
-
-                    collisionBody.CollisionInfo.IfSome(info => {
-                        spriteBatch.DrawLine(transform.WorldPosition, transform.WorldPosition + info.PenetrationVector,
-                            Color.Aquamarine);
-                    });
-                }
-
-                movableMapper.MaybeGet(entity).IfSome(movable => spriteBatch.DrawLine(transform.WorldPosition,
-                    transform.WorldPosition + movable.GravityPull * 1000, Color.Azure));
+                DrawLevelWrapping(sprite, transform);
+                DrawCollisionBoundsAndInfo(entity, transform);
+                DrawGravityPull(entity, transform);
             }
 
             spriteBatch.DrawString(spriteFonts.Verdana, "AWSD: Move, Space: Boost", Vector2.One, Color.White);
 
             spriteBatch.End();
+        }
+
+        private void DrawLevelWrapping(Sprite sprite, Transform2 transform)
+        {
+            Level.IfSome(level => {
+                var bounds = sprite.GetBoundingRectangle(transform);
+
+                if (level.Bounds.Contains(bounds.TopLeft) ^ level.Bounds.Contains(bounds.BottomRight)) {
+                    if (bounds.Top < 0) {
+                        spriteBatch.Draw(sprite, transform.Position + level.Bounds.HeightVector(),
+                            transform.Rotation, transform.Scale);
+                    } else if (bounds.Bottom >= level.Bounds.Bottom) {
+                        spriteBatch.Draw(sprite, transform.Position - level.Bounds.HeightVector(),
+                            transform.Rotation, transform.Scale);
+                    }
+
+                    if (bounds.Left < 0) {
+                        spriteBatch.Draw(sprite, transform.Position + level.Bounds.WidthVector(),
+                            transform.Rotation, transform.Scale);
+                    } else if (bounds.Right >= level.Bounds.Right) {
+                        spriteBatch.Draw(sprite, transform.Position - level.Bounds.WidthVector(),
+                            transform.Rotation, transform.Scale);
+                    }
+                }
+            });
+        }
+
+        private void DrawCollisionBoundsAndInfo(int entity, Transform2 transform)
+        {
+            var collisionBody = collisionMapper.Get(entity);
+            if (collisionBody != null) {
+                if (collisionBody.Bounds is CircleF circle) {
+                    spriteBatch.DrawCircle(circle, 32, Color.Aqua);
+                }
+
+                collisionBody.CollisionInfo.IfSome(info => {
+                    spriteBatch.DrawLine(transform.WorldPosition, transform.WorldPosition + info.PenetrationVector,
+                        Color.Aquamarine);
+                });
+            }
+        }
+
+        private void DrawGravityPull(int entity, Transform2 transform)
+        {
+            movableMapper.MaybeGet(entity).IfSome(movable => spriteBatch.DrawLine(transform.WorldPosition,
+                transform.WorldPosition + movable.GravityPull * 1000, Color.Azure));
         }
     }
 }

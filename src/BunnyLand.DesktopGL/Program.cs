@@ -9,7 +9,8 @@ namespace BunnyLand.DesktopGL
         private static void Main()
         {
             var config = new ConfigurationBuilder()
-                .AddIniFile("config.ini", false, true)
+                .AddIniFile("defaultConfig.ini", false)
+                .AddIniFile("config.ini", true, true)
                 .Build();
             var gameSettings = config.GetSection("Game").Get<GameSettings>();
 
