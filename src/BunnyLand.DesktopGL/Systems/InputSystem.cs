@@ -16,9 +16,10 @@ namespace BunnyLand.DesktopGL.Systems
     public class InputSystem : EntityProcessingSystem
     {
         private readonly GamePadListener gamePadListener;
+        private readonly GameSettings gameSettings;
+        private readonly Variables variables;
         private readonly KeyboardListener keyboardListener;
         private readonly IKeyMap keyMap;
-        private readonly GameSettings gameSettings;
         private readonly IDictionary<PlayerIndex, Player> players = new Dictionary<PlayerIndex, Player>();
 
         private readonly Dictionary<PlayerIndex, System.Collections.Generic.HashSet<PlayerKey>> pressedKeys = Enum
@@ -29,13 +30,15 @@ namespace BunnyLand.DesktopGL.Systems
 
         private ComponentMapper<Player> playerMapper;
 
-        public InputSystem(KeyboardListener keyboardListener, GamePadListener gamePadListener, IKeyMap keyMap, GameSettings gameSettings) : base(
+        public InputSystem(KeyboardListener keyboardListener, GamePadListener gamePadListener, IKeyMap keyMap,
+            GameSettings gameSettings, Variables variables) : base(
             Aspect.All(typeof(Player), typeof(Movable)))
         {
             this.keyboardListener = keyboardListener;
             this.gamePadListener = gamePadListener;
             this.keyMap = keyMap;
             this.gameSettings = gameSettings;
+            this.variables = variables;
 
             keyboardListener.KeyPressed += OnKeyPressed;
             keyboardListener.KeyReleased += OnKeyRelease;
@@ -98,20 +101,23 @@ namespace BunnyLand.DesktopGL.Systems
             };
 
 
-            movable.BrakingForce = player.IsBraking && (movable.Acceleration == Vector2.Zero || gameSettings.BrakeWhileJetpacking)
-                ? player.BrakePower
-                : 0;
+            movable.BrakingForce = player.IsBraking
+                && (movable.Acceleration == Vector2.Zero || gameSettings.BrakeWhileJetpacking)
+                    ? variables.Global[GlobalVariable.BrakePower]
+                    : 0;
         }
 
-        private static Vector2 ResultAcceleration(ICollection<PlayerKey> keys,
+        private Vector2 ResultAcceleration(ICollection<PlayerKey> keys,
             Vector2 currentVelocity)
         {
-            const float jetpackMaxSpeed = 8;
-            const float jetpackBoostMaxSpeed = 12;
+            var jetpackMaxSpeed = variables.Global[GlobalVariable.JetpackMaxSpeed];
+            var jetpackBoostMaxSpeed = variables.Global[GlobalVariable.JetpackBoostMaxSpeed];
+
+            var jetpackAcceleration = variables.Global[GlobalVariable.JetpackAcceleration];
+            var jetpackBoostAcceleration = variables.Global[GlobalVariable.JetpackBoostAcceleration];
 
             var isBoosting = keys.Contains(PlayerKey.Jump);
-            var accelerationMultiplier = isBoosting ? 1f : 0.2f;
-
+            var accelerationMultiplier = isBoosting ? jetpackBoostAcceleration : jetpackAcceleration;
 
             var attemptedAcceleration = new Vector2(
                     (keys.Contains(PlayerKey.Left) ? -1 : 0) + (keys.Contains(PlayerKey.Right) ? 1 : 0),

@@ -36,41 +36,7 @@ namespace BunnyLand.DesktopGL.Systems
             var player = playerMapper.Get(entityId);
             var body = collisionMapper.Get(entityId);
 
-            var state = KeyboardExtended.GetState();
-
             var unit = gameTime.GetElapsedSeconds() * 100;
-
-
         }
     }
-
-    //public class StateMachine<TState, TEvents>
-    //{
-    //    private TState state;
-
-    //    public static StateMachine<TState, TEvents> Start(TState state)
-    //    {
-    //        var stateMachine = new StateMachine<TState, TEvents> {state = state};
-    //        return stateMachine;
-    //    }
-
-    //    public StateDefinition From(TState state)
-    //    {
-    //        return new StateDefinition(this, state);
-    //    }
-
-    //    public class StateDefinition
-    //    {
-    //        private StateMachine<TState, TEvents> stateMachine;
-    //        private TState state;
-
-    //        public StateDefinition(StateMachine<TState, TEvents> stateMachine, TState state)
-    //        {
-    //            this.stateMachine = stateMachine;
-    //            this.state = state;
-    //        }
-
-    //        public
-    //    }
-    //}
 }

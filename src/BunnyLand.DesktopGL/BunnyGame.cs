@@ -8,10 +8,14 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using MonoGame.Extended;
+using MonoGame.Extended.BitmapFonts;
 using MonoGame.Extended.Collisions;
 using MonoGame.Extended.Entities;
+using MonoGame.Extended.Gui;
 using MonoGame.Extended.Input.InputListeners;
 using MonoGame.Extended.Screens;
+using MonoGame.Extended.ViewportAdapters;
+using Screen = MonoGame.Extended.Screens.Screen;
 
 namespace BunnyLand.DesktopGL
 {
@@ -71,14 +75,18 @@ namespace BunnyLand.DesktopGL
             services.AddSingleton<GamePadListener>();
             services.AddSingleton(provider => new InputListenerComponent(provider.GetRequiredService<Game>(),
                 provider.GetRequiredService<KeyboardListener>(), provider.GetRequiredService<GamePadListener>()));
-            // services.AddSingleton<InputListenerComponent>();
+
+            services.AddSingleton<ViewportAdapter, DefaultViewportAdapter>();
+            services.AddSingleton<IGuiRenderer>(provider =>
+                new GuiSpriteBatchRenderer(provider.GetRequiredService<GraphicsDevice>(), () => Matrix.Identity));
+            services.AddSingleton<GuiSystem>();
+            services.AddSingleton<Variables>();
         }
 
         private static World BuildWorld(IServiceProvider provider)
         {
             return provider.CreateWorld()
                 .AddSystemService<InputSystem>()
-                .AddSystemService<BattleFieldSystem>()
                 .AddSystemService<RenderSystem>()
                 .AddSystemService<PlayerSystem>()
                 .AddSystemService<GravitySystem>()
@@ -102,6 +110,9 @@ namespace BunnyLand.DesktopGL
             Services.RegisterGameComponent<World>();
             Services.RegisterGameComponent<CollisionComponent>();
             Services.RegisterGameComponent<ScreenManager>();
+
+            var bitmapFont = Content.Load<BitmapFont>("Fonts/bryndan-medium");
+            Skin.CreateDefault(bitmapFont);
 
             LoadScreen<BattleScreen>();
         }

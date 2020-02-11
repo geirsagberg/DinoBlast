@@ -1,11 +1,12 @@
 using BunnyLand.DesktopGL.Components;
 using BunnyLand.DesktopGL.Extensions;
-using BunnyLand.DesktopGL.Resources;
 using LanguageExt;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using MonoGame.Extended;
 using MonoGame.Extended.Animations;
+using MonoGame.Extended.BitmapFonts;
 using MonoGame.Extended.Entities;
 using MonoGame.Extended.Entities.Systems;
 using MonoGame.Extended.Sprites;
@@ -14,8 +15,8 @@ namespace BunnyLand.DesktopGL.Systems
 {
     public class RenderSystem : EntityDrawSystem
     {
+        private readonly BitmapFont font;
         private readonly SpriteBatch spriteBatch;
-        private readonly SpriteFonts spriteFonts;
         private ComponentMapper<AnimatedSprite> animatedSpriteMapper;
         private ComponentMapper<CollisionBody> collisionMapper;
         private ComponentMapper<Level> levelMapper;
@@ -30,11 +31,12 @@ namespace BunnyLand.DesktopGL.Systems
 
         public Option<Player> Player { get; set; }
 
-        public RenderSystem(SpriteBatch spriteBatch, SpriteFonts spriteFonts) : base(Aspect.All(typeof(Transform2))
+        public RenderSystem(SpriteBatch spriteBatch, ContentManager contentManager) : base(Aspect
+            .All(typeof(Transform2))
             .One(typeof(AnimatedSprite), typeof(Sprite)))
         {
             this.spriteBatch = spriteBatch;
-            this.spriteFonts = spriteFonts;
+            font = contentManager.Load<BitmapFont>("Fonts/bryndan-medium");
         }
 
         public override void Initialize(IComponentMapperService mapperService)
@@ -76,9 +78,9 @@ namespace BunnyLand.DesktopGL.Systems
                 DrawGravityPull(entity, transform);
             }
 
-            spriteBatch.DrawString(spriteFonts.Verdana, "AWSD: Move, Space: Boost, Shift: Toggle Brake/Glide",
+            spriteBatch.DrawString(font, "AWSD: Move, Space: Boost, Shift: Toggle Brake/Glide",
                 Vector2.One, Color.White);
-            Player.IfSome(player => spriteBatch.DrawString(spriteFonts.Verdana,
+            Player.IfSome(player => spriteBatch.DrawString(font,
                 "Brakes: " + (player.IsBraking ? "On" : "Off"), new Vector2(1, 30), Color.White));
 
 
