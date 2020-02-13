@@ -354,3 +354,5 @@ MigrationBackup/
 
 # BunnyLand
 config.ini
+!**/Content/bin
+!**/Content/obj

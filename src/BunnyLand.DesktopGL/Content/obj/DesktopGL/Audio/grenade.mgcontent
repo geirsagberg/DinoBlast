@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PipelineBuildEvent xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <SourceFile>C:/Projects/BunnyLand/src/BunnyLand.DesktopGL/Content/Audio/grenade.wav</SourceFile>
+  <SourceTime>2010-04-23T14:01:54+02:00</SourceTime>
+  <DestFile>C:/Projects/BunnyLand/src/BunnyLand.DesktopGL/Content/bin/DesktopGL/Audio/grenade.xnb</DestFile>
+  <DestTime>2020-02-13T17:40:24.7321423+01:00</DestTime>
+  <Importer>WavImporter</Importer>
+  <ImporterTime>2018-12-08T17:35:54+01:00</ImporterTime>
+  <Processor>SoundEffectProcessor</Processor>
+  <ProcessorTime>2018-12-08T17:35:54+01:00</ProcessorTime>
+  <Parameters>
+    <Key>Quality</Key>
+    <Value>Best</Value>
+  </Parameters>
+  <Dependencies />
+  <BuildAsset />
+  <BuildOutput />
+</PipelineBuildEvent>

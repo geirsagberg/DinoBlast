@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="utf-8"?>
+<SourceFileCollection xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <Profile>Reach</Profile>
+  <Platform>DesktopGL</Platform>
+  <Config />
+  <SourceFiles>
+    <File>C:/Projects/bunnyland/src/BunnyLand.DesktopGL/Content/Audio/empty.wav</File>
+    <File>C:/Projects/bunnyland/src/BunnyLand.DesktopGL/Content/Audio/grenade.wav</File>
+    <File>C:/Projects/bunnyland/src/BunnyLand.DesktopGL/Content/Audio/Music/sleighride.mp3</File>
+    <File>C:/Projects/bunnyland/src/BunnyLand.DesktopGL/Content/Audio/Music/spongebob.mp3</File>
+    <File>C:/Projects/bunnyland/src/BunnyLand.DesktopGL/Content/Audio/Music/theatreland.mp3</File>
+    <File>C:/Projects/bunnyland/src/BunnyLand.DesktopGL/Content/Audio/ouch1.wav</File>
+    <File>C:/Projects/bunnyland/src/BunnyLand.DesktopGL/Content/Audio/reload.wav</File>
+    <File>C:/Projects/bunnyland/src/BunnyLand.DesktopGL/Content/Audio/shotgun.wav</File>
+    <File>C:/Projects/bunnyland/src/BunnyLand.DesktopGL/Content/Audio/smg.wav</File>
+    <File>C:/Projects/bunnyland/src/BunnyLand.DesktopGL/Content/Audio/splat1.wav</File>
+    <File>C:/Projects/bunnyland/src/BunnyLand.DesktopGL/Content/Fonts/menuRegular.spritefont</File>
+    <File>C:/Projects/bunnyland/src/BunnyLand.DesktopGL/Content/Fonts/menuSelected.spritefont</File>
+    <File>C:/Projects/bunnyland/src/BunnyLand.DesktopGL/Content/Fonts/Verdana.spritefont</File>
+    <File>C:/Projects/bunnyland/src/BunnyLand.DesktopGL/Content/Textures/black-hole.png</File>
+    <File>C:/Projects/bunnyland/src/BunnyLand.DesktopGL/Content/Textures/blood.png</File>
+    <File>C:/Projects/bunnyland/src/BunnyLand.DesktopGL/Content/Textures/blood2.png</File>
+    <File>C:/Projects/bunnyland/src/BunnyLand.DesktopGL/Content/Textures/Bodyparts/Body.png</File>
+    <File>C:/Projects/bunnyland/src/BunnyLand.DesktopGL/Content/Textures/Bodyparts/Ear1.png</File>
+    <File>C:/Projects/bunnyland/src/BunnyLand.DesktopGL/Content/Textures/Bodyparts/Ear2.png</File>
+    <File>C:/Projects/bunnyland/src/BunnyLand.DesktopGL/Content/Textures/Bodyparts/Eye1.png</File>
+    <File>C:/Projects/bunnyland/src/BunnyLand.DesktopGL/Content/Textures/Bodyparts/Eye2.png</File>
+    <File>C:/Projects/bunnyland/src/BunnyLand.DesktopGL/Content/Textures/Bodyparts/Foot.png</File>
+    <File>C:/Projects/bunnyland/src/BunnyLand.DesktopGL/Content/Textures/Bodyparts/Hand.png</File>
+    <File>C:/Projects/bunnyland/src/BunnyLand.DesktopGL/Content/Textures/Bodyparts/Head.png</File>
+    <File>C:/Projects/bunnyland/src/BunnyLand.DesktopGL/Content/Textures/bullet.png</File>
+    <File>C:/Projects/bunnyland/src/BunnyLand.DesktopGL/Content/Textures/bunny-sprites.png</File>
+    <File>C:/Projects/bunnyland/src/BunnyLand.DesktopGL/Content/Textures/exp2.png</File>
+    <File>C:/Projects/bunnyland/src/BunnyLand.DesktopGL/Content/Textures/Explotion.png</File>
+    <File>C:/Projects/bunnyland/src/BunnyLand.DesktopGL/Content/Textures/GameBackgrounds/16-10/background_1920x1200_space1.jpg</File>
+    <File>C:/Projects/bunnyland/src/BunnyLand.DesktopGL/Content/Textures/GameBackgrounds/16-10/background_1920x1200_space2.jpg</File>
+    <File>C:/Projects/bunnyland/src/BunnyLand.DesktopGL/Content/Textures/GameBackgrounds/16-10/background_1920x1200_space4.jpg</File>
+    <File>C:/Projects/bunnyland/src/BunnyLand.DesktopGL/Content/Textures/GameBackgrounds/16-9/background_1920x1080_space1.jpg</File>
+    <File>C:/Projects/bunnyland/src/BunnyLand.DesktopGL/Content/Textures/GameBackgrounds/16-9/background_1920x1080_space3.jpg</File>
+    <File>C:/Projects/bunnyland/src/BunnyLand.DesktopGL/Content/Textures/GameBackgrounds/16-9/background_1920x1080_space4.jpg</File>
+    <File>C:/Projects/bunnyland/src/BunnyLand.DesktopGL/Content/Textures/GameBackgrounds/16-9/background_1920x1080_starryskies.jpg</File>
+    <File>C:/Projects/bunnyland/src/BunnyLand.DesktopGL/Content/Textures/GameBackgrounds/4-3/background_1600x1200_space1.jpg</File>
+    <File>C:/Projects/bunnyland/src/BunnyLand.DesktopGL/Content/Textures/GameBackgrounds/4-3/background_1600x1200_space2.jpg</File>
+    <File>C:/Projects/bunnyland/src/BunnyLand.DesktopGL/Content/Textures/GameBackgrounds/4-3/background_1600x1200_space3.jpg</File>
+    <File>C:/Projects/bunnyland/src/BunnyLand.DesktopGL/Content/Textures/GameBackgrounds/4-3/background_1600x1200_space4.jpg</File>
+    <File>C:/Projects/bunnyland/src/BunnyLand.DesktopGL/Content/Textures/GameBackgrounds/5-4/background_1280x1024_space1_.jpg</File>
+    <File>C:/Projects/bunnyland/src/BunnyLand.DesktopGL/Content/Textures/Handweapon.png</File>
+    <File>C:/Projects/bunnyland/src/BunnyLand.DesktopGL/Content/Textures/Menu/cutebunnies.png</File>
+    <File>C:/Projects/bunnyland/src/BunnyLand.DesktopGL/Content/Textures/Planets/Earth.png</File>
+    <File>C:/Projects/bunnyland/src/BunnyLand.DesktopGL/Content/Textures/Planets/Planet_by_Randell.png</File>
+    <File>C:/Projects/bunnyland/src/BunnyLand.DesktopGL/Content/Textures/Planets/redplanet.png</File>
+    <File>C:/Projects/bunnyland/src/BunnyLand.DesktopGL/Content/Textures/Planets/Venus.png</File>
+    <File>C:/Projects/bunnyland/src/BunnyLand.DesktopGL/Content/Textures/PlayerAnimation.png</File>
+    <File>C:/Projects/bunnyland/src/BunnyLand.DesktopGL/Content/Textures/Terrain/boulder.jpg</File>
+    <File>C:/Projects/bunnyland/src/BunnyLand.DesktopGL/Content/Textures/Terrain/Cantaloupe_skin.jpg</File>
+    <File>C:/Projects/bunnyland/src/BunnyLand.DesktopGL/Content/Textures/Terrain/rock-texture.jpg</File>
+    <File>C:/Projects/bunnyland/src/BunnyLand.DesktopGL/Content/Textures/Terrain/rough.jpg</File>
+    <File>C:/Projects/bunnyland/src/BunnyLand.DesktopGL/Content/Textures/Terrain/worn_stone.jpg</File>
+    <File>C:/Projects/bunnyland/src/BunnyLand.DesktopGL/Content/Textures/testmap.png</File>
+    <File>C:/Projects/bunnyland/src/BunnyLand.DesktopGL/Content/Textures/totoro.png</File>
+  </SourceFiles>
+  <DestFiles>
+    <File xsi:nil="true" />
+    <File xsi:nil="true" />
+    <File xsi:nil="true" />
+    <File xsi:nil="true" />
+    <File xsi:nil="true" />
+    <File xsi:nil="true" />
+    <File xsi:nil="true" />
+    <File xsi:nil="true" />
+    <File xsi:nil="true" />
+    <File xsi:nil="true" />
+    <File xsi:nil="true" />
+    <File xsi:nil="true" />
+    <File xsi:nil="true" />
+    <File xsi:nil="true" />
+    <File xsi:nil="true" />
+    <File xsi:nil="true" />
+    <File xsi:nil="true" />
+    <File xsi:nil="true" />
+    <File xsi:nil="true" />
+    <File xsi:nil="true" />
+    <File xsi:nil="true" />
+    <File xsi:nil="true" />
+    <File xsi:nil="true" />
+    <File xsi:nil="true" />
+    <File xsi:nil="true" />
+    <File xsi:nil="true" />
+    <File xsi:nil="true" />
+    <File xsi:nil="true" />
+    <File xsi:nil="true" />
+    <File xsi:nil="true" />
+    <File xsi:nil="true" />
+    <File xsi:nil="true" />
+    <File xsi:nil="true" />
+    <File xsi:nil="true" />
+    <File xsi:nil="true" />
+    <File xsi:nil="true" />
+    <File xsi:nil="true" />
+    <File xsi:nil="true" />
+    <File xsi:nil="true" />
+    <File xsi:nil="true" />
+    <File xsi:nil="true" />
+    <File xsi:nil="true" />
+    <File xsi:nil="true" />
+    <File xsi:nil="true" />
+    <File xsi:nil="true" />
+    <File xsi:nil="true" />
+    <File xsi:nil="true" />
+    <File xsi:nil="true" />
+    <File xsi:nil="true" />
+    <File xsi:nil="true" />
+    <File xsi:nil="true" />
+    <File xsi:nil="true" />
+    <File xsi:nil="true" />
+    <File xsi:nil="true" />
+  </DestFiles>
+</SourceFileCollection>

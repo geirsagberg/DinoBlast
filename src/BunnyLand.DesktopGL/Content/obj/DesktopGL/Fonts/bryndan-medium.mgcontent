@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PipelineBuildEvent xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <SourceFile>C:/Projects/BunnyLand/src/BunnyLand.DesktopGL/Content/Fonts/bryndan-medium.fnt</SourceFile>
+  <SourceTime>2020-02-13T17:07:39.1053378+01:00</SourceTime>
+  <DestFile>C:/Projects/BunnyLand/src/BunnyLand.DesktopGL/Content/bin/DesktopGL/Fonts/bryndan-medium.xnb</DestFile>
+  <DestTime>2020-02-13T17:43:49.4129303+01:00</DestTime>
+  <Importer>BitmapFontImporter</Importer>
+  <ImporterTime>2019-08-18T10:59:20+02:00</ImporterTime>
+  <Processor>BitmapFontProcessor</Processor>
+  <ProcessorTime>2019-08-18T10:59:20+02:00</ProcessorTime>
+  <Dependencies />
+  <BuildAsset />
+  <BuildOutput />
+</PipelineBuildEvent>
