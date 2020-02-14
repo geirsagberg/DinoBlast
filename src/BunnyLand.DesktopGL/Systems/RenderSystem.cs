@@ -83,6 +83,8 @@ namespace BunnyLand.DesktopGL.Systems
             Player.IfSome(player => spriteBatch.DrawString(font,
                 "Brakes: " + (player.IsBraking ? "On" : "Off"), new Vector2(1, 30), Color.White));
 
+            spriteBatch.DrawString(font, $"FPS: {1f / gameTime.ElapsedGameTime.TotalSeconds}", new Vector2(1, 60),
+                Color.White);
 
             spriteBatch.End();
         }

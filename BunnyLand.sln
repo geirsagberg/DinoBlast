@@ -19,6 +19,11 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Nez", "Nez", "{6EE823EE-D0A
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nez.Standard", "Nez\Nez.Portable\Nez.Standard.csproj", "{0DB438B5-78D9-4BAC-981F-4FDCC6386E40}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "_Solution Items_", "_Solution Items_", "{E09B865F-03E1-48B3-8346-26362719FD82}"
+ProjectSection(SolutionItems) = preProject
+	nuget.config = nuget.config
+EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU

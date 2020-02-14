@@ -43,6 +43,7 @@ namespace BunnyLand.DesktopGL.Systems
             var transform = transformMapper.Get(entityId);
             var movable = movableMapper.Get(entityId);
             var body = bodyMapper.TryGet(entityId);
+            var elapsedSeconds = gameTime.GetElapsedSeconds() * variables.Global[GlobalVariable.GameSpeed] * 60f;
 
             // Penetration vector is how far into another entity this entity has collided
             var penetrationVector = body.Some(someBody => someBody.CollisionInfo
@@ -50,11 +51,12 @@ namespace BunnyLand.DesktopGL.Systems
                 .None(Vector2.Zero)
             ).None(Vector2.Zero);
 
-            var bounceBack = penetrationVector.NormalizedOrZero() * movable.Velocity.Length() * variables.Global[GlobalVariable.BounceFactor];
+            var bounceBack = penetrationVector.NormalizedOrZero() * movable.Velocity.Length()
+                * variables.Global[GlobalVariable.BounceFactor];
 
             // Calculate change in velocity
-            var deltaVelocity = movable.Acceleration
-                + movable.GravityPull
+            var deltaVelocity = elapsedSeconds * movable.Acceleration
+                + elapsedSeconds * movable.GravityPull
                 - penetrationVector
                 - bounceBack;
             movable.Velocity += deltaVelocity;
@@ -65,10 +67,11 @@ namespace BunnyLand.DesktopGL.Systems
 
 
             // Limit to max speed
-            movable.Velocity = movable.Velocity.Truncate(variables.Global[GlobalVariable.GlobalMaxSpeed]) * variables.Global[GlobalVariable.InertiaRatio];
+            movable.Velocity = movable.Velocity.Truncate(variables.Global[GlobalVariable.GlobalMaxSpeed])
+                * variables.Global[GlobalVariable.InertiaRatio];
 
             // Update position
-            transform.Position += (movable.Velocity - penetrationVector) * gameTime.GetElapsedSeconds() * variables.Global[GlobalVariable.Fps];
+            transform.Position += (movable.Velocity - penetrationVector) * elapsedSeconds;
 
             Level.IfSome(level => transform.Wrap(level.Bounds));
         }

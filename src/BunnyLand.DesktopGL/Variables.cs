@@ -16,7 +16,7 @@ namespace BunnyLand.DesktopGL
             {GlobalVariable.BrakePower, 0.1f},
             {GlobalVariable.InertiaRatio, 1f},
             {GlobalVariable.GlobalMaxSpeed, 100f},
-            {GlobalVariable.Fps, 60}
+            {GlobalVariable.GameSpeed, 1f}
         };
 
         public IReadOnlyDictionary<GlobalVariable, float> Global => global;
