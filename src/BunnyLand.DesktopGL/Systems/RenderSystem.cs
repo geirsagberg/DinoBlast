@@ -1,3 +1,6 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using BunnyLand.DesktopGL.Components;
 using BunnyLand.DesktopGL.Extensions;
 using LanguageExt;
@@ -16,6 +19,8 @@ namespace BunnyLand.DesktopGL.Systems
     public class RenderSystem : EntityDrawSystem
     {
         private readonly BitmapFont font;
+
+        private readonly LinkedList<int> fpsList = new LinkedList<int>();
         private readonly SpriteBatch spriteBatch;
         private ComponentMapper<AnimatedSprite> animatedSpriteMapper;
         private ComponentMapper<CollisionBody> collisionMapper;
@@ -83,10 +88,26 @@ namespace BunnyLand.DesktopGL.Systems
             Player.IfSome(player => spriteBatch.DrawString(font,
                 "Brakes: " + (player.IsBraking ? "On" : "Off"), new Vector2(1, 30), Color.White));
 
-            spriteBatch.DrawString(font, $"FPS: {1f / gameTime.ElapsedGameTime.TotalSeconds}", new Vector2(1, 60),
+            var smoothedFps = GetSmoothedFps(gameTime);
+
+            spriteBatch.DrawString(font, $"FPS: {smoothedFps}", new Vector2(1, 60),
                 Color.White);
 
             spriteBatch.End();
+        }
+
+        private int GetSmoothedFps(GameTime gameTime)
+        {
+            var fps = (int) (Math.Abs(gameTime.ElapsedGameTime.TotalSeconds) < 0.0000001
+                ? 0
+                : 1 / gameTime.ElapsedGameTime.TotalSeconds);
+
+            fpsList.AddLast(fps);
+            if (fpsList.Count > 3)
+                fpsList.RemoveFirst();
+
+            var smoothedFps = fpsList.Sum() / fpsList.Count;
+            return smoothedFps;
         }
 
         private void DrawLevelWrapping(Sprite sprite, Transform2 transform)
@@ -116,17 +137,16 @@ namespace BunnyLand.DesktopGL.Systems
 
         private void DrawCollisionBoundsAndInfo(int entity, Transform2 transform)
         {
-            var collisionBody = collisionMapper.Get(entity);
-            if (collisionBody != null) {
-                if (collisionBody.Bounds is CircleF circle) {
+            collisionMapper.TryGet(entity).IfSome(body => {
+                if (body.Bounds is CircleF circle) {
                     spriteBatch.DrawCircle(circle, 32, Color.Aqua);
                 }
 
-                collisionBody.CollisionInfo.IfSome(info => {
+                body.CollisionInfo.IfSome(info => {
                     spriteBatch.DrawLine(transform.WorldPosition, transform.WorldPosition + info.PenetrationVector,
                         Color.Aquamarine);
                 });
-            }
+            });
         }
 
         private void DrawGravityPull(int entity, Transform2 transform)

@@ -4,6 +4,7 @@ using LanguageExt;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Xna.Framework;
 using MonoGame.Extended.Animations.SpriteSheets;
+using MonoGame.Extended.Collections;
 using MonoGame.Extended.Collisions;
 using MonoGame.Extended.Entities;
 
@@ -49,6 +50,13 @@ namespace BunnyLand.DesktopGL.Extensions
         {
             other = collisionInfo.Other;
             penetrationVector = collisionInfo.PenetrationVector;
+        }
+
+        public static void AddRange<T>(this Bag<T> bag, params T[] items)
+        {
+            foreach (var item in items) {
+                bag.Add(item);
+            }
         }
     }
 }

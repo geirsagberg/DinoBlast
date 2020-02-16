@@ -35,9 +35,11 @@ namespace BunnyLand.DesktopGL
             Graphics = new GraphicsDeviceManager(this) {
                 PreferredBackBufferWidth = gameSettings.Width,
                 PreferredBackBufferHeight = gameSettings.Height,
-                PreferMultiSampling = true
+                PreferMultiSampling = true,
+                SynchronizeWithVerticalRetrace = gameSettings.VSyncEnabled,
             };
             Content.RootDirectory = "Content";
+            IsFixedTimeStep = gameSettings.FixedTimeStep;
 
             this.gameSettings = gameSettings;
         }
@@ -72,7 +74,6 @@ namespace BunnyLand.DesktopGL
                 return spriteFonts;
             });
             services.AddSingleton<ScreenManager>();
-            services.AddSingleton(new CollisionComponent(new RectangleF(Point2.Zero, new Size2(10000, 10000))));
             services.AddSingleton(new KeyboardListener(new KeyboardListenerSettings {RepeatPress = false}));
             services.AddSingleton(new GamePadListener(new GamePadListenerSettings(PlayerIndex.One)));
             services.AddSingleton(new GamePadListener(new GamePadListenerSettings(PlayerIndex.Two)));
@@ -115,7 +116,6 @@ namespace BunnyLand.DesktopGL
         {
             Services.RegisterGameComponent<InputListenerComponent>();
             Services.RegisterGameComponent<World>();
-            Services.RegisterGameComponent<CollisionComponent>();
             Services.RegisterGameComponent<ScreenManager>();
 
             var bitmapFont = Content.Load<BitmapFont>("Fonts/bryndan-medium");

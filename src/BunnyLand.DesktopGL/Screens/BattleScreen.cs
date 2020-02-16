@@ -3,7 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using BunnyLand.DesktopGL.Controls;
 using BunnyLand.DesktopGL.Enums;
+using BunnyLand.DesktopGL.Extensions;
 using Microsoft.Xna.Framework;
+using MonoGame.Extended.Collections;
 using MonoGame.Extended.Entities;
 using MonoGame.Extended.Gui;
 using MonoGame.Extended.Gui.Controls;
@@ -15,6 +17,7 @@ namespace BunnyLand.DesktopGL.Screens
 {
     public class BattleScreen : GameScreen
     {
+        private readonly Bag<Entity> entities = new Bag<Entity>();
         private readonly EntityFactory entityFactory;
         private readonly GameSettings gameSettings;
         private readonly GuiSystem guiSystem;
@@ -33,12 +36,31 @@ namespace BunnyLand.DesktopGL.Screens
 
         public override void LoadContent()
         {
-            entityFactory.CreatePlanet(new Vector2(400, 400), 8000, 0.5f);
-            entityFactory.CreatePlanet(new Vector2(800, 300), 12000, 0.8f);
-            entityFactory.CreatePlayer(new Vector2(100, 100));
-            entityFactory.CreateLevel(gameSettings.Width, gameSettings.Height);
+            SetupEntities();
+            SetupDebugGui();
+        }
 
+        private void SetupEntities()
+        {
+            entities.AddRange(entityFactory.CreatePlanet(new Vector2(400, 400), 8000, 0.5f),
+                entityFactory.CreatePlanet(new Vector2(800, 300), 12000, 0.8f),
+                entityFactory.CreatePlayer(new Vector2(100, 100)),
+                entityFactory.CreateLevel(gameSettings.Width, gameSettings.Height)
+            );
+        }
 
+        public void ResetWorld()
+        {
+            foreach (var entity in entities) {
+                world.DestroyEntity(entity);
+            }
+
+            entities.Clear();
+            SetupEntities();
+        }
+
+        private void SetupDebugGui()
+        {
             var stackPanel = new StackPanel {
                 AttachedProperties = {{DockPanel.DockProperty, Dock.Right}}
             };
@@ -48,6 +70,13 @@ namespace BunnyLand.DesktopGL.Screens
                     stackPanel.Items.Add(control);
                 }
             }
+
+            var resetButton = new Button {
+                Content = "Reset"
+            };
+            resetButton.Clicked += delegate { ResetWorld(); };
+
+            stackPanel.Items.Add(resetButton);
 
             guiSystem.ActiveScreen = new GuiScreen {
                 Content = new DockPanel {
