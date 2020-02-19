@@ -51,7 +51,7 @@ namespace BunnyLand.DesktopGL.Systems
             var transform = transformMapper.Get(entityId);
             var movable = movableMapper.Get(entityId);
             var body = bodyMapper.TryGet(entityId);
-            var elapsedTicks = gameTime.GetElapsedSeconds() * variables.Global[GlobalVariable.GameSpeed] * 60f;
+            var elapsedTicks = gameTime.GetElapsedTicks(variables);
 
             // var newVelocity = (movable.Acceleration + movable.GravityPull) * elapsedSeconds;
             // var newPosition = movable.Position + newVelocity * elapsedSeconds;
@@ -64,26 +64,27 @@ namespace BunnyLand.DesktopGL.Systems
             // Collision detection, get penetration vector
 
             // Move out of collision
-            //
+            // Set velocity:
+            // Subtract pen.vector from velocity
 
 
 
 
 
             // Penetration vector is how far into another entity this entity has collided
-            var penetrationVector = body.Some(someBody => someBody.CollisionInfo
-                .Some(info => info.PenetrationVector)
-                .None(Vector2.Zero)
-            ).None(Vector2.Zero);
-
-            var bounceBack = penetrationVector.NormalizedOrZero() * movable.Velocity.Length()
-                * variables.Global[GlobalVariable.BounceFactor];
+            // var penetrationVector = body.Some(someBody => someBody.CollisionInfo
+            //     .Some(info => info.PenetrationVector)
+            //     .None(Vector2.Zero)
+            // ).None(Vector2.Zero);
+            //
+            // var bounceBack = penetrationVector.NormalizedOrZero() * movable.Velocity.Length()
+            //     * variables.Global[GlobalVariable.BounceFactor];
 
             // Calculate change in velocity
             var deltaVelocity = elapsedTicks * movable.Acceleration
-                + elapsedTicks * movable.GravityPull
-                - penetrationVector
-                - bounceBack;
+                + elapsedTicks * movable.GravityPull;
+                // - penetrationVector
+                // - bounceBack;
             movable.Velocity += deltaVelocity;
 
             // Apply braking if any
@@ -96,11 +97,11 @@ namespace BunnyLand.DesktopGL.Systems
                 * variables.Global[GlobalVariable.InertiaRatio];
 
             // Update position
-            transform.Position += (movable.Velocity - penetrationVector) * elapsedTicks;
+            transform.Position += movable.Velocity * elapsedTicks;
 
             Level.IfSome(level => transform.Wrap(level.Bounds));
 
-            body.IfSome(b => b.CollisionInfo = Option<CollisionEventArgs>.None);
+            // body.IfSome(b => b.CollisionInfo = Option<CollisionEventArgs>.None);
         }
     }
 }
