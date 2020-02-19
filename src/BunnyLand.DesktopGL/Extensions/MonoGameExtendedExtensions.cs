@@ -1,8 +1,10 @@
 using System;
 using System.Linq;
+using BunnyLand.DesktopGL.Enums;
 using LanguageExt;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Xna.Framework;
+using MonoGame.Extended;
 using MonoGame.Extended.Animations.SpriteSheets;
 using MonoGame.Extended.Collections;
 using MonoGame.Extended.Collisions;
@@ -12,6 +14,9 @@ namespace BunnyLand.DesktopGL.Extensions
 {
     public static class MonoGameExtendedExtensions
     {
+        public static float GetElapsedTicks(this GameTime gameTime, Variables variables) =>
+            gameTime.GetElapsedSeconds() * variables.Global[GlobalVariable.GameSpeed] * 60f;
+
         public static Option<T> TryGet<T>(this ComponentMapper<T> mapper, int entityId) where T : class
         {
             return mapper.Has(entityId) ? Option<T>.Some(mapper.Get(entityId)) : Option<T>.None;

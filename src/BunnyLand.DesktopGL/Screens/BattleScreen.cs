@@ -5,6 +5,7 @@ using BunnyLand.DesktopGL.Controls;
 using BunnyLand.DesktopGL.Enums;
 using BunnyLand.DesktopGL.Extensions;
 using Microsoft.Xna.Framework;
+using MonoGame.Extended;
 using MonoGame.Extended.Collections;
 using MonoGame.Extended.Entities;
 using MonoGame.Extended.Gui;
@@ -42,10 +43,12 @@ namespace BunnyLand.DesktopGL.Screens
 
         private void SetupEntities()
         {
-            entities.AddRange(entityFactory.CreatePlanet(new Vector2(400, 400), 8000, 0.5f),
+            entities.AddRange(
+                entityFactory.CreateLevel(gameSettings.Width, gameSettings.Height),
+                entityFactory.CreatePlanet(new Vector2(400, 400), 8000, 0.5f),
                 entityFactory.CreatePlanet(new Vector2(800, 300), 12000, 0.8f),
                 entityFactory.CreatePlayer(new Vector2(100, 100)),
-                entityFactory.CreateLevel(gameSettings.Width, gameSettings.Height)
+                entityFactory.CreateBlock(new RectangleF(600, 600, 10, 200))
             );
         }
 
