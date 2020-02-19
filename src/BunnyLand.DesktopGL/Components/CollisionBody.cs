@@ -1,6 +1,9 @@
 using System;
+using System.Collections.Generic;
 using LanguageExt;
+using Microsoft.Xna.Framework;
 using MonoGame.Extended;
+using MonoGame.Extended.Collections;
 using MonoGame.Extended.Collisions;
 
 namespace BunnyLand.DesktopGL.Components
@@ -11,7 +14,10 @@ namespace BunnyLand.DesktopGL.Components
         public ColliderTypes CollidesWith { get; }
         private readonly IShapeF bounds;
         private readonly Transform2 transform;
-        public Option<CollisionEventArgs> CollisionInfo { get; set; }
+
+        public List<(CollisionBody body, Vector2 penetrationVector)> Collisions { get; set; } = new List<(CollisionBody body, Vector2 penetrationVector)>();
+
+        public Vector2 OldPosition { get; set; }
 
         public IShapeF Bounds {
             get {
@@ -19,6 +25,8 @@ namespace BunnyLand.DesktopGL.Components
                 return bounds;
             }
         }
+        
+        public RectangleF CollisionBounds { get; set; }
 
         public CollisionBody(IShapeF bounds, Transform2 transform, ColliderTypes isColliderType, ColliderTypes collidesWith)
         {
@@ -31,7 +39,6 @@ namespace BunnyLand.DesktopGL.Components
         public void OnCollision(CollisionEventArgs collisionInfo)
         {
             Console.WriteLine("Collision");
-            CollisionInfo = collisionInfo;
         }
     }
 

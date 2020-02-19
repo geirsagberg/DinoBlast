@@ -32,6 +32,11 @@ namespace BunnyLand.DesktopGL.Systems
             gravityPointMapper.TryGet(entityId).IfSome(points.Add);
         }
 
+        protected override void OnEntityRemoved(int entityId)
+        {
+            gravityPointMapper.TryGet(entityId).IfSome(point => points.Remove(point));
+        }
+
         public override void Process(GameTime gameTime, int entityId)
         {
             var movable = movableMapper.Get(entityId);

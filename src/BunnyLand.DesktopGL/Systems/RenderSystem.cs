@@ -27,6 +27,7 @@ namespace BunnyLand.DesktopGL.Systems
         private ComponentMapper<Level> levelMapper;
         private ComponentMapper<Movable> movableMapper;
         private ComponentMapper<Player> playerMapper;
+        private ComponentMapper<SolidColor> solidColorMapper;
         private ComponentMapper<Sprite> spriteMapper;
         private ComponentMapper<Transform2> transformMapper;
 
@@ -38,7 +39,7 @@ namespace BunnyLand.DesktopGL.Systems
 
         public RenderSystem(SpriteBatch spriteBatch, ContentManager contentManager) : base(Aspect
             .All(typeof(Transform2))
-            .One(typeof(AnimatedSprite), typeof(Sprite)))
+            .One(typeof(AnimatedSprite), typeof(Sprite), typeof(SolidColor)))
         {
             this.spriteBatch = spriteBatch;
             font = contentManager.Load<BitmapFont>("Fonts/bryndan-medium");
@@ -53,6 +54,7 @@ namespace BunnyLand.DesktopGL.Systems
             movableMapper = mapperService.GetMapper<Movable>();
             levelMapper = mapperService.GetMapper<Level>();
             playerMapper = mapperService.GetMapper<Player>();
+            solidColorMapper = mapperService.GetMapper<SolidColor>();
         }
 
         protected override void OnEntityAdded(int entityId)
@@ -68,19 +70,18 @@ namespace BunnyLand.DesktopGL.Systems
 
             spriteBatch.Begin();
             foreach (var entity in ActiveEntities) {
-                var sprite = animatedSpriteMapper.Get(entity) ?? spriteMapper.Get(entity);
-                if (sprite is AnimatedSprite animatedSprite) {
+                animatedSpriteMapper.TryGet(entity).IfSome(animatedSprite => {
                     animatedSprite.Update(elapsedSeconds);
-                }
-
-                var transform = transformMapper.Get(entity);
-
-                spriteBatch.Draw(sprite, transform);
-                // spriteBatch.DrawRectangle(sprite.GetBoundingRectangle(transform), Color.Beige);
-
-                DrawLevelWrapping(sprite, transform);
-                DrawCollisionBoundsAndInfo(entity, transform);
-                DrawGravityPull(entity, transform);
+                    RenderSprite(entity, animatedSprite);
+                });
+                spriteMapper.TryGet(entity).IfSome(sprite => RenderSprite(entity, sprite));
+                solidColorMapper.TryGet(entity).IfSome(solidColor => {
+                    spriteBatch.DrawRectangle(solidColor.Bounds, solidColor.Color);
+                });
+                transformMapper.TryGet(entity).IfSome(transform => {
+                    DrawCollisionBoundsAndInfo(entity, transform);
+                    DrawGravityPull(entity, transform);
+                });
             }
 
             spriteBatch.DrawString(font, "AWSD: Move, Space: Boost, Shift: Toggle Brake/Glide",
@@ -94,6 +95,16 @@ namespace BunnyLand.DesktopGL.Systems
                 Color.White);
 
             spriteBatch.End();
+        }
+
+        private void RenderSprite(int entity, Sprite sprite)
+        {
+            var transform = transformMapper.Get(entity);
+
+            spriteBatch.Draw(sprite, transform);
+            // spriteBatch.DrawRectangle(sprite.GetBoundingRectangle(transform), Color.Beige);
+
+            DrawLevelWrapping(sprite, transform);
         }
 
         private int GetSmoothedFps(GameTime gameTime)
@@ -138,14 +149,26 @@ namespace BunnyLand.DesktopGL.Systems
         private void DrawCollisionBoundsAndInfo(int entity, Transform2 transform)
         {
             collisionMapper.TryGet(entity).IfSome(body => {
+                var color = body.Collisions.Any() ? Color.Red : Color.Aqua;
                 if (body.Bounds is CircleF circle) {
-                    spriteBatch.DrawCircle(circle, 32, Color.Aqua);
+                    spriteBatch.DrawCircle(circle, 32, color);
+                } else if (body.Bounds is RectangleF rectangle) {
+                    spriteBatch.DrawRectangle(rectangle, color);
                 }
 
-                body.CollisionInfo.IfSome(info => {
-                    spriteBatch.DrawLine(transform.WorldPosition, transform.WorldPosition + info.PenetrationVector,
+                if (body.CollisionBounds != default) {
+                    spriteBatch.DrawRectangle(body.CollisionBounds, Color.Chocolate);
+                }
+
+                foreach (var collision in body.Collisions) {
+                    spriteBatch.DrawLine(transform.WorldPosition, transform.WorldPosition + collision.penetrationVector,
                         Color.Aquamarine);
-                });
+                }
+
+                // body.CollisionInfo.IfSome(info => {
+                //     spriteBatch.DrawLine(transform.WorldPosition, transform.WorldPosition + info.PenetrationVector,
+                //         Color.Aquamarine);
+                // });
             });
         }
 

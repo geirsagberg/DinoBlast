@@ -39,7 +39,8 @@ namespace BunnyLand.DesktopGL
             entity.Attach(transform);
             var animatedSprite = GetPlayerSprite();
             entity.Attach(animatedSprite);
-            entity.Attach(new CollisionBody(new CircleF(Point2.Zero, 15), transform, ColliderTypes.Player, ColliderTypes.Player | ColliderTypes.Projectile | ColliderTypes.Static));
+            entity.Attach(new CollisionBody(new CircleF(Point2.Zero, 15), transform, ColliderTypes.Player,
+                ColliderTypes.Player | ColliderTypes.Projectile | ColliderTypes.Static));
             entity.Attach(new Player());
             entity.Attach(new Movable(transform));
             return entity;
@@ -53,7 +54,8 @@ namespace BunnyLand.DesktopGL
             var sprite = new Sprite(textures.redplanet);
             entity.Attach(sprite);
             var boundingRectangle = sprite.GetBoundingRectangle(position, 0, new Vector2(scale));
-            entity.Attach(new CollisionBody(new CircleF(Point2.Zero, boundingRectangle.Width / 2f), transform, ColliderTypes.Static, ColliderTypes.Player | ColliderTypes.Projectile));
+            entity.Attach(new CollisionBody(new CircleF(Point2.Zero, boundingRectangle.Width / 2f), transform,
+                ColliderTypes.Static, ColliderTypes.Player | ColliderTypes.Projectile));
             entity.Attach(new GravityPoint(transform, mass));
             return entity;
         }
@@ -62,6 +64,17 @@ namespace BunnyLand.DesktopGL
         {
             var entity = world.CreateEntity();
             entity.Attach(new Level(new RectangleF(0, 0, width, height)));
+            return entity;
+        }
+
+        public Entity CreateBlock(RectangleF rectangleF)
+        {
+            var entity = world.CreateEntity();
+            var transform = new Transform2(rectangleF.Position);
+            entity.Attach(transform);
+            entity.Attach(new CollisionBody(rectangleF, transform, ColliderTypes.Static,
+                ColliderTypes.Player | ColliderTypes.Projectile));
+            entity.Attach(new SolidColor(Color.LightCoral, rectangleF));
             return entity;
         }
     }
