@@ -15,11 +15,11 @@ namespace BunnyLand.DesktopGL.Systems
 {
     public class InputSystem : EntityProcessingSystem
     {
-        private readonly GamePadListener gamePadListener;
         private readonly GameSettings gameSettings;
         private readonly Variables variables;
         private readonly KeyboardListener keyboardListener;
         private readonly IKeyMap keyMap;
+        private readonly IButtonMap buttonMap;
         private readonly IDictionary<PlayerIndex, Player> players = new Dictionary<PlayerIndex, Player>();
 
         private readonly Dictionary<PlayerIndex, System.Collections.Generic.HashSet<PlayerKey>> pressedKeys = Enum
@@ -29,19 +29,45 @@ namespace BunnyLand.DesktopGL.Systems
         private ComponentMapper<Movable> movableMapper;
 
         private ComponentMapper<Player> playerMapper;
+        private readonly IDictionary<PlayerIndex, GamePadListener> gamePadListeners;
 
-        public InputSystem(KeyboardListener keyboardListener, GamePadListener gamePadListener, IKeyMap keyMap,
+        public InputSystem(KeyboardListener keyboardListener, IEnumerable<GamePadListener> gamePadListeners, IKeyMap keyMap, IButtonMap buttonMap,
             GameSettings gameSettings, Variables variables) : base(
             Aspect.All(typeof(Player), typeof(Movable)))
         {
             this.keyboardListener = keyboardListener;
-            this.gamePadListener = gamePadListener;
+            this.gamePadListeners = gamePadListeners.ToDictionary(l => l.PlayerIndex);
             this.keyMap = keyMap;
+            this.buttonMap = buttonMap;
             this.gameSettings = gameSettings;
             this.variables = variables;
 
             keyboardListener.KeyPressed += OnKeyPressed;
-            keyboardListener.KeyReleased += OnKeyRelease;
+            keyboardListener.KeyReleased += OnKeyReleased;
+            foreach (var gamePadListener in this.gamePadListeners.Values) {
+                gamePadListener.ButtonDown += OnButtonDown;
+                gamePadListener.ButtonUp += OnButtonUp;
+                gamePadListener.ThumbStickMoved += OnThumbStickMoved;
+                gamePadListener.TriggerMoved += OnTriggerMoved;
+            }
+        }
+
+        private void OnTriggerMoved(object? sender, GamePadEventArgs e)
+        {
+        }
+
+        private void OnThumbStickMoved(object? sender, GamePadEventArgs e)
+        {
+            
+        }
+
+        private void OnButtonUp(object? sender, GamePadEventArgs e)
+        {
+        }
+
+        private void OnButtonDown(object? sender, GamePadEventArgs e)
+        {
+            buttonMap.GetKey(e.Button).IfSome(key => HandlePlayerKeyPressed(e.PlayerIndex, key));
         }
 
         protected override void OnEntityAdded(int entityId)
@@ -52,14 +78,12 @@ namespace BunnyLand.DesktopGL.Systems
         private void OnKeyPressed(object? sender, KeyboardEventArgs e)
         {
             keyMap.GetKey(e.Key)
-                .IfSome(t => {
-                    pressedKeys[t.index].Add(t.key);
-                    HandlePlayerKeyPressed(t.index, t.key);
-                });
+                .IfSome(t => HandlePlayerKeyPressed(t.index, t.key));
         }
 
         private void HandlePlayerKeyPressed(PlayerIndex index, PlayerKey key)
         {
+            pressedKeys[index].Add(key);
             switch (key) {
                 case PlayerKey.ToggleBrake:
                     players.TryGetValue(index)
@@ -68,7 +92,7 @@ namespace BunnyLand.DesktopGL.Systems
             }
         }
 
-        private void OnKeyRelease(object? sender, KeyboardEventArgs e)
+        private void OnKeyReleased(object? sender, KeyboardEventArgs e)
         {
             keyMap.GetKey(e.Key)
                 .IfSome(t => pressedKeys[t.index].Remove(t.key));
@@ -78,6 +102,14 @@ namespace BunnyLand.DesktopGL.Systems
         {
             base.Dispose();
             keyboardListener.KeyPressed -= OnKeyPressed;
+            keyboardListener.KeyReleased -= OnKeyReleased;
+            foreach (var gamePadListener in gamePadListeners.Values)
+            {
+                gamePadListener.ButtonDown -= OnButtonDown;
+                gamePadListener.ButtonUp -= OnButtonUp;
+                gamePadListener.ThumbStickMoved -= OnThumbStickMoved;
+                gamePadListener.TriggerMoved -= OnTriggerMoved;
+            }
         }
 
         public override void Initialize(IComponentMapperService mapperService)
@@ -93,13 +125,11 @@ namespace BunnyLand.DesktopGL.Systems
 
             var keys = pressedKeys[player.PlayerIndex];
 
-
             movable.Acceleration = player.StandingOn switch {
                 StandingOn.Nothing => ResultAcceleration(keys, movable.Velocity),
                 StandingOn.Planet => Vector2.Zero,
                 _ => Vector2.Zero
             };
-
 
             movable.BrakingForce = player.IsBraking
                 && (movable.Acceleration == Vector2.Zero || gameSettings.BrakeWhileJetpacking)

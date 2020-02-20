@@ -1,7 +1,7 @@
 ﻿using BunnyLand.DesktopGL.Components;
+using BunnyLand.DesktopGL.Extensions;
 using LanguageExt;
 using Microsoft.Xna.Framework;
-using MonoGame.Extended;
 using MonoGame.Extended.Collisions;
 using MonoGame.Extended.Entities;
 using MonoGame.Extended.Entities.Systems;
@@ -14,36 +14,47 @@ namespace BunnyLand.DesktopGL.Systems
     /// </summary>
     public class CollisionSystem : EntityProcessingSystem
     {
-        private readonly CollisionComponent collisionComponent;
         private ComponentMapper<CollisionBody> bodyMapper;
-        private ComponentMapper<Transform2> transformMapper;
+        private ComponentMapper<Level> levelMapper;
 
-        public CollisionSystem(CollisionComponent collisionComponent) : base(Aspect.All(typeof(CollisionBody),
-            typeof(Transform2)))
+        public Option<Level> Level { get; set; }
+        public Option<CollisionComponent> CollisionComponent { get; set; }
+
+        public CollisionSystem() : base(Aspect.All(typeof(CollisionBody)))
         {
-            this.collisionComponent = collisionComponent;
         }
 
         public override void Initialize(IComponentMapperService mapperService)
         {
             bodyMapper = mapperService.GetMapper<CollisionBody>();
-            transformMapper = mapperService.GetMapper<Transform2>();
+            levelMapper = mapperService.GetMapper<Level>();
         }
 
         protected override void OnEntityAdded(int entityId)
         {
-            var body = bodyMapper.Get(entityId);
-            if (body != null) {
-                collisionComponent.Insert(body);
-            }
+            levelMapper.TryGet(entityId).IfSome(level => {
+                Level = level;
+                var component = new CollisionComponent(level.Bounds);
+                foreach (var entity in ActiveEntities) {
+                    component.Insert(bodyMapper.Get(entity));
+                }
+
+                CollisionComponent = component;
+            });
+            CollisionComponent.IfSome(collisionComponent =>
+                bodyMapper.TryGet(entityId).IfSome(collisionComponent.Insert));
         }
 
         protected override void OnEntityRemoved(int entityId)
         {
-            var body = bodyMapper.Get(entityId);
-            if (body != null) {
-                collisionComponent.Remove(body);
-            }
+            CollisionComponent.IfSome(collisionComponent =>
+                bodyMapper.TryGet(entityId).IfSome(collisionComponent.Remove));
+        }
+
+        public override void Update(GameTime gameTime)
+        {
+            base.Update(gameTime);
+            CollisionComponent.IfSome(component => component.Update(gameTime));
         }
 
         public override void Process(GameTime gameTime, int entityId)

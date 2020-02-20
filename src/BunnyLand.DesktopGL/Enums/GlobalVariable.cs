@@ -11,6 +11,6 @@
         GlobalMaxSpeed,
         InertiaRatio,
         BrakePower,
-        Fps
+        GameSpeed
     }
 }

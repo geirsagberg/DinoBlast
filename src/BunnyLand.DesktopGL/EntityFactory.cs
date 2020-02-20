@@ -39,7 +39,7 @@ namespace BunnyLand.DesktopGL
             entity.Attach(transform);
             var animatedSprite = GetPlayerSprite();
             entity.Attach(animatedSprite);
-            entity.Attach(new CollisionBody(new CircleF(Point2.Zero, 15), transform));
+            entity.Attach(new CollisionBody(new CircleF(Point2.Zero, 15), transform, ColliderTypes.Player, ColliderTypes.Player | ColliderTypes.Projectile | ColliderTypes.Static));
             entity.Attach(new Player());
             entity.Attach(new Movable(transform));
             return entity;
@@ -53,7 +53,7 @@ namespace BunnyLand.DesktopGL
             var sprite = new Sprite(textures.redplanet);
             entity.Attach(sprite);
             var boundingRectangle = sprite.GetBoundingRectangle(position, 0, new Vector2(scale));
-            entity.Attach(new CollisionBody(new CircleF(Point2.Zero, boundingRectangle.Width / 2f), transform));
+            entity.Attach(new CollisionBody(new CircleF(Point2.Zero, boundingRectangle.Width / 2f), transform, ColliderTypes.Static, ColliderTypes.Player | ColliderTypes.Projectile));
             entity.Attach(new GravityPoint(transform, mass));
             return entity;
         }

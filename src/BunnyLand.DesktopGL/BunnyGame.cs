@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using BunnyLand.DesktopGL.Extensions;
 using BunnyLand.DesktopGL.Resources;
 using BunnyLand.DesktopGL.Screens;
@@ -34,9 +35,12 @@ namespace BunnyLand.DesktopGL
             Graphics = new GraphicsDeviceManager(this) {
                 PreferredBackBufferWidth = gameSettings.Width,
                 PreferredBackBufferHeight = gameSettings.Height,
-                PreferMultiSampling = true
+                PreferMultiSampling = true,
+                SynchronizeWithVerticalRetrace = gameSettings.VSyncEnabled,
             };
             Content.RootDirectory = "Content";
+            IsFixedTimeStep = gameSettings.FixedTimeStep;
+
             this.gameSettings = gameSettings;
         }
 
@@ -70,11 +74,15 @@ namespace BunnyLand.DesktopGL
                 return spriteFonts;
             });
             services.AddSingleton<ScreenManager>();
-            services.AddSingleton(new CollisionComponent(new RectangleF(Point2.Zero, new Size2(10000, 10000))));
             services.AddSingleton(new KeyboardListener(new KeyboardListenerSettings {RepeatPress = false}));
-            services.AddSingleton<GamePadListener>();
-            services.AddSingleton(provider => new InputListenerComponent(provider.GetRequiredService<Game>(),
-                provider.GetRequiredService<KeyboardListener>(), provider.GetRequiredService<GamePadListener>()));
+            services.AddSingleton(new GamePadListener(new GamePadListenerSettings(PlayerIndex.One)));
+            services.AddSingleton(new GamePadListener(new GamePadListenerSettings(PlayerIndex.Two)));
+            services.AddSingleton(new GamePadListener(new GamePadListenerSettings(PlayerIndex.Three)));
+            services.AddSingleton(new GamePadListener(new GamePadListenerSettings(PlayerIndex.Four)));
+            services.AddSingleton(provider =>
+                provider.GetServices<GamePadListener>().Cast<InputListener>()
+                    .Concat(provider.GetServices<KeyboardListener>()).ToArray());
+            services.AddSingleton<InputListenerComponent>();
 
             services.AddSingleton<ViewportAdapter, DefaultViewportAdapter>();
             services.AddSingleton<IGuiRenderer>(provider =>
@@ -87,11 +95,11 @@ namespace BunnyLand.DesktopGL
         {
             return provider.CreateWorld()
                 .AddSystemService<InputSystem>()
-                .AddSystemService<RenderSystem>()
                 .AddSystemService<PlayerSystem>()
                 .AddSystemService<GravitySystem>()
                 .AddSystemService<PhysicsSystem>()
                 .AddSystemService<CollisionSystem>()
+                .AddSystemService<RenderSystem>()
                 .Build();
         }
 
@@ -108,7 +116,6 @@ namespace BunnyLand.DesktopGL
         {
             Services.RegisterGameComponent<InputListenerComponent>();
             Services.RegisterGameComponent<World>();
-            Services.RegisterGameComponent<CollisionComponent>();
             Services.RegisterGameComponent<ScreenManager>();
 
             var bitmapFont = Content.Load<BitmapFont>("Fonts/bryndan-medium");

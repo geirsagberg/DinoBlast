@@ -7,5 +7,7 @@ namespace BunnyLand.DesktopGL
         public int Height { get; set; } = 720;
         public bool FullScreen { get; set; }
         public bool BrakeWhileJetpacking { get; set; }
+        public bool VSyncEnabled { get; set; } = true;
+        public bool FixedTimeStep { get; set; } = true;
     }
 }

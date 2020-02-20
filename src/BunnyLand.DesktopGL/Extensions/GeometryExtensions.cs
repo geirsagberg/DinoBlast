@@ -25,7 +25,7 @@ namespace BunnyLand.DesktopGL.Extensions
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector2 SubtractLength(this Vector2 vector, float length) =>
-            vector.NormalizedCopy() * (vector.Length() - length);
+            vector.NormalizedOrZero() * (vector.Length() - length);
 
         public static void Wrap(this Transform2 transform, RectangleF levelSize)
         {
