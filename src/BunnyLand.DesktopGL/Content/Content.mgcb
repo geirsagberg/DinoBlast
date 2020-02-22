@@ -153,13 +153,6 @@
 /processorParam:TextureFormat=Compressed
 /build:Fonts/menuSelected.spritefont
 
-#begin Fonts/Verdana.spritefont
-/importer:FontDescriptionImporter
-/processor:FontDescriptionProcessor
-/processorParam:PremultiplyAlpha=True
-/processorParam:TextureFormat=Compressed
-/build:Fonts/Verdana.spritefont
-
 #begin Textures/black-hole.png
 /importer:TextureImporter
 /processor:TextureProcessor
