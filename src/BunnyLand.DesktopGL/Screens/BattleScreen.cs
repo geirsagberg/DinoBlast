@@ -13,6 +13,7 @@ using MonoGame.Extended.Gui.Controls;
 using MonoGame.Extended.Screens;
 using PubSub;
 using GuiScreen = MonoGame.Extended.Gui.Screen;
+using AWorld = tainicom.Aether.Physics2D.Dynamics.World;
 
 namespace BunnyLand.DesktopGL.Screens
 {
@@ -26,13 +27,14 @@ namespace BunnyLand.DesktopGL.Screens
         private readonly World world;
 
         public BattleScreen(Game game, EntityFactory entityFactory, World world, GameSettings gameSettings,
-            GuiSystem guiSystem, Variables variables) : base(game)
+            GuiSystem guiSystem, Variables variables, AWorld physicsWorld) : base(game)
         {
             this.entityFactory = entityFactory;
             this.world = world;
             this.gameSettings = gameSettings;
             this.guiSystem = guiSystem;
             this.variables = variables;
+            physicsWorld.Gravity = Vector2.Zero;
         }
 
         public override void LoadContent()

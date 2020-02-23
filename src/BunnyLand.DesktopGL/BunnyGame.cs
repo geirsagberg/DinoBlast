@@ -89,6 +89,7 @@ namespace BunnyLand.DesktopGL
                 new GuiSpriteBatchRenderer(provider.GetRequiredService<GraphicsDevice>(), () => Matrix.Identity));
             services.AddSingleton<GuiSystem>();
             services.AddSingleton<Variables>();
+            services.AddSingleton<tainicom.Aether.Physics2D.Dynamics.World>();
         }
 
         private static World BuildWorld(IServiceProvider provider)

@@ -1,3 +1,6 @@
 [submodule "Nez"]
 	path = Nez
 	url = https://github.com/geirsagberg/Nez
+[submodule "Aether.Physics2D"]
+	path = Aether.Physics2D
+	url = https://github.com/geirsagberg/Aether.Physics2D

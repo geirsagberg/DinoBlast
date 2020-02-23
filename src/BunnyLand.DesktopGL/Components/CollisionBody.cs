@@ -8,6 +8,7 @@ using MonoGame.Extended.Collisions;
 
 namespace BunnyLand.DesktopGL.Components
 {
+
     public class CollisionBody : ICollisionActor
     {
         public ColliderTypes ColliderType { get; }

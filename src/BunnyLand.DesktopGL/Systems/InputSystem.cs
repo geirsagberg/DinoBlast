@@ -10,6 +10,7 @@ using MonoGame.Extended;
 using MonoGame.Extended.Entities;
 using MonoGame.Extended.Entities.Systems;
 using MonoGame.Extended.Input.InputListeners;
+using tainicom.Aether.Physics2D.Dynamics;
 
 namespace BunnyLand.DesktopGL.Systems
 {
@@ -30,10 +31,11 @@ namespace BunnyLand.DesktopGL.Systems
 
         private ComponentMapper<Player> playerMapper;
         private readonly IDictionary<PlayerIndex, GamePadListener> gamePadListeners;
+        private ComponentMapper<Body> bodyMapper;
 
         public InputSystem(KeyboardListener keyboardListener, IEnumerable<GamePadListener> gamePadListeners, IKeyMap keyMap, IButtonMap buttonMap,
             GameSettings gameSettings, Variables variables) : base(
-            Aspect.All(typeof(Player), typeof(Movable)))
+            Aspect.All(typeof(Player)))
         {
             this.keyboardListener = keyboardListener;
             this.gamePadListeners = gamePadListeners.ToDictionary(l => l.PlayerIndex);
@@ -58,7 +60,7 @@ namespace BunnyLand.DesktopGL.Systems
 
         private void OnThumbStickMoved(object? sender, GamePadEventArgs e)
         {
-            
+
         }
 
         private void OnButtonUp(object? sender, GamePadEventArgs e)
@@ -116,25 +118,53 @@ namespace BunnyLand.DesktopGL.Systems
         {
             playerMapper = mapperService.GetMapper<Player>();
             movableMapper = mapperService.GetMapper<Movable>();
+            bodyMapper = mapperService.GetMapper<Body>();
         }
 
         public override void Process(GameTime gameTime, int entityId)
         {
             var player = playerMapper.Get(entityId);
-            var movable = movableMapper.Get(entityId);
 
             var keys = pressedKeys[player.PlayerIndex];
 
-            movable.Acceleration = player.StandingOn switch {
-                StandingOn.Nothing => ResultAcceleration(keys, movable.Velocity),
-                StandingOn.Planet => Vector2.Zero,
-                _ => Vector2.Zero
-            };
+            movableMapper.TryGet(entityId).IfSome(movable => {
 
-            movable.BrakingForce = player.IsBraking
-                && (movable.Acceleration == Vector2.Zero || gameSettings.BrakeWhileJetpacking)
-                    ? variables.Global[GlobalVariable.BrakePower]
-                    : 0;
+                movable.Acceleration = player.StandingOn switch {
+                    StandingOn.Nothing => ResultAcceleration(keys, movable.Velocity),
+                    StandingOn.Planet => Vector2.Zero,
+                    _ => Vector2.Zero
+                };
+
+                movable.BrakingForce = player.IsBraking
+                    && (movable.Acceleration == Vector2.Zero || gameSettings.BrakeWhileJetpacking)
+                        ? variables.Global[GlobalVariable.BrakePower]
+                        : 0;
+
+            });
+
+
+
+            bodyMapper.TryGet(entityId).IfSome(body => {
+
+
+
+                var accelerationMultiplier = 100000f;
+
+                var attemptedAcceleration = new Vector2(
+                        (keys.Contains(PlayerKey.Left) ? -1 : 0) + (keys.Contains(PlayerKey.Right) ? 1 : 0),
+                        (keys.Contains(PlayerKey.Up) ? -1 : 0) + (keys.Contains(PlayerKey.Down) ? 1 : 0))
+                    .NormalizedOrZero() * accelerationMultiplier;
+
+
+                body.ApplyForce(attemptedAcceleration);
+                // var resultAcceleration = ResultAcceleration(keys, body.LinearVelocity);
+                // if (resultAcceleration != Vector2.Zero) {
+                    // body.ApplyForce(resultAcceleration * 100000);
+                    // body.ApplyLinearImpulse(new Vector2(10, 0));
+                // }
+            });
+
+
         }
 
         private Vector2 ResultAcceleration(ICollection<PlayerKey> keys,

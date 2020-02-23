@@ -1,9 +1,8 @@
 using System;
-using System.Diagnostics;
-using System.Numerics;
 using System.Runtime.CompilerServices;
+using Microsoft.Xna.Framework;
 using MonoGame.Extended;
-using Vector2 = Microsoft.Xna.Framework.Vector2;
+using tainicom.Aether.Physics2D.Dynamics;
 
 namespace BunnyLand.DesktopGL.Extensions
 {
@@ -48,7 +47,8 @@ namespace BunnyLand.DesktopGL.Extensions
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static CircleF Inflate(this CircleF circle, float addRadius) => new CircleF(circle.Center, circle.Radius + addRadius);
+        public static CircleF Inflate(this CircleF circle, float addRadius) =>
+            new CircleF(circle.Center, circle.Radius + addRadius);
 
         public static void Wrap(this Transform2 transform, RectangleF levelSize)
         {
@@ -68,9 +68,23 @@ namespace BunnyLand.DesktopGL.Extensions
         }
 
 
+        public static void Wrap(this Body body, RectangleF levelSize)
+        {
+            if (body.Position.X < 0) {
+                body.Position += levelSize.WidthVector();
+            } else if (body.Position.X >= levelSize.Width) {
+                body.Position -= levelSize.WidthVector();
+            }
+
+            if (body.Position.Y < 0) {
+                body.Position += levelSize.HeightVector();
+            } else if (body.Position.Y >= levelSize.Height) {
+                body.Position -= levelSize.HeightVector();
+            }
+        }
 
         /// <summary>
-        /// Calculate a's penetration into b
+        ///     Calculate a's penetration into b
         /// </summary>
         /// <param name="a">The penetrating shape.</param>
         /// <param name="b">The shape being penetrated.</param>
@@ -94,15 +108,12 @@ namespace BunnyLand.DesktopGL.Extensions
             if (intersectingRectangle.IsEmpty) return Vector2.Zero;
 
             Vector2 penetration;
-            if (intersectingRectangle.Width < intersectingRectangle.Height)
-            {
+            if (intersectingRectangle.Width < intersectingRectangle.Height) {
                 var d = rect1.Center.X < rect2.Center.X
                     ? intersectingRectangle.Width
                     : -intersectingRectangle.Width;
                 penetration = new Vector2(d, 0);
-            }
-            else
-            {
+            } else {
                 var d = rect1.Center.Y < rect2.Center.Y
                     ? intersectingRectangle.Height
                     : -intersectingRectangle.Height;
@@ -114,20 +125,16 @@ namespace BunnyLand.DesktopGL.Extensions
 
         private static Vector2 PenetrationVector(CircleF circ1, CircleF circ2)
         {
-            if (!circ1.Intersects(circ2))
-            {
+            if (!circ1.Intersects(circ2)) {
                 return Vector2.Zero;
             }
 
             var displacement = Point2.Displacement(circ1.Center, circ2.Center);
 
             Vector2 desiredDisplacement;
-            if (displacement != Vector2.Zero)
-            {
+            if (displacement != Vector2.Zero) {
                 desiredDisplacement = displacement.NormalizedCopy() * (circ1.Radius + circ2.Radius);
-            }
-            else
-            {
+            } else {
                 desiredDisplacement = -Vector2.UnitY * (circ1.Radius + circ2.Radius);
             }
 
@@ -141,13 +148,11 @@ namespace BunnyLand.DesktopGL.Extensions
             var collisionPoint = rect.ClosestPointTo(circ.Center);
             var cToCollPoint = collisionPoint - circ.Center;
 
-            if (rect.Contains(circ.Center) || cToCollPoint.Equals(Vector2.Zero))
-            {
+            if (rect.Contains(circ.Center) || cToCollPoint.Equals(Vector2.Zero)) {
                 var displacement = Point2.Displacement(circ.Center, rect.Center);
 
                 Vector2 desiredDisplacement;
-                if (displacement != Vector2.Zero)
-                {
+                if (displacement != Vector2.Zero) {
                     // Calculate penetration as only in X or Y direction.
                     // Whichever is lower.
                     var dispx = new Vector2(displacement.X, 0);
@@ -155,30 +160,23 @@ namespace BunnyLand.DesktopGL.Extensions
                     dispx.Normalize();
                     dispy.Normalize();
 
-                    dispx *= (circ.Radius + rect.Width / 2);
-                    dispy *= (circ.Radius + rect.Height / 2);
+                    dispx *= circ.Radius + rect.Width / 2;
+                    dispy *= circ.Radius + rect.Height / 2;
 
-                    if (dispx.LengthSquared() < dispy.LengthSquared())
-                    {
+                    if (dispx.LengthSquared() < dispy.LengthSquared()) {
                         desiredDisplacement = dispx;
                         displacement.Y = 0;
-                    }
-                    else
-                    {
+                    } else {
                         desiredDisplacement = dispy;
                         displacement.X = 0;
                     }
-                }
-                else
-                {
+                } else {
                     desiredDisplacement = -Vector2.UnitY * (circ.Radius + rect.Height / 2);
                 }
 
                 var penetration = displacement - desiredDisplacement;
                 return penetration;
-            }
-            else
-            {
+            } else {
                 var penetration = circ.Radius * cToCollPoint.NormalizedCopy() - cToCollPoint;
                 return penetration;
             }

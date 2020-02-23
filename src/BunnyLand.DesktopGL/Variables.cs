@@ -7,10 +7,10 @@ namespace BunnyLand.DesktopGL
     public class Variables
     {
         private readonly Dictionary<GlobalVariable, float> global = new Dictionary<GlobalVariable, float> {
-            {GlobalVariable.JetpackAcceleration, 0.2f},
-            {GlobalVariable.JetpackBoostAcceleration, 1f},
-            {GlobalVariable.JetpackMaxSpeed, 8f},
-            {GlobalVariable.JetpackBoostMaxSpeed, 12f},
+            {GlobalVariable.JetpackAcceleration, 20f},
+            {GlobalVariable.JetpackBoostAcceleration, 100f},
+            {GlobalVariable.JetpackMaxSpeed, 1000f},
+            {GlobalVariable.JetpackBoostMaxSpeed, 1200f},
             {GlobalVariable.GravityMultiplier, 1f},
             {GlobalVariable.BounceFactor, 0.5f},
             {GlobalVariable.BrakePower, 0.1f},

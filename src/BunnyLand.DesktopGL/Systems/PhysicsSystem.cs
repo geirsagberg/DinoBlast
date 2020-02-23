@@ -52,6 +52,9 @@ namespace BunnyLand.DesktopGL.Systems
             var movable = movableMapper.Get(entityId);
             var body = bodyMapper.TryGet(entityId);
             var elapsedTicks = gameTime.GetElapsedTicks(variables);
+            
+            
+            
 
             // var newVelocity = (movable.Acceleration + movable.GravityPull) * elapsedSeconds;
             // var newPosition = movable.Position + newVelocity * elapsedSeconds;

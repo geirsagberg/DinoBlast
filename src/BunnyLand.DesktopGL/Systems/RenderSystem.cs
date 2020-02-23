@@ -13,6 +13,7 @@ using MonoGame.Extended.BitmapFonts;
 using MonoGame.Extended.Entities;
 using MonoGame.Extended.Entities.Systems;
 using MonoGame.Extended.Sprites;
+using tainicom.Aether.Physics2D.Dynamics;
 
 namespace BunnyLand.DesktopGL.Systems
 {
@@ -23,6 +24,7 @@ namespace BunnyLand.DesktopGL.Systems
         private readonly LinkedList<int> fpsList = new LinkedList<int>();
         private readonly SpriteBatch spriteBatch;
         private ComponentMapper<AnimatedSprite> animatedSpriteMapper;
+        private ComponentMapper<Body> bodyMapper;
         private ComponentMapper<CollisionBody> collisionMapper;
         private ComponentMapper<Level> levelMapper;
         private ComponentMapper<Movable> movableMapper;
@@ -38,7 +40,7 @@ namespace BunnyLand.DesktopGL.Systems
         public Option<Player> Player { get; set; }
 
         public RenderSystem(SpriteBatch spriteBatch, ContentManager contentManager) : base(Aspect
-            .All(typeof(Transform2))
+            .One(typeof(Transform2), typeof(Body))
             .One(typeof(AnimatedSprite), typeof(Sprite), typeof(SolidColor)))
         {
             this.spriteBatch = spriteBatch;
@@ -55,6 +57,7 @@ namespace BunnyLand.DesktopGL.Systems
             levelMapper = mapperService.GetMapper<Level>();
             playerMapper = mapperService.GetMapper<Player>();
             solidColorMapper = mapperService.GetMapper<SolidColor>();
+            bodyMapper = mapperService.GetMapper<Body>();
         }
 
         protected override void OnEntityAdded(int entityId)
@@ -99,12 +102,20 @@ namespace BunnyLand.DesktopGL.Systems
 
         private void RenderSprite(int entity, Sprite sprite)
         {
-            var transform = transformMapper.Get(entity);
+            transformMapper.TryGet(entity).IfSome(transform => {
+                spriteBatch.Draw(sprite, transform);
+                // spriteBatch.DrawRectangle(sprite.GetBoundingRectangle(transform), Color.Beige);
 
-            spriteBatch.Draw(sprite, transform);
-            // spriteBatch.DrawRectangle(sprite.GetBoundingRectangle(transform), Color.Beige);
 
-            DrawLevelWrapping(sprite, transform);
+                bodyMapper.TryGet(entity).IfSome(body => {
+                    spriteBatch.Draw(sprite.TextureRegion.Texture,
+                        body.Position, sprite.TextureRegion.Bounds, Color.White, body.Rotation, sprite.Origin, transform.Scale, SpriteEffects.None, 1f
+                    );
+                });
+
+                DrawLevelWrapping(sprite, transform);
+            });
+
         }
 
         private int GetSmoothedFps(GameTime gameTime)
