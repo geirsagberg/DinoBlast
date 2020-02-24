@@ -99,8 +99,8 @@ namespace BunnyLand.DesktopGL.Systems
             bodyMapper.TryGet(entityId).IfSome(body => {
                 movableMapper.TryGet(entityId).IfSome(movable => {
                     var collisionBounds = body.Bounds switch {
-                        CircleF circle => FindCollisionBounds(movable, circle.ToRectangleF()),
-                        RectangleF rectangle => FindCollisionBounds(movable, rectangle),
+                        CircleF circle => FindCollisionBounds(movable, circle.ToRectangleF(), elapsedTicks),
+                        RectangleF rectangle => FindCollisionBounds(movable, rectangle, elapsedTicks),
                         _ => throw new Exception("Unknown shape")
                     };
                     body.CollisionBounds = collisionBounds;
@@ -108,8 +108,6 @@ namespace BunnyLand.DesktopGL.Systems
                     // TODO: If performance becomes a problem, look into broadphase algorithms like SAP or Dynamic tree, or separate collision tables per collidertype
                     var potentialCollisions = Bodies.Where(b =>
                         b.CollidesWith.HasFlag(body.ColliderType) && b != body && b.Bounds.Intersects(collisionBounds));
-
-                    // TODO: Tunneling-safe check for point of impact
 
                     body.Collisions = potentialCollisions
                         .Select(other => (other, body.CalculatePenetrationVector(other, elapsedTicks)))
@@ -120,15 +118,12 @@ namespace BunnyLand.DesktopGL.Systems
         }
 
 
-        private static RectangleF FindCollisionBounds(Option<Movable> maybeMovable, RectangleF rectangle)
+        private static RectangleF FindCollisionBounds(Option<Movable> maybeMovable, RectangleF rectangle,
+            float elapsedTicks)
         {
             // If it is moving, we have to include the path from here to there in the potential collision
-            return maybeMovable.Some(movable => rectangle.Expand(movable.Velocity))
+            return maybeMovable.Some(movable => rectangle.Expand(movable.Velocity * elapsedTicks))
                 .None(rectangle);
         }
-
-
     }
-
-
 }
