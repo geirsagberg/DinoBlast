@@ -1,18 +1,17 @@
 using System;
 using System.Collections.Generic;
+using BunnyLand.DesktopGL.Extensions;
 using LanguageExt;
 using Microsoft.Xna.Framework;
 using MonoGame.Extended;
-using MonoGame.Extended.Collections;
-using MonoGame.Extended.Collisions;
 
 namespace BunnyLand.DesktopGL.Components
 {
-    public class CollisionBody : ICollisionActor
+    public class CollisionBody
     {
         public ColliderTypes ColliderType { get; }
         public ColliderTypes CollidesWith { get; }
-        private readonly IShapeF bounds;
+        private readonly IShapeF shape;
         private readonly Transform2 transform;
 
         public List<(CollisionBody body, Vector2 penetrationVector)> Collisions { get; set; } = new List<(CollisionBody body, Vector2 penetrationVector)>();
@@ -21,24 +20,40 @@ namespace BunnyLand.DesktopGL.Components
 
         public IShapeF Bounds {
             get {
-                bounds.Position = transform.Position;
-                return bounds;
+                shape.Position = transform.Position;
+                return shape;
             }
         }
-        
+
         public RectangleF CollisionBounds { get; set; }
 
-        public CollisionBody(IShapeF bounds, Transform2 transform, ColliderTypes isColliderType, ColliderTypes collidesWith)
+        public CollisionBody(IShapeF shape, Transform2 transform, ColliderTypes isColliderType, ColliderTypes collidesWith)
         {
             ColliderType = isColliderType;
             CollidesWith = collidesWith;
-            this.bounds = bounds;
+            this.shape = shape;
             this.transform = transform;
+            OldPosition = transform.Position;
         }
 
-        public void OnCollision(CollisionEventArgs collisionInfo)
+        public Vector2 CalculatePenetrationVector(CollisionBody other, float elapsedTicks)
         {
-            Console.WriteLine("Collision");
+            if (other.Bounds.Intersects(Bounds)) return other.Bounds.CalculatePenetrationVector(Bounds);
+
+            // Swept AABB / Circle algorithm
+
+            var velocity = transform.Position - OldPosition;
+            var otherVelocity = other.transform.Position - other.OldPosition;
+
+            var relativeVelocity = (otherVelocity - velocity) * elapsedTicks;
+
+            return Bounds switch {
+                RectangleF rect when other.Bounds is RectangleF otherRect => Vector2.Zero,
+                RectangleF rect when other.Bounds is CircleF otherCircle => Vector2.Zero,
+                CircleF circle when other.Bounds is RectangleF otherRect => Vector2.Zero,
+                CircleF circle when other.Bounds is CircleF otherCircle => Vector2.Zero,
+                _ => throw new NotImplementedException()
+            };
         }
     }
 

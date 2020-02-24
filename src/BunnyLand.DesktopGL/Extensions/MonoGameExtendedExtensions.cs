@@ -7,7 +7,6 @@ using Microsoft.Xna.Framework;
 using MonoGame.Extended;
 using MonoGame.Extended.Animations.SpriteSheets;
 using MonoGame.Extended.Collections;
-using MonoGame.Extended.Collisions;
 using MonoGame.Extended.Entities;
 
 namespace BunnyLand.DesktopGL.Extensions
@@ -49,13 +48,6 @@ namespace BunnyLand.DesktopGL.Extensions
             new SpriteSheetAnimationData(Enumerable.Range(range.Start.Value,
                     Math.Abs(range.End.Value - range.Start.Value)).ToArray(), frameDuration, isLooping, isReversed,
                 isPingPong);
-
-        public static void Deconstruct(this CollisionEventArgs collisionInfo, out ICollisionActor other,
-            out Vector2 penetrationVector)
-        {
-            other = collisionInfo.Other;
-            penetrationVector = collisionInfo.PenetrationVector;
-        }
 
         public static void AddRange<T>(this Bag<T> bag, params T[] items)
         {

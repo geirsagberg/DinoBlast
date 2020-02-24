@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using BunnyLand.DesktopGL.Components;
 using BunnyLand.DesktopGL.Extensions;
@@ -7,7 +8,6 @@ using LanguageExt;
 using Microsoft.Xna.Framework;
 using MonoGame.Extended;
 using MonoGame.Extended.Collections;
-using MonoGame.Extended.Collisions;
 using MonoGame.Extended.Entities;
 using MonoGame.Extended.Entities.Systems;
 
@@ -19,6 +19,8 @@ namespace BunnyLand.DesktopGL.Systems
     /// </summary>
     public class CollisionSystem : EntityProcessingSystem
     {
+        private readonly Variables variables;
+        private const int LogCollisionDetectionEveryNthFrame = 60;
         private ComponentMapper<CollisionBody> bodyMapper;
         private ComponentMapper<Level> levelMapper;
         private ComponentMapper<Movable> movableMapper;
@@ -27,8 +29,9 @@ namespace BunnyLand.DesktopGL.Systems
 
         public Bag<CollisionBody> Bodies { get; } = new Bag<CollisionBody>();
 
-        public CollisionSystem() : base(Aspect.All(typeof(CollisionBody)))
+        public CollisionSystem(Variables variables) : base(Aspect.All(typeof(CollisionBody)))
         {
+            this.variables = variables;
         }
 
         public override void Initialize(IComponentMapperService mapperService)
@@ -69,25 +72,50 @@ namespace BunnyLand.DesktopGL.Systems
             // CollisionComponent.IfSome(component => component.Update(gameTime));
         }
 
+        private readonly Stopwatch stopwatch = new Stopwatch();
+
+        public override void Begin()
+        {
+            stopwatch.Restart();
+        }
+
+        public override void End()
+        {
+            stopwatch.Stop();
+            timeSpans[timeSpanCounter] = stopwatch.Elapsed;
+            timeSpanCounter = (timeSpanCounter + 1) % LogCollisionDetectionEveryNthFrame;
+            if (timeSpanCounter == 0) {
+                Console.WriteLine($"Avg time collision detection: {timeSpans.Average(ts => ts.TotalMilliseconds):N} ms");
+            }
+        }
+
+        private int timeSpanCounter = 0;
+        private readonly TimeSpan[] timeSpans = new TimeSpan[LogCollisionDetectionEveryNthFrame];
+
         public override void Process(GameTime gameTime, int entityId)
         {
+            var elapsedTicks = gameTime.GetElapsedTicks(variables);
+
             bodyMapper.TryGet(entityId).IfSome(body => {
-                var maybeMovable = movableMapper.TryGet(entityId);
-                var collisionBounds = body.Bounds switch {
-                    CircleF circle => FindCollisionBounds(maybeMovable, circle.ToRectangleF()),
-                    RectangleF rectangle => FindCollisionBounds(maybeMovable, rectangle),
-                    _ => throw new Exception("Unknown shape")
-                };
-                body.CollisionBounds = collisionBounds;
+                movableMapper.TryGet(entityId).IfSome(movable => {
+                    var collisionBounds = body.Bounds switch {
+                        CircleF circle => FindCollisionBounds(movable, circle.ToRectangleF()),
+                        RectangleF rectangle => FindCollisionBounds(movable, rectangle),
+                        _ => throw new Exception("Unknown shape")
+                    };
+                    body.CollisionBounds = collisionBounds;
 
-                var potentialCollisions = Bodies.Where(b =>
-                    b.CollidesWith.HasFlag(body.ColliderType) && b != body && b.Bounds.Intersects(collisionBounds));
+                    // TODO: If performance becomes a problem, look into broadphase algorithms like SAP or Dynamic tree, or separate collision tables per collidertype
+                    var potentialCollisions = Bodies.Where(b =>
+                        b.CollidesWith.HasFlag(body.ColliderType) && b != body && b.Bounds.Intersects(collisionBounds));
 
-                // TODO: Tunneling-safe check for point of impact
+                    // TODO: Tunneling-safe check for point of impact
 
-                body.Collisions = potentialCollisions
-                    .Select(other => (other, body.Bounds.CalculatePenetrationVector(other.Bounds)))
-                    .Where(t => t.Item2 != Vector2.Zero).ToList();
+                    body.Collisions = potentialCollisions
+                        .Select(other => (other, body.CalculatePenetrationVector(other, elapsedTicks)))
+                        .Where(t => t.Item2 != Vector2.Zero).ToList();
+                });
+
             });
         }
 
@@ -98,5 +126,9 @@ namespace BunnyLand.DesktopGL.Systems
             return maybeMovable.Some(movable => rectangle.Expand(movable.Velocity))
                 .None(rectangle);
         }
+
+
     }
+
+
 }

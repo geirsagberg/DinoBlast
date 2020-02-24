@@ -32,6 +32,7 @@ namespace BunnyLand.DesktopGL.Extensions
 
         public static RectangleF Expand(this RectangleF rectangle, Vector2 direction)
         {
+            if (direction == Vector2.Zero) return rectangle;
             var translated = rectangle;
             translated.Position += direction;
             return rectangle.Union(translated);
