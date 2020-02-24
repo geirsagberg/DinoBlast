@@ -8,9 +8,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
-using MonoGame.Extended;
 using MonoGame.Extended.BitmapFonts;
-using MonoGame.Extended.Collisions;
 using MonoGame.Extended.Entities;
 using MonoGame.Extended.Gui;
 using MonoGame.Extended.Input.InputListeners;
@@ -36,7 +34,7 @@ namespace BunnyLand.DesktopGL
                 PreferredBackBufferWidth = gameSettings.Width,
                 PreferredBackBufferHeight = gameSettings.Height,
                 PreferMultiSampling = true,
-                SynchronizeWithVerticalRetrace = gameSettings.VSyncEnabled,
+                SynchronizeWithVerticalRetrace = gameSettings.VSyncEnabled
             };
             Content.RootDirectory = "Content";
             IsFixedTimeStep = gameSettings.FixedTimeStep;

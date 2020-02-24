@@ -5,7 +5,6 @@ using BunnyLand.DesktopGL.Extensions;
 using LanguageExt;
 using Microsoft.Xna.Framework;
 using MonoGame.Extended;
-using MonoGame.Extended.Collisions;
 using MonoGame.Extended.Entities;
 using MonoGame.Extended.Entities.Systems;
 
@@ -50,7 +49,6 @@ namespace BunnyLand.DesktopGL.Systems
         {
             var transform = transformMapper.Get(entityId);
             var movable = movableMapper.Get(entityId);
-            var body = bodyMapper.TryGet(entityId);
             var elapsedTicks = gameTime.GetElapsedTicks(variables);
 
             // var newVelocity = (movable.Acceleration + movable.GravityPull) * elapsedSeconds;
@@ -97,6 +95,7 @@ namespace BunnyLand.DesktopGL.Systems
                 * variables.Global[GlobalVariable.InertiaRatio];
 
             // Update position
+            bodyMapper.TryGet(entityId).IfSome(body => body.OldPosition = transform.Position);
             transform.Position += movable.Velocity * elapsedTicks;
 
             Level.IfSome(level => transform.Wrap(level.Bounds));
