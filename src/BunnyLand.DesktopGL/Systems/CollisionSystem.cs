@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using BunnyLand.DesktopGL.Components;
+using BunnyLand.DesktopGL.Enums;
 using BunnyLand.DesktopGL.Extensions;
 using LanguageExt;
 using Microsoft.Xna.Framework;
@@ -58,7 +59,7 @@ namespace BunnyLand.DesktopGL.Systems
             checkedPairs.Clear();
         }
 
-        private System.Collections.Generic.HashSet<(CollisionBody, CollisionBody)> checkedPairs = new System.Collections.Generic.HashSet<(CollisionBody, CollisionBody)>();
+        private readonly System.Collections.Generic.HashSet<(CollisionBody, CollisionBody)> checkedPairs = new System.Collections.Generic.HashSet<(CollisionBody, CollisionBody)>();
 
         public override void End()
         {
@@ -91,11 +92,22 @@ namespace BunnyLand.DesktopGL.Systems
                         b != body && b.CollidesWith.HasFlag(body.ColliderType) && !checkedPairs.Contains((b, body)) && b.Bounds.Intersects(collisionBounds)).ToList();
 
                     body.Collisions = potentialCollisions
-                        .Select(other => (other, body.CalculatePenetrationVector(other, elapsedTicks)))
+                        .Select(other => (other, body.CalculatePenetrationVector(other)))
                         .Where(t => t.Item2 != Vector2.Zero).ToList();
                     potentialCollisions.ForEach(b => checkedPairs.Add((body, b)));
-                });
 
+                    foreach (var (other, penetrationVector) in body.Collisions) {
+                        switch (body.ColliderType) {
+                            case ColliderTypes.Player when other.ColliderType == ColliderTypes.Static:
+                                movable.Transform.Position += penetrationVector;
+                                movable.Velocity += penetrationVector / elapsedTicks;
+                                break;
+                            case ColliderTypes.Projectile:
+                                DestroyEntity(entityId);
+                                break;
+                        }
+                    }
+                });
             });
         }
 

@@ -9,5 +9,6 @@ namespace BunnyLand.DesktopGL
         public bool BrakeWhileJetpacking { get; set; }
         public bool VSyncEnabled { get; set; } = true;
         public bool FixedTimeStep { get; set; } = true;
+        public int Fps { get; set; } = 60;
     }
 }

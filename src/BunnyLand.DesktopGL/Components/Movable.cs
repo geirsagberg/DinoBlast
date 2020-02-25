@@ -5,7 +5,7 @@ namespace BunnyLand.DesktopGL.Components
 {
     public class Movable
     {
-        private Transform2 Transform { get; }
+        public Transform2 Transform { get; }
 
         public Vector2 Position => Transform.Position;
 

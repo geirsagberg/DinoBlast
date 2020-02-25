@@ -79,15 +79,16 @@ namespace BunnyLand.DesktopGL.Systems
             //     * variables.Global[GlobalVariable.BounceFactor];
 
             // Calculate change in velocity
-            var deltaVelocity = elapsedTicks * movable.Acceleration
-                + elapsedTicks * movable.GravityPull;
+            var deltaVelocity = (movable.Acceleration + movable.GravityPull) * gameTime.GetElapsedSeconds() * 60f; // + elapsedTicks ;
                 // - penetrationVector
                 // - bounceBack;
             movable.Velocity += deltaVelocity;
 
             // Apply braking if any
             movable.Velocity =
-                movable.Velocity.SubtractLength(Math.Min(movable.Velocity.Length(), movable.BrakingForce * elapsedTicks));
+                movable.Velocity.SubtractLength(Math.Min(movable.Velocity.Length(), movable.BrakingForce * gameTime.GetElapsedSeconds() * 60f
+                    //* elapsedTicks
+                ));
 
 
             // Limit to max speed
