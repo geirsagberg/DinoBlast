@@ -13,10 +13,6 @@ using MonoGame.Extended.Entities.Systems;
 
 namespace BunnyLand.DesktopGL.Systems
 {
-    /// <summary>
-    ///     Handles adding <see cref="CollisionBody" /> components to the <see cref="CollisionComponent" />, and resetting
-    ///     their collision info. Collision checking itself is handled within <see cref="CollisionComponent" />.
-    /// </summary>
     public class CollisionSystem : EntityProcessingSystem
     {
         private readonly Variables variables;
@@ -45,31 +41,13 @@ namespace BunnyLand.DesktopGL.Systems
         {
             levelMapper.TryGet(entityId).IfSome(level => {
                 Level = level;
-
-
-                // var component = new CollisionComponent(level.Bounds);
-                // foreach (var entity in ActiveEntities) {
-                //     component.Insert(bodyMapper.Get(entity));
-                // }
-
-                // CollisionComponent = component;
             });
             bodyMapper.TryGet(entityId).IfSome(body => Bodies.Add(body));
-            // CollisionComponent.IfSome(collisionComponent =>
-            //     bodyMapper.TryGet(entityId).IfSome(collisionComponent.Insert));
         }
 
         protected override void OnEntityRemoved(int entityId)
         {
-            // CollisionComponent.IfSome(collisionComponent =>
-            //     bodyMapper.TryGet(entityId).IfSome(collisionComponent.Remove));
             bodyMapper.TryGet(entityId).IfSome(body => Bodies.Remove(body));
-        }
-
-        public override void Update(GameTime gameTime)
-        {
-            base.Update(gameTime);
-            // CollisionComponent.IfSome(component => component.Update(gameTime));
         }
 
         private readonly Stopwatch stopwatch = new Stopwatch();
