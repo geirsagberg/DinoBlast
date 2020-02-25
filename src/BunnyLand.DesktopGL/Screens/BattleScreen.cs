@@ -44,11 +44,11 @@ namespace BunnyLand.DesktopGL.Screens
         private void SetupEntities()
         {
             entities.AddRange(
-                entityFactory.CreateLevel(gameSettings.Width, gameSettings.Height),
-                entityFactory.CreatePlanet(new Vector2(400, 400), 8000, 0.5f),
-                entityFactory.CreatePlanet(new Vector2(800, 300), 12000, 0.8f),
-                entityFactory.CreatePlayer(new Vector2(100, 100)),
-                entityFactory.CreateBlock(new RectangleF(600, 600, 10, 200))
+                entityFactory.CreateLevel(world.CreateEntity(), gameSettings.Width, gameSettings.Height),
+                entityFactory.CreatePlanet(world.CreateEntity(), new Vector2(400, 400), 8000, 0.5f),
+                entityFactory.CreatePlanet(world.CreateEntity(), new Vector2(800, 300), 12000, 0.8f),
+                entityFactory.CreatePlayer(world.CreateEntity(), new Vector2(100, 100)),
+                entityFactory.CreateBlock(world.CreateEntity(), new RectangleF(600, 600, 10, 200))
             );
         }
 
@@ -108,7 +108,6 @@ namespace BunnyLand.DesktopGL.Screens
 
         public override void Draw(GameTime gameTime)
         {
-
             guiSystem.Draw(gameTime);
         }
     }

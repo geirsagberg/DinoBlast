@@ -11,6 +11,7 @@
         GlobalMaxSpeed,
         InertiaRatio,
         BrakePower,
-        GameSpeed
+        GameSpeed,
+        DebugVectorMultiplier
     }
 }

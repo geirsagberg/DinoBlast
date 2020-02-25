@@ -55,7 +55,10 @@ namespace BunnyLand.DesktopGL.Systems
         public override void Begin()
         {
             stopwatch.Restart();
+            checkedPairs.Clear();
         }
+
+        private System.Collections.Generic.HashSet<(CollisionBody, CollisionBody)> checkedPairs = new System.Collections.Generic.HashSet<(CollisionBody, CollisionBody)>();
 
         public override void End()
         {
@@ -85,11 +88,12 @@ namespace BunnyLand.DesktopGL.Systems
 
                     // TODO: If performance becomes a problem, look into broadphase algorithms like SAP or Dynamic tree, or separate collision tables per collidertype
                     var potentialCollisions = Bodies.Where(b =>
-                        b.CollidesWith.HasFlag(body.ColliderType) && b != body && b.Bounds.Intersects(collisionBounds));
+                        b != body && b.CollidesWith.HasFlag(body.ColliderType) && !checkedPairs.Contains((b, body)) && b.Bounds.Intersects(collisionBounds)).ToList();
 
                     body.Collisions = potentialCollisions
                         .Select(other => (other, body.CalculatePenetrationVector(other, elapsedTicks)))
                         .Where(t => t.Item2 != Vector2.Zero).ToList();
+                    potentialCollisions.ForEach(b => checkedPairs.Add((body, b)));
                 });
 
             });
