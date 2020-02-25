@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using BunnyLand.DesktopGL.Components;
+using BunnyLand.DesktopGL.Enums;
 using BunnyLand.DesktopGL.Extensions;
 using LanguageExt;
 using Microsoft.Xna.Framework;
@@ -22,6 +23,7 @@ namespace BunnyLand.DesktopGL.Systems
 
         private readonly LinkedList<int> fpsList = new LinkedList<int>();
         private readonly SpriteBatch spriteBatch;
+        private readonly Variables variables;
         private ComponentMapper<AnimatedSprite> animatedSpriteMapper;
         private ComponentMapper<CollisionBody> collisionMapper;
         private ComponentMapper<Level> levelMapper;
@@ -37,11 +39,12 @@ namespace BunnyLand.DesktopGL.Systems
 
         public Option<Player> Player { get; set; }
 
-        public RenderSystem(SpriteBatch spriteBatch, ContentManager contentManager) : base(Aspect
+        public RenderSystem(SpriteBatch spriteBatch, ContentManager contentManager, Variables variables) : base(Aspect
             .All(typeof(Transform2))
             .One(typeof(AnimatedSprite), typeof(Sprite), typeof(SolidColor)))
         {
             this.spriteBatch = spriteBatch;
+            this.variables = variables;
             font = contentManager.Load<BitmapFont>("Fonts/bryndan-medium");
         }
 
@@ -175,7 +178,7 @@ namespace BunnyLand.DesktopGL.Systems
         private void DrawGravityPull(int entity, Transform2 transform)
         {
             movableMapper.TryGet(entity).IfSome(movable => spriteBatch.DrawLine(transform.WorldPosition,
-                transform.WorldPosition + movable.GravityPull * 1000, Color.Azure));
+                transform.WorldPosition + movable.GravityPull * variables.Global[GlobalVariable.DebugVectorMultiplier], Color.Azure));
         }
     }
 }
