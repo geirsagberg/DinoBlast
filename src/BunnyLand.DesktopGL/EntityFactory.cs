@@ -88,9 +88,10 @@ namespace BunnyLand.DesktopGL
                 Velocity = velocity
             };
             entity.Attach(movable);
-            var projectile = new Projectile(movable,
-                new CollisionBody(new CircleF(Point2.Zero, 1), transform,
-                    ColliderTypes.Projectile, ColliderTypes.Player | ColliderTypes.Static));
+            var collisionBody = new CollisionBody(new CircleF(Point2.Zero, 1), transform,
+                ColliderTypes.Projectile, ColliderTypes.Player | ColliderTypes.Static);
+            entity.Attach(collisionBody);
+            var projectile = new Projectile(movable, collisionBody);
             entity.Attach(projectile);
 
             var sprite = new Sprite(textures.bullet);

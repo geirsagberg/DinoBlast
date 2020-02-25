@@ -36,7 +36,7 @@ namespace BunnyLand.DesktopGL.Components
             OldPosition = transform.Position;
         }
 
-        public Vector2 CalculatePenetrationVector(CollisionBody other, float elapsedTicks)
+        public Vector2 CalculatePenetrationVector(CollisionBody other)
         {
             if (other.Bounds.Intersects(Bounds)) return other.Bounds.CalculatePenetrationVector(Bounds);
 

@@ -40,7 +40,7 @@ namespace BunnyLand.DesktopGL.Systems
                         emitterMapper.TryGet(entityId).IfSome(emitter => {
                             emitter.IsEmitting = isShooting;
                             emitter.Emit ??= (entity, totalGameTime) =>
-                                entityFactory.CreateBullet(entity, transform.Position, movable.Velocity, totalGameTime, TimeSpan.FromSeconds(4));
+                                entityFactory.CreateBullet(entity, transform.Position + movable.Velocity.NormalizedOrZero() * 15f, movable.Velocity, totalGameTime, TimeSpan.FromSeconds(4));
                         });
                     });
                 });
