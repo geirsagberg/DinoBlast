@@ -13,7 +13,6 @@ namespace BunnyLand.DesktopGL.Systems
 {
     public class PlayerSystem : EntityProcessingSystem
     {
-        private ComponentMapper<AnimatedSprite> spriteMapper = null!;
         private ComponentMapper<Transform2> transformMapper = null!;
         private ComponentMapper<Player> playerMapper;
         private ComponentMapper<CollisionBody> collisionMapper;
@@ -24,8 +23,8 @@ namespace BunnyLand.DesktopGL.Systems
 
         public override void Initialize(IComponentMapperService mapperService)
         {
+
             transformMapper = mapperService.GetMapper<Transform2>();
-            spriteMapper = mapperService.GetMapper<AnimatedSprite>();
             playerMapper = mapperService.GetMapper<Player>();
             collisionMapper = mapperService.GetMapper<CollisionBody>();
         }
