@@ -12,14 +12,18 @@ namespace BunnyLand.DesktopGL.Systems
     public class PlayerSystem : EntityProcessingSystem
     {
         private readonly EntityFactory entityFactory;
+        private readonly Random random;
+        private readonly Variables variables;
         private ComponentMapper<Emitter> emitterMapper;
         private ComponentMapper<Movable> movableMapper;
         private ComponentMapper<Player> playerMapper;
         private ComponentMapper<Transform2> transformMapper;
 
-        public PlayerSystem(EntityFactory entityFactory) : base(Aspect.All(typeof(Player)))
+        public PlayerSystem(EntityFactory entityFactory, Random random, Variables variables) : base(Aspect.All(typeof(Player)))
         {
             this.entityFactory = entityFactory;
+            this.random = random;
+            this.variables = variables;
         }
 
         public override void Initialize(IComponentMapperService mapperService)
@@ -40,7 +44,7 @@ namespace BunnyLand.DesktopGL.Systems
                         emitterMapper.TryGet(entityId).IfSome(emitter => {
                             emitter.IsEmitting = isShooting;
                             emitter.Emit ??= (entity, totalGameTime) =>
-                                entityFactory.CreateBullet(entity, transform.Position + movable.Velocity.NormalizedOrZero() * 15f, movable.Velocity, totalGameTime, TimeSpan.FromSeconds(4));
+                                entityFactory.CreateBullet(entity, transform.Position + movable.Velocity.NormalizedOrZero() , movable.Velocity + random.NextUnitVector(), totalGameTime, TimeSpan.FromSeconds(4));
                         });
                     });
                 });

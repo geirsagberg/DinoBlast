@@ -12,6 +12,7 @@
         InertiaRatio,
         BrakePower,
         GameSpeed,
-        DebugVectorMultiplier
+        DebugVectorMultiplier,
+        BulletSpeed
     }
 }

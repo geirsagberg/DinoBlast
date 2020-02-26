@@ -61,6 +61,8 @@ namespace BunnyLand.DesktopGL
             services.AddTransient<WorldBuilder>();
             services.AddTransient<SpriteBatch>();
 
+            services.AddSingleton<Random>();
+
             services.AddSingleton(BuildWorld);
             services.AddSingleton(provider => {
                 var textures = new Textures(provider.GetRequiredService<ContentManager>());

@@ -1,5 +1,6 @@
 using System;
 using BunnyLand.DesktopGL.Components;
+using BunnyLand.DesktopGL.Enums;
 using BunnyLand.DesktopGL.Extensions;
 using BunnyLand.DesktopGL.Resources;
 using Microsoft.Xna.Framework;
@@ -15,10 +16,12 @@ namespace BunnyLand.DesktopGL
     public class EntityFactory
     {
         private readonly Textures textures;
+        private readonly Variables variables;
 
-        public EntityFactory(Textures textures)
+        public EntityFactory(Textures textures, Variables variables)
         {
             this.textures = textures;
+            this.variables = variables;
         }
 
         private AnimatedSprite GetPlayerSprite()
@@ -43,8 +46,7 @@ namespace BunnyLand.DesktopGL
             entity.Attach(new Movable(transform));
 
             var emitter = new Emitter {
-                EmitInterval = TimeSpan.FromSeconds(0.1),
-
+                EmitInterval = TimeSpan.FromSeconds(0.1)
             };
             entity.Attach(emitter);
 
@@ -80,12 +82,13 @@ namespace BunnyLand.DesktopGL
             return entity;
         }
 
-        public Entity CreateBullet(Entity entity, Vector2 position, Vector2 velocity, TimeSpan totalGametime, TimeSpan lifeSpan)
+        public Entity CreateBullet(Entity entity, Vector2 position, Vector2 velocity, TimeSpan totalGametime,
+            TimeSpan lifeSpan)
         {
             var transform = new Transform2(position);
             entity.Attach(transform);
             var movable = new Movable(transform) {
-                Velocity = velocity
+                Velocity = velocity * variables.Global[GlobalVariable.BulletSpeed]
             };
             entity.Attach(movable);
             var collisionBody = new CollisionBody(new CircleF(Point2.Zero, 1), transform,
