@@ -1,5 +1,4 @@
 ﻿using System;
-using LanguageExt;
 using MonoGame.Extended.Entities;
 
 namespace BunnyLand.DesktopGL.Components
@@ -8,8 +7,10 @@ namespace BunnyLand.DesktopGL.Components
     {
         public TimeSpan EmitInterval { get; set; }
         public bool IsEmitting { get; set; }
-        public Option<TimeSpan> LastEmitted { get; set; }
+        public TimeSpan TimeSinceLastEmit { get; set; }
 
-        public Action<Entity, TimeSpan>? Emit { get; set; }
+        public Emit? Emit { get; set; }
     }
+
+    public delegate void Emit(Entity entity);
 }

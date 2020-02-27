@@ -36,6 +36,7 @@ namespace BunnyLand.DesktopGL
                 PreferMultiSampling = true,
                 SynchronizeWithVerticalRetrace = gameSettings.VSyncEnabled
             };
+
             Content.RootDirectory = "Content";
             IsFixedTimeStep = gameSettings.FixedTimeStep;
             TargetElapsedTime = TimeSpan.FromSeconds(1f / gameSettings.Fps);
@@ -103,6 +104,7 @@ namespace BunnyLand.DesktopGL
                 .AddSystemService<PhysicsSystem>()
                 .AddSystemService<CollisionSystem>()
                 .AddSystemService<RenderSystem>()
+                .AddSystemService<BattleSystem>()
                 .Build();
         }
 

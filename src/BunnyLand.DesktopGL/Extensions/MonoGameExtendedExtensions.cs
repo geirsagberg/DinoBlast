@@ -5,9 +5,9 @@ using LanguageExt;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Xna.Framework;
 using MonoGame.Extended;
-using MonoGame.Extended.Animations.SpriteSheets;
 using MonoGame.Extended.Collections;
 using MonoGame.Extended.Entities;
+using MonoGame.Extended.Sprites;
 
 namespace BunnyLand.DesktopGL.Extensions
 {
@@ -15,6 +15,9 @@ namespace BunnyLand.DesktopGL.Extensions
     {
         public static float GetElapsedTicks(this GameTime gameTime, Variables variables) =>
             gameTime.GetElapsedSeconds() * variables.Global[GlobalVariable.GameSpeed] * 60f;
+
+        public static TimeSpan GetElapsedTimeSpan(this GameTime gameTime, Variables variables) =>
+             gameTime.ElapsedGameTime * variables.Global[GlobalVariable.GameSpeed];
 
         public static Option<T> TryGet<T>(this ComponentMapper<T> mapper, int entityId) where T : class
         {
@@ -38,16 +41,11 @@ namespace BunnyLand.DesktopGL.Extensions
             return component;
         }
 
-        public static void Add(this SpriteSheetAnimationFactory animationFactory, string name, Range range,
-            float frameDuration = 0.2f,
-            bool isLooping = true, bool isReversed = false, bool isPingPong = false) => animationFactory.Add(name,
-            DefineSpriteAnimation(range, frameDuration, isLooping, isReversed, isPingPong));
-
-        public static SpriteSheetAnimationData DefineSpriteAnimation(Range range, float frameDuration = 0.2f,
-            bool isLooping = true, bool isReversed = false, bool isPingPong = false) =>
-            new SpriteSheetAnimationData(Enumerable.Range(range.Start.Value,
-                    Math.Abs(range.End.Value - range.Start.Value)).ToArray(), frameDuration, isLooping, isReversed,
-                isPingPong);
+        public static void Add(this SpriteSheet spriteSheet, string name, Range range, float frameDuration = 0.2f) => spriteSheet.Cycles.Add(name,
+            new SpriteSheetAnimationCycle {
+                Frames = Enumerable.Range(range.Start.Value, Math.Abs(range.End.Value - range.Start.Value))
+                    .Select(r => new SpriteSheetAnimationFrame(r, frameDuration)).ToList()
+            });
 
         public static void AddRange<T>(this Bag<T> bag, params T[] items)
         {
