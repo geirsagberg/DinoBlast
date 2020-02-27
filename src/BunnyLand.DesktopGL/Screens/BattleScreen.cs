@@ -3,10 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using BunnyLand.DesktopGL.Controls;
 using BunnyLand.DesktopGL.Enums;
-using BunnyLand.DesktopGL.Extensions;
+using BunnyLand.DesktopGL.Messages;
 using Microsoft.Xna.Framework;
 using MonoGame.Extended;
-using MonoGame.Extended.Collections;
 using MonoGame.Extended.Entities;
 using MonoGame.Extended.Gui;
 using MonoGame.Extended.Gui.Controls;
@@ -18,7 +17,6 @@ namespace BunnyLand.DesktopGL.Screens
 {
     public class BattleScreen : GameScreen
     {
-        private readonly Bag<Entity> entities = new Bag<Entity>();
         private readonly EntityFactory entityFactory;
         private readonly GameSettings gameSettings;
         private readonly GuiSystem guiSystem;
@@ -37,30 +35,10 @@ namespace BunnyLand.DesktopGL.Screens
 
         public override void LoadContent()
         {
-            SetupEntities();
             SetupDebugGui();
+            Hub.Default.Publish(new ResetWorldMessage());
         }
 
-        private void SetupEntities()
-        {
-            entities.AddRange(
-                entityFactory.CreateLevel(world.CreateEntity(), gameSettings.Width, gameSettings.Height),
-                entityFactory.CreatePlanet(world.CreateEntity(), new Vector2(400, 400), 8000, 0.5f),
-                entityFactory.CreatePlanet(world.CreateEntity(), new Vector2(800, 300), 12000, 0.8f),
-                entityFactory.CreatePlayer(world.CreateEntity(), new Vector2(100, 100)),
-                entityFactory.CreateBlock(world.CreateEntity(), new RectangleF(600, 600, 10, 200))
-            );
-        }
-
-        public void ResetWorld()
-        {
-            foreach (var entity in entities) {
-                world.DestroyEntity(entity);
-            }
-
-            entities.Clear();
-            SetupEntities();
-        }
 
         private void SetupDebugGui()
         {
@@ -77,7 +55,7 @@ namespace BunnyLand.DesktopGL.Screens
             var resetButton = new Button {
                 Content = "Reset"
             };
-            resetButton.Clicked += delegate { ResetWorld(); };
+            resetButton.Clicked += delegate { Hub.Default.Publish(new ResetWorldMessage()); };
 
             stackPanel.Items.Add(resetButton);
 

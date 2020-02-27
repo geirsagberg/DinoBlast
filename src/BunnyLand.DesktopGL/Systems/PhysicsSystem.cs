@@ -27,14 +27,7 @@ namespace BunnyLand.DesktopGL.Systems
 
         protected override void OnEntityAdded(int entityId)
         {
-            levelMapper.TryGet(entityId).IfSome(level => {
-                Level = level;
-            });
-
-        }
-
-        protected override void OnEntityRemoved(int entityId)
-        {
+            levelMapper.TryGet(entityId).IfSome(level => { Level = level; });
         }
 
         public override void Initialize(IComponentMapperService mapperService)
@@ -51,45 +44,14 @@ namespace BunnyLand.DesktopGL.Systems
             var movable = movableMapper.Get(entityId);
             var elapsedTicks = gameTime.GetElapsedTicks(variables);
 
-            // var newVelocity = (movable.Acceleration + movable.GravityPull) * elapsedSeconds;
-            // var newPosition = movable.Position + newVelocity * elapsedSeconds;
-            //
-            //
-
-            // Calculate new velocity
-            // Calculate new position
-
-            // Collision detection, get penetration vector
-
-            // Move out of collision
-            // Set velocity:
-            // Subtract pen.vector from velocity
-
-
-
-
-
-            // Penetration vector is how far into another entity this entity has collided
-            // var penetrationVector = body.Some(someBody => someBody.CollisionInfo
-            //     .Some(info => info.PenetrationVector)
-            //     .None(Vector2.Zero)
-            // ).None(Vector2.Zero);
-            //
-            // var bounceBack = penetrationVector.NormalizedOrZero() * movable.Velocity.Length()
-            //     * variables.Global[GlobalVariable.BounceFactor];
-
             // Calculate change in velocity
-            var deltaVelocity = (movable.Acceleration + movable.GravityPull) * gameTime.GetElapsedSeconds() * 60f; // + elapsedTicks ;
-                // - penetrationVector
-                // - bounceBack;
+            var deltaVelocity = (movable.Acceleration + movable.GravityPull) * elapsedTicks;
             movable.Velocity += deltaVelocity;
 
             // Apply braking if any
             movable.Velocity =
-                movable.Velocity.SubtractLength(Math.Min(movable.Velocity.Length(), movable.BrakingForce * gameTime.GetElapsedSeconds() * 60f
-                    //* elapsedTicks
-                ));
-
+                movable.Velocity.SubtractLength(
+                    Math.Min(movable.Velocity.Length(), movable.BrakingForce * elapsedTicks));
 
             // Limit to max speed
             movable.Velocity = movable.Velocity.Truncate(variables.Global[GlobalVariable.GlobalMaxSpeed])
@@ -100,8 +62,6 @@ namespace BunnyLand.DesktopGL.Systems
             transform.Position += movable.Velocity * elapsedTicks;
 
             Level.IfSome(level => transform.Wrap(level.Bounds));
-
-            // body.IfSome(b => b.CollisionInfo = Option<CollisionEventArgs>.None);
         }
     }
 }

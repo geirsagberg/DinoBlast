@@ -4,13 +4,12 @@ namespace BunnyLand.DesktopGL.Components
 {
     public class Lifetime
     {
-        public TimeSpan CreatedAt { get; }
         public TimeSpan LifeSpan { get; }
+        public TimeSpan LifeSpanLeft { get; set; }
 
-        public Lifetime(TimeSpan createdAt, TimeSpan lifeSpan)
+        public Lifetime(TimeSpan lifeSpan)
         {
-            CreatedAt = createdAt;
-            LifeSpan = lifeSpan;
+            LifeSpanLeft = LifeSpan = lifeSpan;
         }
     }
 }

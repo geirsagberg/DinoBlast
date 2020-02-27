@@ -1,12 +1,11 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using BunnyLand.DesktopGL.Components;
 using BunnyLand.DesktopGL.Enums;
-using BunnyLand.DesktopGL.Extensions;
 using BunnyLand.DesktopGL.Resources;
 using Microsoft.Xna.Framework;
 using MonoGame.Extended;
-using MonoGame.Extended.Animations;
-using MonoGame.Extended.Animations.SpriteSheets;
 using MonoGame.Extended.Entities;
 using MonoGame.Extended.Sprites;
 using MonoGame.Extended.TextureAtlases;
@@ -27,10 +26,18 @@ namespace BunnyLand.DesktopGL
         private AnimatedSprite GetPlayerSprite()
         {
             var atlas = TextureAtlas.Create("bunny", textures.PlayerAnimation, 35, 50);
-            var animationFactory = new SpriteSheetAnimationFactory(atlas);
-            animationFactory.Add("idle", ..0);
-            animationFactory.Add("running", 1..9);
-            var animatedSprite = new AnimatedSprite(animationFactory, "idle");
+            var spriteSheet = new SpriteSheet {
+                TextureAtlas = atlas
+            };
+            spriteSheet.Cycles.Add("idle", new SpriteSheetAnimationCycle {
+                Frames = new List<SpriteSheetAnimationFrame> {
+                    new SpriteSheetAnimationFrame(0)
+                }
+            });
+            spriteSheet.Cycles.Add("running",
+                new SpriteSheetAnimationCycle
+                    {Frames = Enumerable.Range(1, 8).Select(i => new SpriteSheetAnimationFrame(1)).ToList()});
+            var animatedSprite = new AnimatedSprite(spriteSheet);
             return animatedSprite;
         }
 
@@ -46,7 +53,7 @@ namespace BunnyLand.DesktopGL
             entity.Attach(new Movable(transform));
 
             var emitter = new Emitter {
-                EmitInterval = TimeSpan.FromSeconds(0.1)
+                EmitInterval = TimeSpan.FromSeconds(0.01)
             };
             entity.Attach(emitter);
 
@@ -82,7 +89,7 @@ namespace BunnyLand.DesktopGL
             return entity;
         }
 
-        public Entity CreateBullet(Entity entity, Vector2 position, Vector2 velocity, TimeSpan totalGametime,
+        public Entity CreateBullet(Entity entity, Vector2 position, Vector2 velocity,
             TimeSpan lifeSpan)
         {
             var transform = new Transform2(position);
@@ -99,7 +106,7 @@ namespace BunnyLand.DesktopGL
 
             var sprite = new Sprite(textures.bullet);
             entity.Attach(sprite);
-            var lifetime = new Lifetime(totalGametime, lifeSpan);
+            var lifetime = new Lifetime(lifeSpan);
             entity.Attach(lifetime);
             return entity;
         }
