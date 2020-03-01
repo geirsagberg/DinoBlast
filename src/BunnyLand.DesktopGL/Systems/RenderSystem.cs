@@ -87,7 +87,7 @@ namespace BunnyLand.DesktopGL.Systems
                 });
             }
 
-            spriteBatch.DrawString(font, "AWSD: Move, Space: Boost, Shift: Toggle Brake/Glide",
+            spriteBatch.DrawString(font, "AWSD: Move, Space: Boost, Shift: Toggle Brake/Glide, Ctrl: Shoot",
                 Vector2.One, Color.White);
             Player.IfSome(player => spriteBatch.DrawString(font,
                 "Brakes: " + (player.IsBraking ? "On" : "Off"), new Vector2(1, 30), Color.White));
@@ -96,6 +96,8 @@ namespace BunnyLand.DesktopGL.Systems
 
             spriteBatch.DrawString(font, $"FPS: {smoothedFps}", new Vector2(1, 60),
                 Color.White);
+
+            spriteBatch.DrawString(font, $"IsRunningSlowly: {gameTime.IsRunningSlowly}", new Vector2(1, 90), Color.White);
 
             spriteBatch.End();
         }

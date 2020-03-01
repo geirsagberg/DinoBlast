@@ -31,6 +31,7 @@ namespace BunnyLand.DesktopGL.Systems
             entityFactory.CreateLevel(CreateEntity(), gameSettings.Width, gameSettings.Height);
             entityFactory.CreatePlanet(CreateEntity(), new Vector2(400, 400), 8000, 0.5f);
             entityFactory.CreatePlanet(CreateEntity(), new Vector2(800, 300), 12000, 0.8f);
+            entityFactory.CreatePlanet(CreateEntity(), new Vector2(800, 600), 0, 0.05f);
             entityFactory.CreatePlayer(CreateEntity(), new Vector2(100, 100));
             entityFactory.CreateBlock(CreateEntity(), new RectangleF(600, 600, 10, 200));
         }

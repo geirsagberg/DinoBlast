@@ -40,20 +40,18 @@ namespace BunnyLand.DesktopGL.Components
         {
             if (other.Bounds.Intersects(Bounds)) return other.Bounds.CalculatePenetrationVector(Bounds);
 
-            // var overlapResult = Bounds.TestOverlap(other)
-
             // Swept AABB / Circle algorithm
 
             var velocity = transform.Position - OldPosition;
             var otherVelocity = other.transform.Position - other.OldPosition;
-
             var oldDistance = other.OldPosition - OldPosition;
 
+            // Currently ignoring velocity of rectangles
             return Bounds switch {
                 RectangleF rect when other.Bounds is RectangleF otherRect => Vector2.Zero,
                 RectangleF rect when other.Bounds is CircleF otherCircle => Vector2.Zero,
-                CircleF circle when other.Bounds is RectangleF otherRect => Vector2.Zero,
-                CircleF circle when other.Bounds is CircleF otherCircle => CollisionHelper.CalculatePenetrationVector(circle, otherCircle, velocity, otherVelocity, oldDistance),
+                CircleF circle when other.Bounds is RectangleF otherRect => CollisionHelper.CalculatePenetrationVector(circle, otherRect, velocity),
+                CircleF circle when other.Bounds is CircleF otherCircle => CollisionHelper.CalculatePenetrationVector(circle, otherCircle, velocity, otherVelocity),
                 _ => throw new NotImplementedException()
             };
         }
