@@ -15,11 +15,13 @@ namespace BunnyLand.DesktopGL.Components
         {
             PlayerIndex = playerIndex;
         }
+        public DirectionalInputs DirectionalInputs { get; set; } = new DirectionalInputs();
 
         public PlayerIndex PlayerIndex { get; set; }
         public StandingOn StandingOn { get; set; }
         public PlayerState State { get; set; }
         public Facing Facing { get; set; }
+
         public bool IsBraking { get; set; } = true;
     }
 }

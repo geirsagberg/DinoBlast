@@ -99,7 +99,11 @@ namespace BunnyLand.DesktopGL
                 .AddSystemService<LifetimeSystem>()
                 .AddSystemService<InputSystem>()
                 .AddSystemService<PlayerSystem>()
+<<<<<<< HEAD
                 .AddSystemService<EmitterSystem>()
+=======
+                .AddSystemService<AcceleratorSystem>()
+>>>>>>> Can control player1 with controller
                 .AddSystemService<GravitySystem>()
                 .AddSystemService<PhysicsSystem>()
                 .AddSystemService<CollisionSystem>()

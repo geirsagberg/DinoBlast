@@ -6,10 +6,12 @@ using BunnyLand.DesktopGL.Enums;
 using BunnyLand.DesktopGL.Extensions;
 using LanguageExt;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Input;
 using MonoGame.Extended;
 using MonoGame.Extended.Entities;
 using MonoGame.Extended.Entities.Systems;
 using MonoGame.Extended.Input.InputListeners;
+using KeyState = BunnyLand.DesktopGL.Enums.KeyState;
 
 namespace BunnyLand.DesktopGL.Systems
 {
@@ -26,16 +28,24 @@ namespace BunnyLand.DesktopGL.Systems
             .GetValues(typeof(PlayerIndex))
             .Cast<PlayerIndex>().ToDictionary(i => i, _ => new System.Collections.Generic.HashSet<PlayerKey>());
 
+        // TODO: Can it just be a tuple of vector vector?
+        private readonly Dictionary<PlayerIndex, DirectionalInputs> directionalInputs =
+            Enum
+                .GetValues(typeof(PlayerIndex))
+                .Cast<PlayerIndex>().ToDictionary(i => i,
+                    _ => new DirectionalInputs());
+
         private readonly Variables variables;
 
         private ComponentMapper<Movable> movableMapper;
 
         private ComponentMapper<Player> playerMapper;
+        private ComponentMapper<Accelerator> acceleratorMapper;
 
         public InputSystem(KeyboardListener keyboardListener, IEnumerable<GamePadListener> gamePadListeners,
             IKeyMap keyMap, IButtonMap buttonMap,
             GameSettings gameSettings, Variables variables) : base(
-            Aspect.All(typeof(Player), typeof(Movable)))
+            Aspect.All(typeof(Player), typeof(Movable), typeof(Accelerator)))
         {
             this.keyboardListener = keyboardListener;
             this.gamePadListeners = gamePadListeners.ToDictionary(l => l.PlayerIndex);
@@ -60,6 +70,22 @@ namespace BunnyLand.DesktopGL.Systems
 
         private void OnThumbStickMoved(object? sender, GamePadEventArgs e)
         {
+            // TODO: Use accelerable
+            var button = e.Button;
+            var stickState = e.ThumbStickState;
+            var playerIndex = e.PlayerIndex;
+
+            if (button.HasFlag(Buttons.LeftStick)) {
+                var direction = new Vector2(stickState.X, -stickState.Y);
+
+                directionalInputs[playerIndex].AccelerationDirection = direction;
+                Console.WriteLine($"Setting dirInput for p${playerIndex} to ${direction}");
+                // Stupid hack because Process is never called
+                players.TryGetValue(playerIndex)
+                    .IfSome(player => player.DirectionalInputs.AccelerationDirection = direction);
+            } else {
+                directionalInputs[playerIndex].AimDirection = stickState;
+            }
         }
 
         private void OnButtonUp(object? sender, GamePadEventArgs e)
@@ -116,17 +142,27 @@ namespace BunnyLand.DesktopGL.Systems
         {
             playerMapper = mapperService.GetMapper<Player>();
             movableMapper = mapperService.GetMapper<Movable>();
+            acceleratorMapper = mapperService.GetMapper<Accelerator>();
         }
 
         public override void Process(GameTime gameTime, int entityId)
         {
+            // TODO: Process blir aldri kalt?
+            // TODO: Process blir aldri kalt?
+            // TODO: Process blir aldri kalt?
+            Console.WriteLine("Poo");
+
             var player = playerMapper.Get(entityId);
             var movable = movableMapper.Get(entityId);
+            var accelerator = acceleratorMapper.Get(entityId);
 
             var keys = pressedKeys[player.PlayerIndex];
 
             UpdatePlayerKeys(player, keys);
+            player.DirectionalInputs = directionalInputs[player.PlayerIndex];
+            accelerator.IntendedAcceleration = directionalInputs[player.PlayerIndex].AccelerationDirection;
 
+            /*
             movable.Acceleration = player.StandingOn switch {
                 StandingOn.Nothing => ResultAcceleration(keys, movable.Velocity),
                 StandingOn.Planet => Vector2.Zero,
@@ -134,9 +170,10 @@ namespace BunnyLand.DesktopGL.Systems
             };
 
             movable.BrakingForce = player.IsBraking
-                && (movable.Acceleration == Vector2.Zero || gameSettings.BrakeWhileJetpacking)
-                    ? variables.Global[GlobalVariable.BrakePower]
-                    : 0;
+                                   && (movable.Acceleration == Vector2.Zero || gameSettings.BrakeWhileJetpacking)
+                ? variables.Global[GlobalVariable.BrakePower]
+                : 0;
+                */
         }
 
         private static void UpdatePlayerKeys(Player player, System.Collections.Generic.HashSet<PlayerKey> keys)
@@ -164,9 +201,11 @@ namespace BunnyLand.DesktopGL.Systems
             var accelerationMultiplier = isBoosting ? jetpackBoostAcceleration : jetpackAcceleration;
 
             var attemptedAcceleration = new Vector2(
-                    (keys.Contains(PlayerKey.Left) ? -1 : 0) + (keys.Contains(PlayerKey.Right) ? 1 : 0),
-                    (keys.Contains(PlayerKey.Up) ? -1 : 0) + (keys.Contains(PlayerKey.Down) ? 1 : 0))
-                .NormalizedOrZero() * accelerationMultiplier;
+                                                (keys.Contains(PlayerKey.Left) ? -1 : 0)
+                                                + (keys.Contains(PlayerKey.Right) ? 1 : 0),
+                                                (keys.Contains(PlayerKey.Up) ? -1 : 0)
+                                                + (keys.Contains(PlayerKey.Down) ? 1 : 0))
+                                            .NormalizedOrZero() * accelerationMultiplier;
 
             var attemptedNewVelocity = currentVelocity + attemptedAcceleration;
 
