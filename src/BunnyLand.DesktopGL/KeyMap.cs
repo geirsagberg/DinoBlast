@@ -6,6 +6,7 @@ namespace BunnyLand.DesktopGL
 {
     public class KeyMap : IKeyMap
     {
+        // TODO: Improve player-index assignment. Gamepads are assigned 1,2,3,4. WASD is hardcoded to 1.
         public Option<(PlayerIndex index, PlayerKey key)> GetKey(Keys keys) => keys switch {
             Keys.A => (PlayerIndex.One, PlayerKey.Left),
             Keys.D => (PlayerIndex.One, PlayerKey.Right),
