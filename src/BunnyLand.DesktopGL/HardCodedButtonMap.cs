@@ -14,6 +14,7 @@ namespace BunnyLand.DesktopGL
             Buttons.A => PlayerKey.Jump,
             Buttons.B => PlayerKey.ToggleBrake,
             Buttons.RightTrigger => PlayerKey.Fire,
+            Buttons.LeftTrigger => PlayerKey.Jump,
             _ => Option<PlayerKey>.None
         };
 

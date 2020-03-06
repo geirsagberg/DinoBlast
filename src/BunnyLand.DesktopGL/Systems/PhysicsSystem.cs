@@ -61,7 +61,9 @@ namespace BunnyLand.DesktopGL.Systems
             bodyMapper.TryGet(entityId).IfSome(body => body.OldPosition = transform.Position);
             transform.Position += movable.Velocity * elapsedTicks;
 
-            Level.IfSome(level => transform.Wrap(level.Bounds));
+            if (movable.WrapAround) {
+                Level.IfSome(level => transform.Wrap(level.Bounds));
+            }
         }
     }
 }

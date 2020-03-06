@@ -34,7 +34,8 @@ namespace BunnyLand.DesktopGL
                 PreferredBackBufferWidth = gameSettings.Width,
                 PreferredBackBufferHeight = gameSettings.Height,
                 PreferMultiSampling = true,
-                SynchronizeWithVerticalRetrace = gameSettings.VSyncEnabled
+                SynchronizeWithVerticalRetrace = gameSettings.VSyncEnabled,
+                IsFullScreen = gameSettings.FullScreen
             };
 
             Content.RootDirectory = "Content";

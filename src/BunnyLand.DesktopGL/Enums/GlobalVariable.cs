@@ -14,6 +14,7 @@
         GameSpeed,
         DebugVectorMultiplier,
         BulletSpeed,
-        FiringInterval
+        FiringInterval,
+        BulletLifespan
     }
 }

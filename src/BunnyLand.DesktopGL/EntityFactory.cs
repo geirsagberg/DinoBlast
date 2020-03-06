@@ -102,7 +102,9 @@ namespace BunnyLand.DesktopGL
             var transform = new Transform2(position);
             entity.Attach(transform);
             var movable = new Movable(transform) {
-                Velocity = velocity
+                Velocity = velocity,
+                GravityMultiplier = 0.3f,
+                WrapAround = false
             };
             entity.Attach(movable);
             var collisionBody = new CollisionBody(new CircleF(Point2.Zero, 1), transform,

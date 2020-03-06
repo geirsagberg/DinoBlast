@@ -19,7 +19,8 @@ namespace BunnyLand.DesktopGL
             {GlobalVariable.GameSpeed, 1f},
             {GlobalVariable.DebugVectorMultiplier, 10f},
             {GlobalVariable.BulletSpeed, 20f},
-            {GlobalVariable.FiringInterval, 0.2f}
+            {GlobalVariable.FiringInterval, 0.2f},
+            {GlobalVariable.BulletLifespan, 1f},
         };
 
         public IReadOnlyDictionary<GlobalVariable, float> Global => global;

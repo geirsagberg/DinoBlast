@@ -129,7 +129,11 @@ namespace BunnyLand.DesktopGL.Systems
             spriteBatch.Draw(sprite, transform);
             // spriteBatch.DrawRectangle(sprite.GetBoundingRectangle(transform), Color.Beige);
 
-            DrawLevelWrapping(sprite, transform);
+            movableMapper.TryGet(entity).IfSome(movable => {
+                if (movable.WrapAround) {
+                    DrawLevelWrapping(sprite, transform);
+                }
+            });
         }
 
         private int GetSmoothedFps(GameTime gameTime)

@@ -49,7 +49,7 @@ namespace BunnyLand.DesktopGL.Systems
 
                             entityFactory.CreateBullet(entity,
                                 movable.Position + player.DirectionalInputs.AimDirection.NormalizedCopy() * 20,
-                                velocity, TimeSpan.FromSeconds(4));
+                                velocity, TimeSpan.FromSeconds(variables.Global[GlobalVariable.BulletLifespan]));
                         };
                     });
                 });

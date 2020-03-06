@@ -15,6 +15,7 @@ namespace BunnyLand.DesktopGL.Components
         public Vector2 GravityPull { get; set; }
 
         public float BrakingForce { get; set; }
+        public bool WrapAround { get; set; } = true;
 
         public Movable(Transform2 transform, float gravityMultiplier = 1)
         {
