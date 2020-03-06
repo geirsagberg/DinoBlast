@@ -29,12 +29,12 @@ namespace BunnyLand.DesktopGL.Systems
         private void SetupEntities()
         {
             entityFactory.CreateLevel(CreateEntity(), gameSettings.Width, gameSettings.Height);
-            entityFactory.CreatePlanet(CreateEntity(), new Vector2(400, 400), 8000, 0.5f);
-            entityFactory.CreatePlanet(CreateEntity(), new Vector2(800, 300), 12000, 0.8f);
-            entityFactory.CreatePlanet(CreateEntity(), new Vector2(800, 600), 0, 0.05f);
+            entityFactory.CreatePlanet(CreateEntity(), new Vector2(250, 500), 3000, 0.3f);
+            entityFactory.CreatePlanet(CreateEntity(), new Vector2(700, 300), 5000, 0.5f);
             entityFactory.CreatePlayer(CreateEntity(), new Vector2(100, 100), PlayerIndex.One);
             entityFactory.CreatePlayer(CreateEntity(), new Vector2(800, 700), PlayerIndex.Two);
-            entityFactory.CreateBlock(CreateEntity(), new RectangleF(600, 600, 10, 200));
+            // entityFactory.CreatePlanet(CreateEntity(), new Vector2(800, 600), 0, 0.05f);
+            // entityFactory.CreateBlock(CreateEntity(), new RectangleF(600, 600, 10, 200));
         }
 
         protected override void OnEntityAdded(int entityId)
