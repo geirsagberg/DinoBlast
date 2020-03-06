@@ -12,12 +12,26 @@ namespace BunnyLand.DesktopGL.Resources
         {
         }
 
+        [Description("Fonts/arial_0")]
+        public Texture2D arial0 { get; set; }
+        [Description("Fonts/bryndan-large_0")]
+        public Texture2D bryndanlarge0 { get; set; }
+        [Description("Fonts/bryndan-large_1")]
+        public Texture2D bryndanlarge1 { get; set; }
+        [Description("Fonts/bryndan-medium_0")]
+        public Texture2D bryndanmedium0 { get; set; }
+        [Description("Fonts/bryndan-small_0")]
+        public Texture2D bryndansmall0 { get; set; }
+        [Description("Textures/Anki")]
+        public Texture2D Anki { get; set; }
         [Description("Textures/black-hole")]
         public Texture2D blackhole { get; set; }
         [Description("Textures/blood")]
         public Texture2D blood { get; set; }
         [Description("Textures/blood2")]
         public Texture2D blood2 { get; set; }
+        [Description("Textures/Bronch")]
+        public Texture2D Bronch { get; set; }
         [Description("Textures/bullet")]
         public Texture2D bullet { get; set; }
         [Description("Textures/bunny-sprites")]
@@ -28,6 +42,10 @@ namespace BunnyLand.DesktopGL.Resources
         public Texture2D Explotion { get; set; }
         [Description("Textures/Handweapon")]
         public Texture2D Handweapon { get; set; }
+        [Description("Textures/mini-Anki")]
+        public Texture2D miniAnki { get; set; }
+        [Description("Textures/minibronch")]
+        public Texture2D minibronch { get; set; }
         [Description("Textures/PlayerAnimation")]
         public Texture2D PlayerAnimation { get; set; }
         [Description("Textures/testmap")]

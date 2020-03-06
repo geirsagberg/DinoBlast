@@ -23,6 +23,12 @@ namespace BunnyLand.DesktopGL
             this.variables = variables;
         }
 
+        private Sprite GetAnkiSprite()
+        {
+            var sprite = new Sprite(textures.miniAnki);
+            return sprite;
+        }
+
         private AnimatedSprite GetPlayerSprite()
         {
             var atlas = TextureAtlas.Create("bunny", textures.PlayerAnimation, 35, 50);
@@ -45,8 +51,8 @@ namespace BunnyLand.DesktopGL
         {
             var transform = new Transform2(position);
             entity.Attach(transform);
-            var animatedSprite = GetPlayerSprite();
-            entity.Attach(animatedSprite);
+            var sprite = GetAnkiSprite();
+            entity.Attach(sprite);
             entity.Attach(new CollisionBody(new CircleF(Point2.Zero, 15), transform, ColliderTypes.Player,
                 ColliderTypes.Player | ColliderTypes.Projectile | ColliderTypes.Static));
             entity.Attach(new Player(playerIndex));
