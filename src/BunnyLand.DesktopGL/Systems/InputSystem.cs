@@ -74,14 +74,12 @@ namespace BunnyLand.DesktopGL.Systems
             var button = e.Button;
             var stickState = e.ThumbStickState;
             var playerIndex = e.PlayerIndex;
+            var direction = new Vector2(stickState.X, -stickState.Y);
 
             if (button.HasFlag(Buttons.LeftStick)) {
-                var direction = new Vector2(stickState.X, -stickState.Y);
-
-                // Console.WriteLine($"Setting dirInput for p${playerIndex} to ${direction}");
                 HandleAccelerationInput(playerIndex, direction);
             } else {
-                // TODO
+                HandleAimInput(playerIndex, direction);
             }
         }
 
@@ -112,6 +110,12 @@ namespace BunnyLand.DesktopGL.Systems
         {
             players.TryGetValue(index)
                 .IfSome(player => player.DirectionalInputs.AccelerationDirection = acceleration);
+        }
+
+        private void HandleAimInput(PlayerIndex index, Vector2 aimVector)
+        {
+            players.TryGetValue(index)
+                .IfSome(player => player.DirectionalInputs.AimDirection = aimVector);
 
         }
 
