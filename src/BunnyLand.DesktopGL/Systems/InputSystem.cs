@@ -129,7 +129,11 @@ namespace BunnyLand.DesktopGL.Systems
         private void HandleAimInput(PlayerIndex index, Vector2 aimVector)
         {
             players.TryGetValue(index)
-                .IfSome(player => player.DirectionalInputs.AimDirection = aimVector.NormalizedOrZero());
+                .IfSome(player => {
+                    if (aimVector.Length() > 0.1) {
+                        player.DirectionalInputs.AimDirection = aimVector.NormalizedOrZero();
+                    }
+                });
         }
 
         private void HandlePlayerKeyInput(PlayerIndex index, PlayerKey key, bool released = false)

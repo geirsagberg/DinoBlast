@@ -13,7 +13,7 @@ namespace BunnyLand.DesktopGL
             Buttons.DPadRight => PlayerKey.Right,
             Buttons.A => PlayerKey.Jump,
             Buttons.B => PlayerKey.ToggleBrake,
-            Buttons.X => PlayerKey.Fire,
+            Buttons.RightTrigger => PlayerKey.Fire,
             _ => Option<PlayerKey>.None
         };
 
