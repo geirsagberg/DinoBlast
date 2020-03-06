@@ -71,8 +71,6 @@ namespace BunnyLand.DesktopGL.Systems
 
         private void OnThumbStickMoved(object? sender, GamePadEventArgs e)
         {
-            // TODO: Use accelerable?
-
             var button = e.Button;
             var stickState = e.ThumbStickState;
             var playerIndex = e.PlayerIndex;
@@ -80,10 +78,10 @@ namespace BunnyLand.DesktopGL.Systems
             if (button.HasFlag(Buttons.LeftStick)) {
                 var direction = new Vector2(stickState.X, -stickState.Y);
 
-                directionalInputs[playerIndex].AccelerationDirection = direction;
                 // Console.WriteLine($"Setting dirInput for p${playerIndex} to ${direction}");
+                HandleAccelerationInput(playerIndex, direction);
             } else {
-                directionalInputs[playerIndex].AimDirection = stickState;
+                // TODO
             }
         }
 
@@ -110,23 +108,41 @@ namespace BunnyLand.DesktopGL.Systems
                 .IfSome(t => HandlePlayerKeyPressed(t.index, t.key));
         }
 
+        private void HandleAccelerationInput(PlayerIndex index, Vector2 acceleration)
+        {
+            players.TryGetValue(index)
+                .IfSome(player => player.DirectionalInputs.AccelerationDirection = acceleration);
+
+        }
+
         private void HandlePlayerKeyPressed(PlayerIndex index, PlayerKey key)
         {
             pressedKeys[index].Add(key);
 
-            // TODO: Should probably only mutate player inside Process method
             switch (key) {
                 case PlayerKey.ToggleBrake:
                     players.TryGetValue(index)
                         .IfSome(player => player.IsBraking = !player.IsBraking);
                     break;
             }
+
+            if (key.IsDirectionInput()) {
+                var direction = KeysToDirectionalInput(pressedKeys[index]);
+                HandleAccelerationInput(index, direction);
+            }
         }
 
         private void OnKeyReleased(object? sender, KeyboardEventArgs e)
         {
             keyMap.GetKey(e.Key)
-                .IfSome(t => pressedKeys[t.index].Remove(t.key));
+                .IfSome(t => {
+                    pressedKeys[t.index].Remove(t.key);
+
+                    if (t.key.IsDirectionInput()) {
+                        var direction = KeysToDirectionalInput(pressedKeys[t.index]);
+                        HandleAccelerationInput(t.index, direction);
+                    }
+                });
         }
 
         public new void Dispose()
@@ -158,7 +174,6 @@ namespace BunnyLand.DesktopGL.Systems
             var keys = pressedKeys[player.PlayerIndex];
 
             UpdatePlayerKeys(player, keys);
-            player.DirectionalInputs = directionalInputs[player.PlayerIndex];
 
             // Temp hack to also allow arrow keys
             /*
