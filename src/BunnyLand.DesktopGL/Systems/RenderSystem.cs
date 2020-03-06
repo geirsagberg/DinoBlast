@@ -114,6 +114,13 @@ namespace BunnyLand.DesktopGL.Systems
             var transform = transformMapper.Get(entity);
 
             playerMapper.TryGet(entity).IfSome(player => {
+                sprite.Color = player.PlayerIndex switch {
+                    PlayerIndex.One => new Color(128, 128, 255),
+                    PlayerIndex.Two => new Color(255, 128, 128),
+                    PlayerIndex.Three => Color.Yellow,
+                    PlayerIndex.Four => Color.Green,
+                    _ => Color.White
+                };
                 healthMapper.TryGet(entity).IfSome(health => {
                     transform.Scale = Vector2.One * health.CurrentHealth / health.MaxHealth;
                 });

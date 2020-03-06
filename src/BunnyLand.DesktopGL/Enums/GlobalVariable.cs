@@ -13,6 +13,7 @@
         BrakePower,
         GameSpeed,
         DebugVectorMultiplier,
-        BulletSpeed
+        BulletSpeed,
+        FiringRate
     }
 }
