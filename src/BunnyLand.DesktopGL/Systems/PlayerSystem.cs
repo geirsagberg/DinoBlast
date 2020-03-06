@@ -43,7 +43,7 @@ namespace BunnyLand.DesktopGL.Systems
 
                     emitterMapper.TryGet(entityId).IfSome(emitter => {
                         emitter.IsEmitting = isShooting;
-                        emitter.EmitInterval = TimeSpan.FromSeconds(variables.Global[GlobalVariable.FiringRate]);
+                        emitter.EmitInterval = TimeSpan.FromSeconds(variables.Global[GlobalVariable.FiringInterval]);
                         emitter.Emit ??= entity => {
                             var velocity = movable.Velocity + player.DirectionalInputs.AimDirection * variables.Global[GlobalVariable.BulletSpeed];
 

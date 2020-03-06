@@ -4,11 +4,13 @@ using System.Diagnostics;
 using System.Linq;
 using BunnyLand.DesktopGL.Components;
 using BunnyLand.DesktopGL.Extensions;
+using BunnyLand.DesktopGL.Messages;
 using LanguageExt;
 using Microsoft.Xna.Framework;
 using MonoGame.Extended;
 using MonoGame.Extended.Entities;
 using MonoGame.Extended.Entities.Systems;
+using PubSub;
 
 namespace BunnyLand.DesktopGL.Systems
 {
@@ -27,6 +29,7 @@ namespace BunnyLand.DesktopGL.Systems
         private ComponentMapper<Health> healthMapper;
         private ComponentMapper<Level> levelMapper;
         private ComponentMapper<Movable> movableMapper;
+        private ComponentMapper<Player> playerMapper;
 
         private int timeSpanCounter;
 
@@ -46,6 +49,7 @@ namespace BunnyLand.DesktopGL.Systems
             levelMapper = mapperService.GetMapper<Level>();
             healthMapper = mapperService.GetMapper<Health>();
             damagingMapper = mapperService.GetMapper<Damaging>();
+            playerMapper = mapperService.GetMapper<Player>();
         }
 
         protected override void OnEntityAdded(int entityId)
@@ -108,6 +112,8 @@ namespace BunnyLand.DesktopGL.Systems
                                 health.CurrentHealth -= damaging.Damage;
                                 if (health.CurrentHealth < 0) {
                                     DestroyEntity(other);
+                                    playerMapper.TryGet(other).IfSome(player =>
+                                        Hub.Default.Publish(new RespawnPlayerMessage(player.PlayerIndex)));
                                 }
                             }));
                         var otherBody = bodyMapper.Get(other);
@@ -121,7 +127,6 @@ namespace BunnyLand.DesktopGL.Systems
                                 DestroyEntity(entityId);
                                 break;
                         }
-
                     }
                 });
             });

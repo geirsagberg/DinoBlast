@@ -1,4 +1,7 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using BunnyLand.DesktopGL.Components;
+using BunnyLand.DesktopGL.Extensions;
 using BunnyLand.DesktopGL.Messages;
 using Microsoft.Xna.Framework;
 using MonoGame.Extended;
@@ -13,17 +16,30 @@ namespace BunnyLand.DesktopGL.Systems
         private readonly HashSet<int> entities = new HashSet<int>();
         private readonly EntityFactory entityFactory;
         private readonly GameSettings gameSettings;
+        private readonly Random random;
+        private ComponentMapper<Player> playerMapper;
+        private readonly Dictionary<PlayerIndex, int> playerEntities = new Dictionary<PlayerIndex, int>();
+        private ComponentMapper<Health> healthMapper;
 
-        public BattleSystem(EntityFactory entityFactory, GameSettings gameSettings) : base(Aspect.All())
+        public BattleSystem(EntityFactory entityFactory, GameSettings gameSettings, Random random) : base(Aspect.All())
         {
             this.entityFactory = entityFactory;
             this.gameSettings = gameSettings;
+            this.random = random;
             Hub.Default.Subscribe((ResetWorldMessage _) => {
                 foreach (var entity in entities) {
                     DestroyEntity(entity);
                 }
                 SetupEntities();
             });
+            Hub.Default.Subscribe((RespawnPlayerMessage msg) => RespawnPlayer(msg.PlayerIndex));
+        }
+
+        public void RespawnPlayer(PlayerIndex playerIndex)
+        {
+            entityFactory.CreatePlayer(CreateEntity(),
+                new Vector2(gameSettings.Width * random.NextSingle(), gameSettings.Height * random.NextSingle()),
+                playerIndex);
         }
 
         private void SetupEntities()
@@ -40,6 +56,7 @@ namespace BunnyLand.DesktopGL.Systems
         protected override void OnEntityAdded(int entityId)
         {
             entities.Add(entityId);
+            playerMapper.TryGet(entityId).IfSome(player => playerEntities[player.PlayerIndex] = entityId);
         }
 
         protected override void OnEntityRemoved(int entityId)
@@ -49,6 +66,8 @@ namespace BunnyLand.DesktopGL.Systems
 
         public override void Initialize(IComponentMapperService mapperService)
         {
+            playerMapper = mapperService.GetMapper<Player>();
+            healthMapper = mapperService.GetMapper<Health>();
         }
     }
 }
