@@ -40,12 +40,12 @@ namespace BunnyLand.DesktopGL.Systems
         private ComponentMapper<Movable> movableMapper;
 
         private ComponentMapper<Player> playerMapper;
-        private ComponentMapper<Accelerator> acceleratorMapper;
+        // private ComponentMapper<Accelerator> acceleratorMapper;
 
         public InputSystem(KeyboardListener keyboardListener, IEnumerable<GamePadListener> gamePadListeners,
             IKeyMap keyMap, IButtonMap buttonMap,
             GameSettings gameSettings, Variables variables) : base(
-            Aspect.All(typeof(Player), typeof(Movable), typeof(Accelerator)))
+            Aspect.All(typeof(Player), typeof(Movable)))
         {
             this.keyboardListener = keyboardListener;
             this.gamePadListeners = gamePadListeners.ToDictionary(l => l.PlayerIndex);
@@ -70,7 +70,8 @@ namespace BunnyLand.DesktopGL.Systems
 
         private void OnThumbStickMoved(object? sender, GamePadEventArgs e)
         {
-            // TODO: Use accelerable
+            // TODO: Use accelerable?
+
             var button = e.Button;
             var stickState = e.ThumbStickState;
             var playerIndex = e.PlayerIndex;
@@ -80,9 +81,6 @@ namespace BunnyLand.DesktopGL.Systems
 
                 directionalInputs[playerIndex].AccelerationDirection = direction;
                 Console.WriteLine($"Setting dirInput for p${playerIndex} to ${direction}");
-                // Stupid hack because Process is never called
-                players.TryGetValue(playerIndex)
-                    .IfSome(player => player.DirectionalInputs.AccelerationDirection = direction);
             } else {
                 directionalInputs[playerIndex].AimDirection = stickState;
             }
@@ -111,6 +109,8 @@ namespace BunnyLand.DesktopGL.Systems
         private void HandlePlayerKeyPressed(PlayerIndex index, PlayerKey key)
         {
             pressedKeys[index].Add(key);
+
+            // TODO: Should probably only mutate player inside Process method
             switch (key) {
                 case PlayerKey.ToggleBrake:
                     players.TryGetValue(index)
@@ -142,25 +142,25 @@ namespace BunnyLand.DesktopGL.Systems
         {
             playerMapper = mapperService.GetMapper<Player>();
             movableMapper = mapperService.GetMapper<Movable>();
-            acceleratorMapper = mapperService.GetMapper<Accelerator>();
+            // acceleratorMapper = mapperService.GetMapper<Accelerator>();
         }
 
         public override void Process(GameTime gameTime, int entityId)
         {
-            // TODO: Process blir aldri kalt?
-            // TODO: Process blir aldri kalt?
-            // TODO: Process blir aldri kalt?
-            Console.WriteLine("Poo");
-
             var player = playerMapper.Get(entityId);
             var movable = movableMapper.Get(entityId);
-            var accelerator = acceleratorMapper.Get(entityId);
+            // var accelerator = acceleratorMapper.Get(entityId);
 
             var keys = pressedKeys[player.PlayerIndex];
 
             UpdatePlayerKeys(player, keys);
             player.DirectionalInputs = directionalInputs[player.PlayerIndex];
-            accelerator.IntendedAcceleration = directionalInputs[player.PlayerIndex].AccelerationDirection;
+
+            // Temp hack to also allow arrow keys
+            if (directionalInputs[player.PlayerIndex].AccelerationDirection.Length() < 0.1) {
+                player.DirectionalInputs.AccelerationDirection = KeysToDirectionalInput(keys);
+            }
+            // accelerator.IntendedAcceleration = directionalInputs[player.PlayerIndex].AccelerationDirection;
 
             /*
             movable.Acceleration = player.StandingOn switch {
@@ -188,33 +188,16 @@ namespace BunnyLand.DesktopGL.Systems
                         : KeyState.None));
         }
 
-        private Vector2 ResultAcceleration(ICollection<PlayerKey> keys,
-            Vector2 currentVelocity)
+        private Vector2 KeysToDirectionalInput(ICollection<PlayerKey> keys)
         {
-            var jetpackMaxSpeed = variables.Global[GlobalVariable.JetpackMaxSpeed];
-            var jetpackBoostMaxSpeed = variables.Global[GlobalVariable.JetpackBoostMaxSpeed];
-
-            var jetpackAcceleration = variables.Global[GlobalVariable.JetpackAcceleration];
-            var jetpackBoostAcceleration = variables.Global[GlobalVariable.JetpackBoostAcceleration];
-
-            var isBoosting = keys.Contains(PlayerKey.Jump);
-            var accelerationMultiplier = isBoosting ? jetpackBoostAcceleration : jetpackAcceleration;
-
             var attemptedAcceleration = new Vector2(
-                                                (keys.Contains(PlayerKey.Left) ? -1 : 0)
-                                                + (keys.Contains(PlayerKey.Right) ? 1 : 0),
-                                                (keys.Contains(PlayerKey.Up) ? -1 : 0)
-                                                + (keys.Contains(PlayerKey.Down) ? 1 : 0))
-                                            .NormalizedOrZero() * accelerationMultiplier;
-
-            var attemptedNewVelocity = currentVelocity + attemptedAcceleration;
-
-            var actualNewVelocity = attemptedNewVelocity.Truncate(Math.Max(currentVelocity.Length(),
-                isBoosting ? jetpackBoostMaxSpeed : jetpackMaxSpeed));
-
-            var actualAcceleration = actualNewVelocity - currentVelocity;
-
-            return actualAcceleration;
+                    (keys.Contains(PlayerKey.Left) ? -1 : 0)
+                    + (keys.Contains(PlayerKey.Right) ? 1 : 0),
+                    (keys.Contains(PlayerKey.Up) ? -1 : 0)
+                    + (keys.Contains(PlayerKey.Down) ? 1 : 0))
+                .NormalizedOrZero();
+            Console.WriteLine($"Keyboard direction: ${attemptedAcceleration}");
+            return attemptedAcceleration;
         }
     }
 }
