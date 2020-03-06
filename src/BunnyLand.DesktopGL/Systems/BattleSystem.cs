@@ -33,7 +33,7 @@ namespace BunnyLand.DesktopGL.Systems
             entityFactory.CreatePlanet(CreateEntity(), new Vector2(800, 300), 12000, 0.8f);
             entityFactory.CreatePlanet(CreateEntity(), new Vector2(800, 600), 0, 0.05f);
             entityFactory.CreatePlayer(CreateEntity(), new Vector2(100, 100), PlayerIndex.One);
-            entityFactory.CreatePlayer(CreateEntity(), new Vector2(800, 800), PlayerIndex.Two);
+            entityFactory.CreatePlayer(CreateEntity(), new Vector2(800, 700), PlayerIndex.Two);
             entityFactory.CreateBlock(CreateEntity(), new RectangleF(600, 600, 10, 200));
         }
 
