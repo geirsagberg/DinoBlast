@@ -60,7 +60,7 @@ namespace BunnyLand.DesktopGL
             entity.Attach(new Health(100));
 
             var emitter = new Emitter {
-                EmitInterval = TimeSpan.FromSeconds(0.01)
+                EmitInterval = TimeSpan.FromSeconds(0.1)
             };
             entity.Attach(emitter);
 
@@ -102,7 +102,7 @@ namespace BunnyLand.DesktopGL
             var transform = new Transform2(position);
             entity.Attach(transform);
             var movable = new Movable(transform) {
-                Velocity = velocity * variables.Global[GlobalVariable.BulletSpeed]
+                Velocity = velocity
             };
             entity.Attach(movable);
             var collisionBody = new CollisionBody(new CircleF(Point2.Zero, 1), transform,

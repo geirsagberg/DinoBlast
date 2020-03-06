@@ -38,20 +38,18 @@ namespace BunnyLand.DesktopGL.Systems
         public override void Process(GameTime gameTime, int entityId)
         {
             playerMapper.TryGet(entityId).IfSome(player => {
-                transformMapper.TryGet(entityId).IfSome(transform => {
-                    movableMapper.TryGet(entityId).IfSome(movable => {
-                        var isShooting = player.PlayerKeys[PlayerKey.Fire].HasFlag(KeyState.Pressed);
+                movableMapper.TryGet(entityId).IfSome(movable => {
+                    var isShooting = player.PlayerKeys[PlayerKey.Fire].HasFlag(KeyState.Pressed);
 
-                        emitterMapper.TryGet(entityId).IfSome(emitter => {
-                            emitter.IsEmitting = isShooting;
-                            emitter.Emit ??= entity => {
-                                var velocity = movable.Velocity + random.NextUnitVector();
+                    emitterMapper.TryGet(entityId).IfSome(emitter => {
+                        emitter.IsEmitting = isShooting;
+                        emitter.Emit ??= entity => {
+                            var velocity = movable.Velocity + player.DirectionalInputs.AimDirection * variables.Global[GlobalVariable.BulletSpeed];
 
-                                entityFactory.CreateBullet(entity,
-                                    transform.Position + velocity.NormalizedCopy() * 16,
-                                    velocity, TimeSpan.FromSeconds(4));
-                            };
-                        });
+                            entityFactory.CreateBullet(entity,
+                                movable.Position + player.DirectionalInputs.AimDirection.NormalizedCopy() * 20,
+                                velocity, TimeSpan.FromSeconds(4));
+                        };
                     });
                 });
             });

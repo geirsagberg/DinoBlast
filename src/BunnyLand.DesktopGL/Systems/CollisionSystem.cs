@@ -117,6 +117,7 @@ namespace BunnyLand.DesktopGL.Systems
                                 movable.Velocity += penetrationVector / elapsedTicks;
                                 break;
                             case ColliderTypes.Projectile:
+                                movable.Transform.Position += penetrationVector;
                                 DestroyEntity(entityId);
                                 break;
                         }
