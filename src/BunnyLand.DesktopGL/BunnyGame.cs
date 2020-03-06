@@ -25,7 +25,7 @@ namespace BunnyLand.DesktopGL
 
         protected GraphicsDeviceManager Graphics { get; }
 
-        private new IServiceProvider Services { get; set; } = null!;
+        private new IServiceProvider Services { get; set; }
 
         public BunnyGame(GameSettings gameSettings)
         {
@@ -76,14 +76,16 @@ namespace BunnyLand.DesktopGL
                 return spriteFonts;
             });
             services.AddSingleton<ScreenManager>();
+
+            services.AddSingleton(provider => new MouseListener(provider.GetService<ViewportAdapter>()));
             services.AddSingleton(new KeyboardListener(new KeyboardListenerSettings {RepeatPress = false}));
             services.AddSingleton(new GamePadListener(new GamePadListenerSettings(PlayerIndex.One)));
             services.AddSingleton(new GamePadListener(new GamePadListenerSettings(PlayerIndex.Two)));
             services.AddSingleton(new GamePadListener(new GamePadListenerSettings(PlayerIndex.Three)));
             services.AddSingleton(new GamePadListener(new GamePadListenerSettings(PlayerIndex.Four)));
             services.AddSingleton(provider =>
-                provider.GetServices<GamePadListener>().Cast<InputListener>()
-                    .Concat(provider.GetServices<KeyboardListener>()).ToArray());
+                new InputListener[] {provider.GetService<MouseListener>(), provider.GetService<KeyboardListener>()}
+                    .Concat(provider.GetServices<GamePadListener>()));
             services.AddSingleton<InputListenerComponent>();
 
             services.AddSingleton<ViewportAdapter, DefaultViewportAdapter>();

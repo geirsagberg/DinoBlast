@@ -46,10 +46,6 @@ namespace BunnyLand.DesktopGL.Systems
             // TODO: How to handle keyboard keys (WASD) vs Controller inputs? How to know which to use?
             var intendedAcceleration = player.DirectionalInputs.AccelerationDirection;
 
-            if (intendedAcceleration.X > 0.5 || intendedAcceleration.Y > 0.5) {
-                var kake = 5;
-            }
-
             movable.Acceleration = player.StandingOn switch {
                 StandingOn.Nothing => ResultAcceleration(player.PlayerKeys, intendedAcceleration, movable.Velocity),
                 StandingOn.Planet => Vector2.Zero,

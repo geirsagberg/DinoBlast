@@ -17,6 +17,7 @@ namespace BunnyLand.DesktopGL.Systems
     {
         private readonly IButtonMap buttonMap;
         private readonly IDictionary<PlayerIndex, GamePadListener> gamePadListeners;
+        private readonly MouseListener mouseListener;
         private readonly KeyboardListener keyboardListener;
         private readonly IKeyMap keyMap;
         private readonly IDictionary<PlayerIndex, Player> players = new Dictionary<PlayerIndex, Player>();
@@ -28,15 +29,17 @@ namespace BunnyLand.DesktopGL.Systems
         private ComponentMapper<Player> playerMapper;
         // private ComponentMapper<Accelerator> acceleratorMapper;
 
-        public InputSystem(KeyboardListener keyboardListener, IEnumerable<GamePadListener> gamePadListeners,
+        public InputSystem(MouseListener mouseListener, KeyboardListener keyboardListener, IEnumerable<GamePadListener> gamePadListeners,
             IKeyMap keyMap, IButtonMap buttonMap) : base(
             Aspect.All(typeof(Player)))
         {
+            this.mouseListener = mouseListener;
             this.keyboardListener = keyboardListener;
             this.gamePadListeners = gamePadListeners.ToDictionary(l => l.PlayerIndex);
             this.keyMap = keyMap;
             this.buttonMap = buttonMap;
 
+            mouseListener.MouseMoved += OnMouseMoved;
             keyboardListener.KeyPressed += OnKeyPressed;
             keyboardListener.KeyReleased += OnKeyReleased;
             foreach (var gamePadListener in this.gamePadListeners.Values) {
@@ -45,6 +48,11 @@ namespace BunnyLand.DesktopGL.Systems
                 gamePadListener.ThumbStickMoved += OnThumbStickMoved;
                 gamePadListener.TriggerMoved += OnTriggerMoved;
             }
+        }
+
+        private void OnMouseMoved(object? sender, MouseEventArgs e)
+        {
+            Console.WriteLine(e.Position);
         }
 
         private void OnTriggerMoved(object? sender, GamePadEventArgs e)
