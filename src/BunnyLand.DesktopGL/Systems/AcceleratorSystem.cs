@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using BunnyLand.DesktopGL.Components;
 using BunnyLand.DesktopGL.Enums;
-using BunnyLand.DesktopGL.Extensions;
 using Microsoft.Xna.Framework;
 using MonoGame.Extended;
 using MonoGame.Extended.Entities;
@@ -12,14 +11,15 @@ namespace BunnyLand.DesktopGL.Systems
 {
     public class AcceleratorSystem : EntityProcessingSystem
     {
+        private readonly GameSettings gameSettings;
+
+        private readonly Variables variables;
         private ComponentMapper<Accelerator> acceleratorMapper;
         private ComponentMapper<Movable> movableMapper;
         private ComponentMapper<Player> playerMapper;
 
-        private readonly Variables variables;
-        private readonly GameSettings gameSettings;
-
-        public AcceleratorSystem(GameSettings gameSettings, Variables variables) : base(Aspect.All(typeof(Player), typeof(Movable)))
+        public AcceleratorSystem(GameSettings gameSettings, Variables variables) : base(Aspect.All(typeof(Player),
+            typeof(Movable)))
         {
             this.gameSettings = gameSettings;
             this.variables = variables;
@@ -47,7 +47,7 @@ namespace BunnyLand.DesktopGL.Systems
             var intendedAcceleration = player.DirectionalInputs.AccelerationDirection;
 
             if (intendedAcceleration.X > 0.5 || intendedAcceleration.Y > 0.5) {
-                int kake = 5;
+                var kake = 5;
             }
 
             movable.Acceleration = player.StandingOn switch {
@@ -57,9 +57,9 @@ namespace BunnyLand.DesktopGL.Systems
             };
 
             movable.BrakingForce = player.IsBraking
-                                   && (movable.Acceleration == Vector2.Zero || gameSettings.BrakeWhileJetpacking)
-                ? variables.Global[GlobalVariable.BrakePower]
-                : 0;
+                && (movable.Acceleration == Vector2.Zero || gameSettings.BrakeWhileJetpacking)
+                    ? variables.Global[GlobalVariable.BrakePower]
+                    : 0;
         }
 
         private Vector2 ResultAcceleration(

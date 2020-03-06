@@ -57,6 +57,7 @@ namespace BunnyLand.DesktopGL
                 ColliderTypes.Player | ColliderTypes.Projectile | ColliderTypes.Static));
             entity.Attach(new Player(playerIndex));
             entity.Attach(new Movable(transform));
+            entity.Attach(new Health(100));
 
             var emitter = new Emitter {
                 EmitInterval = TimeSpan.FromSeconds(0.01)
@@ -114,6 +115,7 @@ namespace BunnyLand.DesktopGL
             entity.Attach(sprite);
             var lifetime = new Lifetime(lifeSpan);
             entity.Attach(lifetime);
+            entity.Attach(new Damaging(30));
             return entity;
         }
     }

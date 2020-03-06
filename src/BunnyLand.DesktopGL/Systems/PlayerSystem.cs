@@ -44,10 +44,13 @@ namespace BunnyLand.DesktopGL.Systems
 
                         emitterMapper.TryGet(entityId).IfSome(emitter => {
                             emitter.IsEmitting = isShooting;
-                            emitter.Emit ??= entity =>
+                            emitter.Emit ??= entity => {
+                                var velocity = movable.Velocity + random.NextUnitVector();
+
                                 entityFactory.CreateBullet(entity,
-                                    transform.Position + movable.Velocity.NormalizedOrZero(),
-                                    movable.Velocity + random.NextUnitVector(), TimeSpan.FromSeconds(4));
+                                    transform.Position + velocity.NormalizedCopy() * 16,
+                                    velocity, TimeSpan.FromSeconds(4));
+                            };
                         });
                     });
                 });

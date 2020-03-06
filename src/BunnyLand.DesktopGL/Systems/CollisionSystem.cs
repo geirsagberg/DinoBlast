@@ -3,12 +3,10 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using BunnyLand.DesktopGL.Components;
-using BunnyLand.DesktopGL.Enums;
 using BunnyLand.DesktopGL.Extensions;
 using LanguageExt;
 using Microsoft.Xna.Framework;
 using MonoGame.Extended;
-using MonoGame.Extended.Collections;
 using MonoGame.Extended.Entities;
 using MonoGame.Extended.Entities.Systems;
 
@@ -16,15 +14,25 @@ namespace BunnyLand.DesktopGL.Systems
 {
     public class CollisionSystem : EntityProcessingSystem
     {
-        private readonly Variables variables;
         private const int LogCollisionDetectionEveryNthFrame = 60;
+
+        private readonly System.Collections.Generic.HashSet<(int entityA, int entityB)> checkedPairs =
+            new System.Collections.Generic.HashSet<(int entityA, int entityB)>();
+
+        private readonly Stopwatch stopwatch = new Stopwatch();
+        private readonly TimeSpan[] timeSpans = new TimeSpan[LogCollisionDetectionEveryNthFrame];
+        private readonly Variables variables;
         private ComponentMapper<CollisionBody> bodyMapper;
+        private ComponentMapper<Damaging> damagingMapper;
+        private ComponentMapper<Health> healthMapper;
         private ComponentMapper<Level> levelMapper;
         private ComponentMapper<Movable> movableMapper;
 
+        private int timeSpanCounter;
+
         public Option<Level> Level { get; set; }
 
-        public Bag<CollisionBody> Bodies { get; } = new Bag<CollisionBody>();
+        public Dictionary<int, CollisionBody> Bodies { get; } = new Dictionary<int, CollisionBody>();
 
         public CollisionSystem(Variables variables) : base(Aspect.All(typeof(CollisionBody)))
         {
@@ -36,22 +44,20 @@ namespace BunnyLand.DesktopGL.Systems
             bodyMapper = mapperService.GetMapper<CollisionBody>();
             movableMapper = mapperService.GetMapper<Movable>();
             levelMapper = mapperService.GetMapper<Level>();
+            healthMapper = mapperService.GetMapper<Health>();
+            damagingMapper = mapperService.GetMapper<Damaging>();
         }
 
         protected override void OnEntityAdded(int entityId)
         {
-            levelMapper.TryGet(entityId).IfSome(level => {
-                Level = level;
-            });
-            bodyMapper.TryGet(entityId).IfSome(body => Bodies.Add(body));
+            levelMapper.TryGet(entityId).IfSome(level => { Level = level; });
+            bodyMapper.TryGet(entityId).IfSome(body => Bodies.Add(entityId, body));
         }
 
         protected override void OnEntityRemoved(int entityId)
         {
-            bodyMapper.TryGet(entityId).IfSome(body => Bodies.Remove(body));
+            bodyMapper.TryGet(entityId).IfSome(body => Bodies.Remove(entityId));
         }
-
-        private readonly Stopwatch stopwatch = new Stopwatch();
 
         public override void Begin()
         {
@@ -59,20 +65,16 @@ namespace BunnyLand.DesktopGL.Systems
             checkedPairs.Clear();
         }
 
-        private readonly System.Collections.Generic.HashSet<(CollisionBody, CollisionBody)> checkedPairs = new System.Collections.Generic.HashSet<(CollisionBody, CollisionBody)>();
-
         public override void End()
         {
             stopwatch.Stop();
             timeSpans[timeSpanCounter] = stopwatch.Elapsed;
             timeSpanCounter = (timeSpanCounter + 1) % LogCollisionDetectionEveryNthFrame;
             if (timeSpanCounter == 0) {
-                Console.WriteLine($"Avg time collision detection: {timeSpans.Average(ts => ts.TotalMilliseconds):N} ms");
+                Console.WriteLine(
+                    $"Avg time collision detection: {timeSpans.Average(ts => ts.TotalMilliseconds):N} ms");
             }
         }
-
-        private int timeSpanCounter = 0;
-        private readonly TimeSpan[] timeSpans = new TimeSpan[LogCollisionDetectionEveryNthFrame];
 
         public override void Process(GameTime gameTime, int entityId)
         {
@@ -88,17 +90,29 @@ namespace BunnyLand.DesktopGL.Systems
                     body.CollisionBounds = collisionBounds;
 
                     // TODO: If performance becomes a problem, look into broadphase algorithms like SAP or Dynamic tree, or separate collision tables per collidertype
-                    var potentialCollisions = Bodies.Where(b =>
-                        b != body && b.CollidesWith.HasFlag(body.ColliderType) && !checkedPairs.Contains((b, body)) && b.Bounds.Intersects(collisionBounds)).ToList();
+                    var potentialCollisions = Bodies.Where(kvp => {
+                        var b = kvp.Value;
+                        return b != body && b.CollidesWith.HasFlag(body.ColliderType)
+                            // && !checkedPairs.Contains((kvp.Key, entityId))
+                            && b.Bounds.Intersects(collisionBounds);
+                    }).ToList();
 
                     body.Collisions = potentialCollisions
-                        .Select(other => (other, body.CalculatePenetrationVector(other)))
+                        .Select(other => (other.Key, body.CalculatePenetrationVector(other.Value)))
                         .Where(t => t.Item2 != Vector2.Zero).ToList();
-                    potentialCollisions.ForEach(b => checkedPairs.Add((body, b)));
+                    // potentialCollisions.ForEach(b => checkedPairs.Add((entityId, b.Key)));
 
                     foreach (var (other, penetrationVector) in body.Collisions) {
+                        damagingMapper.TryGet(entityId).IfSome(damaging =>
+                            healthMapper.TryGet(other).IfSome(health => {
+                                health.CurrentHealth -= damaging.Damage;
+                                if (health.CurrentHealth < 0) {
+                                    DestroyEntity(other);
+                                }
+                            }));
+                        var otherBody = bodyMapper.Get(other);
                         switch (body.ColliderType) {
-                            case ColliderTypes.Player when other.ColliderType == ColliderTypes.Static:
+                            case ColliderTypes.Player when otherBody.ColliderType == ColliderTypes.Static:
                                 movable.Transform.Position += penetrationVector;
                                 movable.Velocity += penetrationVector / elapsedTicks;
                                 break;
@@ -106,6 +120,7 @@ namespace BunnyLand.DesktopGL.Systems
                                 DestroyEntity(entityId);
                                 break;
                         }
+
                     }
                 });
             });

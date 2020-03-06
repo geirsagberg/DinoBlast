@@ -14,7 +14,7 @@ namespace BunnyLand.DesktopGL.Components
         private readonly IShapeF shape;
         private readonly Transform2 transform;
 
-        public List<(CollisionBody body, Vector2 penetrationVector)> Collisions { get; set; } = new List<(CollisionBody body, Vector2 penetrationVector)>();
+        public List<(int entityId, Vector2 penetrationVector)> Collisions { get; set; } = new List<(int entityId, Vector2 penetrationVector)>();
 
         public Vector2 OldPosition { get; set; }
 

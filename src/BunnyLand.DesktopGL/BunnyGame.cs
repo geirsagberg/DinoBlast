@@ -25,7 +25,7 @@ namespace BunnyLand.DesktopGL
 
         protected GraphicsDeviceManager Graphics { get; }
 
-        private new IServiceProvider Services { get; set; }
+        private new IServiceProvider Services { get; set; } = null!;
 
         public BunnyGame(GameSettings gameSettings)
         {
