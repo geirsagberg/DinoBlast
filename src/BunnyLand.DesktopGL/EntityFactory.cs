@@ -41,7 +41,7 @@ namespace BunnyLand.DesktopGL
             return animatedSprite;
         }
 
-        public Entity CreatePlayer(Entity entity, Vector2 position)
+        public Entity CreatePlayer(Entity entity, Vector2 position, PlayerIndex playerIndex)
         {
             var transform = new Transform2(position);
             entity.Attach(transform);
@@ -49,7 +49,7 @@ namespace BunnyLand.DesktopGL
             entity.Attach(animatedSprite);
             entity.Attach(new CollisionBody(new CircleF(Point2.Zero, 15), transform, ColliderTypes.Player,
                 ColliderTypes.Player | ColliderTypes.Projectile | ColliderTypes.Static));
-            entity.Attach(new Player());
+            entity.Attach(new Player(playerIndex));
             entity.Attach(new Movable(transform));
 
             var emitter = new Emitter {

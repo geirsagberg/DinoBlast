@@ -11,6 +11,11 @@ namespace BunnyLand.DesktopGL.Components
         public Dictionary<PlayerKey, KeyState> PlayerKeys =
             EnumHelper.GetValues<PlayerKey>().ToDictionary(k => k, _ => KeyState.None);
 
+        public Player(PlayerIndex playerIndex)
+        {
+            PlayerIndex = playerIndex;
+        }
+
         public PlayerIndex PlayerIndex { get; set; }
         public StandingOn StandingOn { get; set; }
         public PlayerState State { get; set; }
