@@ -9,7 +9,6 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using MonoGame.Extended;
-using MonoGame.Extended.Animations;
 using MonoGame.Extended.BitmapFonts;
 using MonoGame.Extended.Entities;
 using MonoGame.Extended.Entities.Systems;
@@ -26,6 +25,7 @@ namespace BunnyLand.DesktopGL.Systems
         private readonly Variables variables;
         private ComponentMapper<AnimatedSprite> animatedSpriteMapper;
         private ComponentMapper<CollisionBody> collisionMapper;
+        private ComponentMapper<Health> healthMapper;
         private ComponentMapper<Level> levelMapper;
         private ComponentMapper<Movable> movableMapper;
         private ComponentMapper<Player> playerMapper;
@@ -58,6 +58,7 @@ namespace BunnyLand.DesktopGL.Systems
             levelMapper = mapperService.GetMapper<Level>();
             playerMapper = mapperService.GetMapper<Player>();
             solidColorMapper = mapperService.GetMapper<SolidColor>();
+            healthMapper = mapperService.GetMapper<Health>();
         }
 
         protected override void OnEntityAdded(int entityId)
@@ -86,10 +87,10 @@ namespace BunnyLand.DesktopGL.Systems
                     DrawGravityPull(entity, transform);
 
                     playerMapper.TryGet(entity).IfSome(player => {
-                        spriteBatch.DrawLine(transform.Position, transform.Position + player.DirectionalInputs.AimDirection * 100, Color.White);
+                        spriteBatch.DrawLine(transform.Position,
+                            transform.Position + player.DirectionalInputs.AimDirection * 100, Color.White);
                     });
                 });
-
             }
 
             spriteBatch.DrawString(font, "AWSD: Move, Space: Boost, Shift: Toggle Brake/Glide, Ctrl: Shoot",
@@ -102,7 +103,8 @@ namespace BunnyLand.DesktopGL.Systems
             spriteBatch.DrawString(font, $"FPS: {smoothedFps}", new Vector2(1, 60),
                 Color.White);
 
-            spriteBatch.DrawString(font, $"IsRunningSlowly: {gameTime.IsRunningSlowly}", new Vector2(1, 90), Color.White);
+            spriteBatch.DrawString(font, $"IsRunningSlowly: {gameTime.IsRunningSlowly}", new Vector2(1, 90),
+                Color.White);
 
             spriteBatch.End();
         }
@@ -110,6 +112,12 @@ namespace BunnyLand.DesktopGL.Systems
         private void RenderSprite(int entity, Sprite sprite)
         {
             var transform = transformMapper.Get(entity);
+
+            playerMapper.TryGet(entity).IfSome(player => {
+                healthMapper.TryGet(entity).IfSome(health => {
+                    transform.Scale = Vector2.One * health.CurrentHealth / health.MaxHealth;
+                });
+            });
 
             spriteBatch.Draw(sprite, transform);
             // spriteBatch.DrawRectangle(sprite.GetBoundingRectangle(transform), Color.Beige);
@@ -136,22 +144,42 @@ namespace BunnyLand.DesktopGL.Systems
             Level.IfSome(level => {
                 var bounds = sprite.GetBoundingRectangle(transform);
 
-                if (level.Bounds.Contains(bounds.TopLeft) ^ level.Bounds.Contains(bounds.BottomRight)) {
-                    if (bounds.Top < 0) {
-                        spriteBatch.Draw(sprite, transform.Position + level.Bounds.HeightVector(),
-                            transform.Rotation, transform.Scale);
-                    } else if (bounds.Bottom >= level.Bounds.Bottom) {
-                        spriteBatch.Draw(sprite, transform.Position - level.Bounds.HeightVector(),
-                            transform.Rotation, transform.Scale);
-                    }
+                var overlappingTop = bounds.Top < 0;
+                var overlappingBottom = bounds.Bottom >= level.Bounds.Bottom;
 
-                    if (bounds.Left < 0) {
-                        spriteBatch.Draw(sprite, transform.Position + level.Bounds.WidthVector(),
-                            transform.Rotation, transform.Scale);
-                    } else if (bounds.Right >= level.Bounds.Right) {
-                        spriteBatch.Draw(sprite, transform.Position - level.Bounds.WidthVector(),
-                            transform.Rotation, transform.Scale);
-                    }
+                if (overlappingTop) {
+                    spriteBatch.Draw(sprite, transform.Position + level.Bounds.HeightVector(),
+                        transform.Rotation, transform.Scale);
+                } else if (overlappingBottom) {
+                    spriteBatch.Draw(sprite, transform.Position - level.Bounds.HeightVector(),
+                        transform.Rotation, transform.Scale);
+                }
+
+                var overlappingLeft = bounds.Left < 0;
+                var overlappingRight = bounds.Right >= level.Bounds.Right;
+
+                if (overlappingLeft) {
+                    spriteBatch.Draw(sprite, transform.Position + level.Bounds.WidthVector(),
+                        transform.Rotation, transform.Scale);
+                } else if (overlappingRight) {
+                    spriteBatch.Draw(sprite, transform.Position - level.Bounds.WidthVector(),
+                        transform.Rotation, transform.Scale);
+                }
+
+                if (overlappingTop && overlappingLeft) {
+                    spriteBatch.Draw(sprite, transform.Position + level.Bounds.BottomRight,
+                        transform.Rotation, transform.Scale);
+                } else if (overlappingTop && overlappingRight) {
+                    spriteBatch.Draw(sprite,
+                        transform.Position + level.Bounds.HeightVector() - level.Bounds.WidthVector(),
+                        transform.Rotation, transform.Scale);
+                } else if (overlappingBottom && overlappingLeft) {
+                    spriteBatch.Draw(sprite,
+                        transform.Position + level.Bounds.WidthVector() - level.Bounds.HeightVector(),
+                        transform.Rotation, transform.Scale);
+                } else if (overlappingBottom && overlappingRight) {
+                    spriteBatch.Draw(sprite, transform.Position - (Vector2) level.Bounds.BottomRight,
+                        transform.Rotation, transform.Scale);
                 }
             });
         }
@@ -185,7 +213,8 @@ namespace BunnyLand.DesktopGL.Systems
         private void DrawGravityPull(int entity, Transform2 transform)
         {
             movableMapper.TryGet(entity).IfSome(movable => spriteBatch.DrawLine(transform.WorldPosition,
-                transform.WorldPosition + movable.GravityPull * variables.Global[GlobalVariable.DebugVectorMultiplier], Color.Azure));
+                transform.WorldPosition + movable.GravityPull * variables.Global[GlobalVariable.DebugVectorMultiplier],
+                Color.Azure));
         }
     }
 }
