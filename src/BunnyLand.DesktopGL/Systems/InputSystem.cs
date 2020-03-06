@@ -66,6 +66,7 @@ namespace BunnyLand.DesktopGL.Systems
 
         private void OnTriggerMoved(object? sender, GamePadEventArgs e)
         {
+            // Console.WriteLine($"TriggerMoved: ${e.Button} - ${e.TriggerState}");
         }
 
         private void OnThumbStickMoved(object? sender, GamePadEventArgs e)
@@ -80,7 +81,7 @@ namespace BunnyLand.DesktopGL.Systems
                 var direction = new Vector2(stickState.X, -stickState.Y);
 
                 directionalInputs[playerIndex].AccelerationDirection = direction;
-                Console.WriteLine($"Setting dirInput for p${playerIndex} to ${direction}");
+                // Console.WriteLine($"Setting dirInput for p${playerIndex} to ${direction}");
             } else {
                 directionalInputs[playerIndex].AimDirection = stickState;
             }
@@ -88,10 +89,13 @@ namespace BunnyLand.DesktopGL.Systems
 
         private void OnButtonUp(object? sender, GamePadEventArgs e)
         {
+            // Console.WriteLine($"ButtonUp: ${e.Button} - ${e.TriggerState}");
+            buttonMap.GetKey(e.Button).IfSome(key => pressedKeys[e.PlayerIndex].Remove(key));
         }
 
         private void OnButtonDown(object? sender, GamePadEventArgs e)
         {
+            // Console.WriteLine($"ButtonDown: ${e.Button} - ${e.TriggerState}");
             buttonMap.GetKey(e.Button).IfSome(key => HandlePlayerKeyPressed(e.PlayerIndex, key));
         }
 
@@ -157,9 +161,11 @@ namespace BunnyLand.DesktopGL.Systems
             player.DirectionalInputs = directionalInputs[player.PlayerIndex];
 
             // Temp hack to also allow arrow keys
+            /*
             if (directionalInputs[player.PlayerIndex].AccelerationDirection.Length() < 0.1) {
                 player.DirectionalInputs.AccelerationDirection = KeysToDirectionalInput(keys);
             }
+            */
             // accelerator.IntendedAcceleration = directionalInputs[player.PlayerIndex].AccelerationDirection;
 
             /*
