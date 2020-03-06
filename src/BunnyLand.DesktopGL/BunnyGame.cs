@@ -85,7 +85,7 @@ namespace BunnyLand.DesktopGL
             services.AddSingleton(new GamePadListener(new GamePadListenerSettings(PlayerIndex.Four)));
             services.AddSingleton(provider =>
                 new InputListener[] {provider.GetService<MouseListener>(), provider.GetService<KeyboardListener>()}
-                    .Concat(provider.GetServices<GamePadListener>()));
+                    .Concat(provider.GetServices<GamePadListener>()).ToArray());
             services.AddSingleton<InputListenerComponent>();
 
             services.AddSingleton<ViewportAdapter, DefaultViewportAdapter>();

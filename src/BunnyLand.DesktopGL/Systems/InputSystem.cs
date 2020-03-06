@@ -6,6 +6,7 @@ using BunnyLand.DesktopGL.Extensions;
 using LanguageExt;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
+using MonoGame.Extended;
 using MonoGame.Extended.Entities;
 using MonoGame.Extended.Entities.Systems;
 using MonoGame.Extended.Input.InputListeners;
@@ -16,10 +17,18 @@ namespace BunnyLand.DesktopGL.Systems
     public class InputSystem : EntityProcessingSystem
     {
         private readonly IButtonMap buttonMap;
+
+        // TODO: Can it just be a tuple of vector vector?
+        private readonly Dictionary<PlayerIndex, DirectionalInputs> directionalInputs =
+            Enum
+                .GetValues(typeof(PlayerIndex))
+                .Cast<PlayerIndex>().ToDictionary(i => i,
+                    _ => new DirectionalInputs());
+
         private readonly IDictionary<PlayerIndex, GamePadListener> gamePadListeners;
-        private readonly MouseListener mouseListener;
         private readonly KeyboardListener keyboardListener;
-        private readonly IKeyMap keyMap;
+        private readonly MouseListener mouseListener;
+        private readonly IDictionary<PlayerIndex, int> playerEntities = new Dictionary<PlayerIndex, int>();
         private readonly IDictionary<PlayerIndex, Player> players = new Dictionary<PlayerIndex, Player>();
 
         private readonly Dictionary<PlayerIndex, System.Collections.Generic.HashSet<PlayerKey>> pressedKeys = Enum
@@ -27,19 +36,23 @@ namespace BunnyLand.DesktopGL.Systems
             .Cast<PlayerIndex>().ToDictionary(i => i, _ => new System.Collections.Generic.HashSet<PlayerKey>());
 
         private ComponentMapper<Player> playerMapper;
+
+        private ComponentMapper<Transform2> transformMapper;
         // private ComponentMapper<Accelerator> acceleratorMapper;
 
-        public InputSystem(MouseListener mouseListener, KeyboardListener keyboardListener, IEnumerable<GamePadListener> gamePadListeners,
-            IKeyMap keyMap, IButtonMap buttonMap) : base(
+        public InputSystem(MouseListener mouseListener, KeyboardListener keyboardListener,
+            IEnumerable<GamePadListener> gamePadListeners, IButtonMap buttonMap
+        ) : base(
             Aspect.All(typeof(Player)))
         {
             this.mouseListener = mouseListener;
             this.keyboardListener = keyboardListener;
             this.gamePadListeners = gamePadListeners.ToDictionary(l => l.PlayerIndex);
-            this.keyMap = keyMap;
             this.buttonMap = buttonMap;
 
             mouseListener.MouseMoved += OnMouseMoved;
+            mouseListener.MouseDown += OnMouseDown;
+            mouseListener.MouseUp += OnMouseUp;
             keyboardListener.KeyPressed += OnKeyPressed;
             keyboardListener.KeyReleased += OnKeyReleased;
             foreach (var gamePadListener in this.gamePadListeners.Values) {
@@ -50,9 +63,20 @@ namespace BunnyLand.DesktopGL.Systems
             }
         }
 
+        private void OnMouseUp(object? sender, MouseEventArgs e)
+        {
+            buttonMap.GetKey(e.Button).IfSome(key => HandlePlayerKeyInput(PlayerIndex.One, key, true));
+        }
+
+        private void OnMouseDown(object? sender, MouseEventArgs e)
+        {
+            buttonMap.GetKey(e.Button).IfSome(key => HandlePlayerKeyInput(PlayerIndex.One, key));
+        }
+
         private void OnMouseMoved(object? sender, MouseEventArgs e)
         {
-            Console.WriteLine(e.Position);
+            playerEntities.TryGetValue(PlayerIndex.One).IfSome(entityId => transformMapper.TryGet(entityId).IfSome(
+                movable => { HandleAimInput(PlayerIndex.One, e.Position.ToVector2() - movable.Position); }));
         }
 
         private void OnTriggerMoved(object? sender, GamePadEventArgs e)
@@ -76,28 +100,25 @@ namespace BunnyLand.DesktopGL.Systems
 
         private void OnButtonDown(object? sender, GamePadEventArgs e)
         {
-            // Console.WriteLine($"ButtonDown: ${e.Button} - ${e.TriggerState}");
             buttonMap.GetKey(e.Button).IfSome(key => HandlePlayerKeyInput(e.PlayerIndex, key));
         }
 
         private void OnButtonUp(object? sender, GamePadEventArgs e)
         {
-            // Console.WriteLine($"ButtonUp: ${e.Button} - ${e.TriggerState}");
             buttonMap.GetKey(e.Button).IfSome(key => HandlePlayerKeyInput(e.PlayerIndex, key, true));
         }
 
         private void OnKeyPressed(object? sender, KeyboardEventArgs e)
         {
-            keyMap.GetKey(e.Key)
-                .IfSome(t => HandlePlayerKeyInput(t.index, t.key));
+            buttonMap.GetKey(e.Key)
+                .IfSome(key => HandlePlayerKeyInput(PlayerIndex.One, key));
         }
 
         private void OnKeyReleased(object? sender, KeyboardEventArgs e)
         {
-            keyMap.GetKey(e.Key)
-                .IfSome(t => HandlePlayerKeyInput(t.index, t.key, true));
+            buttonMap.GetKey(e.Key)
+                .IfSome(key => HandlePlayerKeyInput(PlayerIndex.One, key, true));
         }
-
 
         private void HandleAccelerationInput(PlayerIndex index, Vector2 acceleration)
         {
@@ -108,7 +129,7 @@ namespace BunnyLand.DesktopGL.Systems
         private void HandleAimInput(PlayerIndex index, Vector2 aimVector)
         {
             players.TryGetValue(index)
-                .IfSome(player => player.DirectionalInputs.AimDirection = aimVector);
+                .IfSome(player => player.DirectionalInputs.AimDirection = aimVector.NormalizedOrZero());
         }
 
         private void HandlePlayerKeyInput(PlayerIndex index, PlayerKey key, bool released = false)
@@ -180,12 +201,16 @@ namespace BunnyLand.DesktopGL.Systems
         public override void Initialize(IComponentMapperService mapperService)
         {
             playerMapper = mapperService.GetMapper<Player>();
+            transformMapper = mapperService.GetMapper<Transform2>();
             // acceleratorMapper = mapperService.GetMapper<Accelerator>();
         }
 
         protected override void OnEntityAdded(int entityId)
         {
-            playerMapper.TryGet(entityId).IfSome(player => players[player.PlayerIndex] = player);
+            playerMapper.TryGet(entityId).IfSome(player => {
+                players[player.PlayerIndex] = player;
+                playerEntities[player.PlayerIndex] = entityId;
+            });
         }
     }
 }

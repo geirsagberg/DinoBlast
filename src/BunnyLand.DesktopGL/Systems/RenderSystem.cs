@@ -41,7 +41,7 @@ namespace BunnyLand.DesktopGL.Systems
 
         public RenderSystem(SpriteBatch spriteBatch, ContentManager contentManager, Variables variables) : base(Aspect
             .All(typeof(Transform2))
-            .One(typeof(AnimatedSprite), typeof(Sprite), typeof(SolidColor)))
+            .One(typeof(AnimatedSprite), typeof(Sprite), typeof(SolidColor), typeof(Player)))
         {
             this.spriteBatch = spriteBatch;
             this.variables = variables;
@@ -84,7 +84,12 @@ namespace BunnyLand.DesktopGL.Systems
                 transformMapper.TryGet(entity).IfSome(transform => {
                     DrawCollisionBoundsAndInfo(entity, transform);
                     DrawGravityPull(entity, transform);
+
+                    playerMapper.TryGet(entity).IfSome(player => {
+                        spriteBatch.DrawLine(transform.Position, transform.Position + player.DirectionalInputs.AimDirection * 100, Color.White);
+                    });
                 });
+
             }
 
             spriteBatch.DrawString(font, "AWSD: Move, Space: Boost, Shift: Toggle Brake/Glide, Ctrl: Shoot",
