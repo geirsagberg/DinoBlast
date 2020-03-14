@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using BunnyLand.DesktopGL.Components;
 using BunnyLand.DesktopGL.Extensions;
 using BunnyLand.DesktopGL.Messages;
@@ -56,12 +57,12 @@ namespace BunnyLand.DesktopGL.Systems
             entityFactory.CreateLevel(CreateEntity(), gameSettings.Width, gameSettings.Height);
             entityFactory.CreatePlanet(CreateEntity(), new Vector2(250, 500), 3000, 0.3f);
             entityFactory.CreatePlanet(CreateEntity(), new Vector2(700, 300), 5000, 0.5f);
-            // entityFactory.CreatePlayer(CreateEntity(), new Vector2(100, 100), PlayerIndex.One);
+            entityFactory.CreatePlayer(CreateEntity(), new Vector2(100, 100), PlayerIndex.One);
             // entityFactory.CreatePlayer(CreateEntity(), new Vector2(800, 700), PlayerIndex.Two);
             // entityFactory.CreatePlanet(CreateEntity(), new Vector2(800, 600), 0, 0.05f);
             // entityFactory.CreateBlock(CreateEntity(), new RectangleF(600, 600, 10, 200));
             var playerIndices = EnumHelper.GetValues<PlayerIndex>();
-            foreach (var index in playerIndices) {
+            foreach (var index in playerIndices.Skip(1)) {
                 if (GamePad.GetState(index).IsConnected) {
                     var (x, y) = startPositions[index];
                     entityFactory.CreatePlayer(CreateEntity(), new Vector2(x, y), index);
