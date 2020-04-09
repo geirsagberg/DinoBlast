@@ -39,7 +39,6 @@ namespace BunnyLand.DesktopGL.Screens
             Hub.Default.Publish(new ResetWorldMessage());
         }
 
-
         private void SetupDebugGui()
         {
             var stackPanel = new StackPanel {

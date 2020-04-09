@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using BunnyLand.DesktopGL.Extensions;
+using BunnyLand.DesktopGL.Messages;
 using BunnyLand.DesktopGL.Resources;
 using BunnyLand.DesktopGL.Screens;
 using BunnyLand.DesktopGL.Systems;
@@ -14,6 +15,7 @@ using MonoGame.Extended.Gui;
 using MonoGame.Extended.Input.InputListeners;
 using MonoGame.Extended.Screens;
 using MonoGame.Extended.ViewportAdapters;
+using PubSub;
 using Screen = MonoGame.Extended.Screens.Screen;
 
 namespace BunnyLand.DesktopGL
@@ -130,7 +132,9 @@ namespace BunnyLand.DesktopGL
             var bitmapFont = Content.Load<BitmapFont>("Fonts/bryndan-medium");
             Skin.CreateDefault(bitmapFont);
 
-            LoadScreen<BattleScreen>();
+            Hub.Default.Subscribe<StartGameMessage>(_ => LoadScreen<BattleScreen>());
+
+            LoadScreen<MenuScreen>();
         }
 
         private void LoadScreen<T>() where T : Screen
