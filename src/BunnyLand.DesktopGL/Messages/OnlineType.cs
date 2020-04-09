@@ -1,6 +1,6 @@
 ﻿namespace BunnyLand.DesktopGL.Messages
 {
-    internal enum OnlineType
+    public enum OnlineType
     {
         Local,
         LAN,
