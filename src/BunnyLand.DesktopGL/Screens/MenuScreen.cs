@@ -1,12 +1,12 @@
-﻿using System;
+﻿using System.Collections.Generic;
+using System.Net;
+using System.Threading.Tasks;
 using BunnyLand.DesktopGL.Messages;
-using LiteNetLib;
-using LiteNetLib.Utils;
+using BunnyLand.DesktopGL.Services;
 using Microsoft.Xna.Framework;
 using MonoGame.Extended.Gui;
 using MonoGame.Extended.Gui.Controls;
 using MonoGame.Extended.Screens;
-using PubSub;
 using Screen = MonoGame.Extended.Gui.Screen;
 
 namespace BunnyLand.DesktopGL.Screens
@@ -14,32 +14,16 @@ namespace BunnyLand.DesktopGL.Screens
     public class MenuScreen : GameScreen
     {
         private readonly GuiSystem guiSystem;
-        private readonly NetManager netClient;
-        private readonly NetManager netServer;
-        private NetPeer? joinedPeer;
-        private readonly int port;
+        private readonly MessageHub messageHub;
+        private Label loadingLabel;
+        private Screen? loadingScreen;
+        private Screen? serverListScreen;
+        private Screen? startMenuScreen;
 
-        public MenuScreen(Game game, GuiSystem guiSystem, GameSettings gameSettings) : base(game)
+        public MenuScreen(Game game, GuiSystem guiSystem, MessageHub messageHub) : base(game)
         {
             this.guiSystem = guiSystem;
-            var clientListener = new EventBasedNetListener();
-            netClient = new NetManager(clientListener);
-            clientListener.NetworkReceiveEvent += (peer, reader, method) => {
-                Console.WriteLine("Received: {0}", reader.GetString(100));
-                reader.Recycle();
-            };
-            clientListener.NetworkErrorEvent += (endPoint, error) => { Console.WriteLine("Network error: {0}", error); };
-
-            var serverListener = new EventBasedNetListener();
-            netServer = new NetManager(serverListener);
-            serverListener.ConnectionRequestEvent += request => { request.Accept(); };
-            serverListener.PeerConnectedEvent += peer => {
-                Console.WriteLine("Peer connected: {0}", peer.EndPoint);
-                var writer = new NetDataWriter();
-                writer.Put("Welcome!");
-                peer.Send(writer, DeliveryMethod.ReliableOrdered);
-            };
-            port = gameSettings.Port;
+            this.messageHub = messageHub;
         }
 
         public override void LoadContent()
@@ -49,72 +33,129 @@ namespace BunnyLand.DesktopGL.Screens
 
         private void ActivateStartMenu()
         {
-            var startMenu = SetupStartMenu();
-            guiSystem.ActiveScreen = startMenu;
+            startMenuScreen ??= SetupStartMenu();
+            guiSystem.ActiveScreen = startMenuScreen;
+        }
+
+        private void ShowLoadingMessage(string message)
+        {
+            loadingScreen ??= SetupLoading();
+            loadingLabel.Content = message;
+            loadingLabel.Position = guiSystem.BoundingRectangle.Center
+                - new Point(loadingLabel.Width / 2, loadingLabel.Height / 2);
+            guiSystem.ActiveScreen = loadingScreen;
+        }
+
+        private Screen SetupLoading()
+        {
+            loadingLabel = new Label();
+
+            return new Screen {
+                Content = new Canvas {
+                    Items = {loadingLabel}
+                }
+            };
         }
 
         private Screen SetupStartMenu()
         {
             const int menuWidth = 400;
             const int menuHeight = 200;
-            var menuPanel = new StackPanel
-            {
+            var menuPanel = new StackPanel {
                 Width = menuWidth,
                 Height = menuHeight,
                 Position = guiSystem.BoundingRectangle.Center - new Point(menuWidth / 2, menuHeight / 2)
             };
 
-            var startLocalButton = new Button
-            {
+            var startLocalButton = new Button {
                 Content = "Start local game"
             };
-            startLocalButton.Clicked += delegate
-            {
-                Hub.Default.Publish(new StartGameMessage(new GameOptions
-                {
-                    OnlineType = OnlineType.Local
+            startLocalButton.Clicked += delegate {
+                messageHub.Publish(new StartGameMessage(new GameOptions {
+                    OnlineType = OnlineType.Offline
                 }));
             };
             menuPanel.Items.Add(startLocalButton);
 
-            var startLanGame = new Button
-            {
+            var startLanGame = new Button {
                 Content = "Start LAN game"
             };
-            startLanGame.Clicked += StartLanGameClicked;
+            startLanGame.Clicked += (obj, args) => StartLanGameClicked();
             menuPanel.Items.Add(startLanGame);
 
-            var joinLanGame = new Button
-            {
+            var joinLanGame = new Button {
                 Content = "Join LAN game"
             };
-            joinLanGame.Clicked += JoinLanGameClicked;
+            joinLanGame.Clicked += (obj, args) => JoinLanGameClicked();
             menuPanel.Items.Add(joinLanGame);
 
-            var startMenu = new Screen
-            {
-                Content = new Canvas
-                {
+            return new Screen {
+                Content = new Canvas {
                     Items = {menuPanel}
                 }
             };
-            return startMenu;
         }
 
-        private void StartLanGameClicked(object? sender, EventArgs e)
+        private void StartLanGameClicked()
         {
-            guiSystem.ActiveScreen.Hide();
-            if (netServer.Start(port)) {
-                Hub.Default.Publish(new StartGameMessage(new GameOptions {OnlineType = OnlineType.LAN}));
+            ShowLoadingMessage("Starting server...");
+
+            var success = messageHub.Send(new StartServerRequest(OnlineType.LAN));
+
+            if (success) {
+                messageHub.Publish(new StartGameMessage(new GameOptions {OnlineType = OnlineType.LAN}));
             } else {
-                guiSystem.ActiveScreen.Show();
+                ActivateStartMenu();
             }
         }
 
-        private void JoinLanGameClicked(object? sender, EventArgs args)
+        private void JoinLanGameClicked()
         {
-            netClient.Start();
-            joinedPeer = netClient.Connect("localhost", port, "BunnyLand");
+            ShowLoadingMessage("Loading servers...");
+            // ShowLoadingMessage("Joining game...");
+
+            var servers = messageHub.Send(new ListServersRequest());
+
+            ShowServerList(servers);
+
+            // var success = await mediator.Send(new JoinServerRequest(OnlineType.LAN));
+            //
+            // if (success) {
+            //     ShowLoadingMessage("Success!");
+            // } else {
+            //     ActivateStartMenu();
+            // }
+        }
+
+        private void ShowServerList(List<IPAddress> servers)
+        {
+            var serversPanel = new StackPanel {
+                Width = 400,
+                Height = 400,
+                Position = guiSystem.BoundingRectangle.Center - new Point(200, 200)
+            };
+
+            foreach (var server in servers) {
+                var button = new Button {
+                    Content = server.ToString()
+                };
+                button.Clicked += async (obj, args) => await JoinServerClicked(server);
+                serversPanel.Items.Add(button);
+            }
+
+            var screen = new Screen {
+                Content = new Canvas {
+                    Items = {
+                        serversPanel
+                    }
+                }
+            };
+            guiSystem.ActiveScreen = screen;
+        }
+
+        private async Task JoinServerClicked(IPAddress server)
+        {
+            ShowLoadingMessage($"Joining game {server}...");
         }
 
         public override void Update(GameTime gameTime)

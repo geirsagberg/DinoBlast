@@ -2,7 +2,7 @@
 {
     public enum OnlineType
     {
-        Local,
+        Offline,
         LAN,
         Internet
     }

@@ -1,6 +1,8 @@
-﻿namespace BunnyLand.DesktopGL.Messages
+﻿using BunnyLand.DesktopGL.Services;
+
+namespace BunnyLand.DesktopGL.Messages
 {
-    internal class StartGameMessage
+    internal class StartGameMessage : INotification
     {
         public GameOptions GameOptions { get; }
 

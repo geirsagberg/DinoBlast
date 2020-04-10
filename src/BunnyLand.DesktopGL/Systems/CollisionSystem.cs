@@ -5,12 +5,12 @@ using System.Linq;
 using BunnyLand.DesktopGL.Components;
 using BunnyLand.DesktopGL.Extensions;
 using BunnyLand.DesktopGL.Messages;
+using BunnyLand.DesktopGL.Services;
 using LanguageExt;
 using Microsoft.Xna.Framework;
 using MonoGame.Extended;
 using MonoGame.Extended.Entities;
 using MonoGame.Extended.Entities.Systems;
-using PubSub;
 
 namespace BunnyLand.DesktopGL.Systems
 {
@@ -24,6 +24,7 @@ namespace BunnyLand.DesktopGL.Systems
         private readonly Stopwatch stopwatch = new Stopwatch();
         private readonly TimeSpan[] timeSpans = new TimeSpan[LogCollisionDetectionEveryNthFrame];
         private readonly Variables variables;
+        private readonly MessageHub messageHub;
         private ComponentMapper<CollisionBody> bodyMapper;
         private ComponentMapper<Damaging> damagingMapper;
         private ComponentMapper<Health> healthMapper;
@@ -37,9 +38,10 @@ namespace BunnyLand.DesktopGL.Systems
 
         public Dictionary<int, CollisionBody> Bodies { get; } = new Dictionary<int, CollisionBody>();
 
-        public CollisionSystem(Variables variables) : base(Aspect.All(typeof(CollisionBody)))
+        public CollisionSystem(Variables variables, MessageHub messageHub) : base(Aspect.All(typeof(CollisionBody)))
         {
             this.variables = variables;
+            this.messageHub = messageHub;
         }
 
         public override void Initialize(IComponentMapperService mapperService)
@@ -75,8 +77,10 @@ namespace BunnyLand.DesktopGL.Systems
             timeSpans[timeSpanCounter] = stopwatch.Elapsed;
             timeSpanCounter = (timeSpanCounter + 1) % LogCollisionDetectionEveryNthFrame;
             if (timeSpanCounter == 0) {
-                Console.WriteLine(
-                    $"Avg time collision detection: {timeSpans.Average(ts => ts.TotalMilliseconds):N} ms");
+                var average = timeSpans.Average(ts => ts.TotalMilliseconds);
+                if (average > 1)
+                    Console.WriteLine(
+                        $"Avg time collision detection: {average:N} ms");
             }
         }
 
@@ -113,7 +117,7 @@ namespace BunnyLand.DesktopGL.Systems
                                 if (health.CurrentHealth < 0) {
                                     DestroyEntity(other);
                                     playerMapper.TryGet(other).IfSome(player =>
-                                        Hub.Default.Publish(new RespawnPlayerMessage(player.PlayerIndex)));
+                                        messageHub.Publish(new RespawnPlayerMessage(player.PlayerIndex)));
                                 }
                             }));
                         var otherBody = bodyMapper.Get(other);

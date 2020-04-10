@@ -4,6 +4,7 @@ using BunnyLand.DesktopGL.Extensions;
 using BunnyLand.DesktopGL.Messages;
 using BunnyLand.DesktopGL.Resources;
 using BunnyLand.DesktopGL.Screens;
+using BunnyLand.DesktopGL.Services;
 using BunnyLand.DesktopGL.Systems;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Xna.Framework;
@@ -15,7 +16,6 @@ using MonoGame.Extended.Gui;
 using MonoGame.Extended.Input.InputListeners;
 using MonoGame.Extended.Screens;
 using MonoGame.Extended.ViewportAdapters;
-using PubSub;
 using Screen = MonoGame.Extended.Screens.Screen;
 
 namespace BunnyLand.DesktopGL
@@ -23,7 +23,6 @@ namespace BunnyLand.DesktopGL
     public class BunnyGame : Game
     {
         private readonly GameSettings gameSettings;
-        private IServiceScope? serviceScope;
 
         protected GraphicsDeviceManager Graphics { get; }
 
@@ -54,8 +53,8 @@ namespace BunnyLand.DesktopGL
 
             services.Scan(scan => {
                 scan.FromAssemblyOf<BunnyGame>()
-                    .AddClasses().AsSelf().WithScopedLifetime()
-                    .AddClasses().AsImplementedInterfaces().WithScopedLifetime()
+                    .AddClasses().AsSelf().WithSingletonLifetime()
+                    .AddClasses().AsImplementedInterfaces().WithSingletonLifetime()
                     ;
             });
             services.AddSingleton(gameSettings);
@@ -95,24 +94,21 @@ namespace BunnyLand.DesktopGL
             services.AddSingleton<IGuiRenderer>(provider =>
                 new GuiSpriteBatchRenderer(provider.GetRequiredService<GraphicsDevice>(), () => Matrix.Identity));
             services.AddSingleton<GuiSystem>();
-            services.AddSingleton<Variables>();
         }
 
-        private static World BuildWorld(IServiceProvider provider)
-        {
-            return provider.CreateWorld()
-                .AddSystemService<LifetimeSystem>()
-                .AddSystemService<InputSystem>()
-                .AddSystemService<PlayerSystem>()
-                .AddSystemService<AcceleratorSystem>()
-                .AddSystemService<EmitterSystem>()
-                .AddSystemService<GravitySystem>()
-                .AddSystemService<PhysicsSystem>()
-                .AddSystemService<CollisionSystem>()
-                .AddSystemService<RenderSystem>()
-                .AddSystemService<BattleSystem>()
-                .Build();
-        }
+        private static World BuildWorld(IServiceProvider provider) => provider.CreateWorld()
+            .AddSystemService<NetSystem>()
+            .AddSystemService<LifetimeSystem>()
+            .AddSystemService<InputSystem>()
+            .AddSystemService<PlayerSystem>()
+            .AddSystemService<AcceleratorSystem>()
+            .AddSystemService<EmitterSystem>()
+            .AddSystemService<GravitySystem>()
+            .AddSystemService<PhysicsSystem>()
+            .AddSystemService<CollisionSystem>()
+            .AddSystemService<RenderSystem>()
+            .AddSystemService<BattleSystem>()
+            .Build();
 
         private T GetService<T>() => Services.GetRequiredService<T>();
 
@@ -132,7 +128,7 @@ namespace BunnyLand.DesktopGL
             var bitmapFont = Content.Load<BitmapFont>("Fonts/bryndan-medium");
             Skin.CreateDefault(bitmapFont);
 
-            Hub.Default.Subscribe<StartGameMessage>(_ => LoadScreen<BattleScreen>());
+            Services.GetRequiredService<MessageHub>().Subscribe<StartGameMessage>(_ => LoadScreen<BattleScreen>());
 
             LoadScreen<MenuScreen>();
         }
@@ -147,15 +143,7 @@ namespace BunnyLand.DesktopGL
             var services = new ServiceCollection();
             ConfigureServices(services);
             var provider = services.BuildServiceProvider();
-            serviceScope = provider.CreateScope();
-            Services = serviceScope.ServiceProvider;
-        }
-
-        protected override void Dispose(bool disposing)
-        {
-            serviceScope?.Dispose();
-
-            base.Dispose(disposing);
+            Services = provider;
         }
     }
 }

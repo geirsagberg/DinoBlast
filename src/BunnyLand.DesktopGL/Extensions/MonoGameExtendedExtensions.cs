@@ -24,11 +24,6 @@ namespace BunnyLand.DesktopGL.Extensions
             return mapper.Has(entityId) ? Option<T>.Some(mapper.Get(entityId)) : Option<T>.None;
         }
 
-        public static T? GetOrNull<T>(this ComponentMapper<T> mapper, int entityId) where T : class
-        {
-            return mapper.Has(entityId) ? mapper.Get(entityId) : null;
-        }
-
         public static WorldBuilderService CreateWorld(this IServiceProvider serviceProvider) =>
             new WorldBuilderService(serviceProvider);
 

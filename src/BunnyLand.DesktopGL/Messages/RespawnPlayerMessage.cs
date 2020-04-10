@@ -1,8 +1,9 @@
-﻿using Microsoft.Xna.Framework;
+﻿using BunnyLand.DesktopGL.Services;
+using Microsoft.Xna.Framework;
 
 namespace BunnyLand.DesktopGL.Messages
 {
-    internal class RespawnPlayerMessage
+    internal class RespawnPlayerMessage : INotification
     {
         public PlayerIndex PlayerIndex { get; }
 

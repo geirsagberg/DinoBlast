@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using BunnyLand.DesktopGL.Enums;
-using PubSub;
+using BunnyLand.DesktopGL.Messages;
+using BunnyLand.DesktopGL.Services;
 
 namespace BunnyLand.DesktopGL
 {
@@ -25,14 +26,14 @@ namespace BunnyLand.DesktopGL
 
         public IReadOnlyDictionary<GlobalVariable, float> Global => global;
 
-        public Variables()
+        public Variables(MessageHub messageHub)
         {
-            Hub.Default.Subscribe<(GlobalVariable key, float value)>(SetGlobalVariable);
+            messageHub.Subscribe<SetGlobalVariableMessage>(SetGlobalVariable);
         }
 
-        private void SetGlobalVariable((GlobalVariable key, float value) tuple)
+        private void SetGlobalVariable(SetGlobalVariableMessage msg)
         {
-            global[tuple.key] = tuple.value;
+            global[msg.Name] = msg.Value;
         }
     }
 }

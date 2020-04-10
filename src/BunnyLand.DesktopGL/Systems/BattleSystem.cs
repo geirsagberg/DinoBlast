@@ -4,12 +4,12 @@ using System.Linq;
 using BunnyLand.DesktopGL.Components;
 using BunnyLand.DesktopGL.Extensions;
 using BunnyLand.DesktopGL.Messages;
+using BunnyLand.DesktopGL.Services;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
 using MonoGame.Extended;
 using MonoGame.Extended.Entities;
 using MonoGame.Extended.Entities.Systems;
-using PubSub;
 
 namespace BunnyLand.DesktopGL.Systems
 {
@@ -31,18 +31,18 @@ namespace BunnyLand.DesktopGL.Systems
         private readonly Dictionary<PlayerIndex, int> playerEntities = new Dictionary<PlayerIndex, int>();
         private ComponentMapper<Health> healthMapper;
 
-        public BattleSystem(EntityFactory entityFactory, GameSettings gameSettings, Random random) : base(Aspect.All())
+        public BattleSystem(EntityFactory entityFactory, GameSettings gameSettings, Random random, MessageHub messageHub) : base(Aspect.All())
         {
             this.entityFactory = entityFactory;
             this.gameSettings = gameSettings;
             this.random = random;
-            Hub.Default.Subscribe((ResetWorldMessage _) => {
+            messageHub.Subscribe((ResetWorldMessage _) => {
                 foreach (var entity in entities) {
                     DestroyEntity(entity);
                 }
                 SetupEntities();
             });
-            Hub.Default.Subscribe((RespawnPlayerMessage msg) => RespawnPlayer(msg.PlayerIndex));
+            messageHub.Subscribe((RespawnPlayerMessage msg) => RespawnPlayer(msg.PlayerIndex));
         }
 
         public void RespawnPlayer(PlayerIndex playerIndex)

@@ -4,39 +4,32 @@ using System.Linq;
 using BunnyLand.DesktopGL.Controls;
 using BunnyLand.DesktopGL.Enums;
 using BunnyLand.DesktopGL.Messages;
+using BunnyLand.DesktopGL.Services;
 using Microsoft.Xna.Framework;
-using MonoGame.Extended;
-using MonoGame.Extended.Entities;
 using MonoGame.Extended.Gui;
 using MonoGame.Extended.Gui.Controls;
 using MonoGame.Extended.Screens;
-using PubSub;
 using GuiScreen = MonoGame.Extended.Gui.Screen;
 
 namespace BunnyLand.DesktopGL.Screens
 {
     public class BattleScreen : GameScreen
     {
-        private readonly EntityFactory entityFactory;
-        private readonly GameSettings gameSettings;
         private readonly GuiSystem guiSystem;
         private readonly Variables variables;
-        private readonly World world;
+        private readonly MessageHub messageHub;
 
-        public BattleScreen(Game game, EntityFactory entityFactory, World world, GameSettings gameSettings,
-            GuiSystem guiSystem, Variables variables) : base(game)
+        public BattleScreen(Game game, GuiSystem guiSystem, Variables variables, MessageHub messageHub) : base(game)
         {
-            this.entityFactory = entityFactory;
-            this.world = world;
-            this.gameSettings = gameSettings;
             this.guiSystem = guiSystem;
             this.variables = variables;
+            this.messageHub = messageHub;
         }
 
         public override void LoadContent()
         {
             SetupDebugGui();
-            Hub.Default.Publish(new ResetWorldMessage());
+            messageHub.Publish(new ResetWorldMessage());
         }
 
         private void SetupDebugGui()
@@ -54,7 +47,7 @@ namespace BunnyLand.DesktopGL.Screens
             var resetButton = new Button {
                 Content = "Reset"
             };
-            resetButton.Clicked += delegate { Hub.Default.Publish(new ResetWorldMessage()); };
+            resetButton.Clicked += delegate { messageHub.Publish(new ResetWorldMessage()); };
 
             stackPanel.Items.Add(resetButton);
 
@@ -74,7 +67,7 @@ namespace BunnyLand.DesktopGL.Screens
             yield return new Label(variable.ToString());
             var defaultValue = variables.Global[variable];
             var slider = new Slider(defaultValue * 0.1f, defaultValue * 10f, defaultValue);
-            slider.OnSliderChanged += (_, value) => Hub.Default.Publish((variable, value));
+            slider.OnSliderChanged += (_, value) => messageHub.Publish(new SetGlobalVariableMessage(variable, value));
             yield return slider;
         }
 

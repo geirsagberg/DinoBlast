@@ -1,6 +1,8 @@
-﻿namespace BunnyLand.DesktopGL.Messages
+﻿using BunnyLand.DesktopGL.Services;
+
+namespace BunnyLand.DesktopGL.Messages
 {
-    internal class ResetWorldMessage
+    internal class ResetWorldMessage : INotification
     {
     }
 }
