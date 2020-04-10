@@ -9,11 +9,6 @@ namespace BunnyLand.DesktopGL.Services
     // Inspired by https://github.com/upta/pubsub/blob/master/PubSub/Core/Hub.cs and MediatR
     public class MessageHub
     {
-        public MessageHub()
-        {
-            ;
-        }
-
         private readonly ConcurrentDictionary<Type, List<Delegate>> notificationHandlers = new ConcurrentDictionary<Type, List<Delegate>>();
         private readonly ConcurrentDictionary<Type, Delegate> requestHandlers = new ConcurrentDictionary<Type, Delegate>();
 
@@ -32,12 +27,15 @@ namespace BunnyLand.DesktopGL.Services
                 }
             }));
 
-        public TResponse Send<TResponse>(IRequest<TResponse> request) => RequestHandlers
+        public async Task<TResponse> Send<TResponse>(IRequest<TResponse> request) => await RequestHandlers
             .TryGetValue(request.GetType())
-            .Some(handler => {
+            .Some(async handler => {
                 var result = handler.DynamicInvoke(request);
-                if (result is TResponse response) return response;
-                throw new Exception("Unknown result " + result);
+                return result switch {
+                    Task<TResponse> task => await task,
+                    TResponse response => response,
+                    _ => throw new Exception("Unknown result " + result)
+                };
             }).None(() => throw new Exception("No handler for request " + request.GetType()));
 
         public void Subscribe<T>(Action<T> action) where T : INotification
@@ -47,6 +45,13 @@ namespace BunnyLand.DesktopGL.Services
         }
 
         public void Handle<TRequest, TResponse>(Func<TRequest, TResponse> handler)
+        {
+            if (!requestHandlers.TryAdd(typeof(TRequest), handler)) {
+                throw new Exception("Handler already registered for " + typeof(TRequest));
+            }
+        }
+
+        public void Handle<TRequest, TResponse>(Func<TRequest, Task<TResponse>> handler)
         {
             if (!requestHandlers.TryAdd(typeof(TRequest), handler)) {
                 throw new Exception("Handler already registered for " + typeof(TRequest));

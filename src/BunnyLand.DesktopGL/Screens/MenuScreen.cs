@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+﻿using System;
 using System.Net;
 using System.Threading.Tasks;
 using BunnyLand.DesktopGL.Messages;
@@ -7,6 +7,7 @@ using Microsoft.Xna.Framework;
 using MonoGame.Extended.Gui;
 using MonoGame.Extended.Gui.Controls;
 using MonoGame.Extended.Screens;
+using static BunnyLand.DesktopGL.Utils.UiHelper;
 using Screen = MonoGame.Extended.Gui.Screen;
 
 namespace BunnyLand.DesktopGL.Screens
@@ -18,12 +19,29 @@ namespace BunnyLand.DesktopGL.Screens
         private Label loadingLabel;
         private Screen? loadingScreen;
         private Screen? serverListScreen;
+        private StackPanel? serversPanel;
         private Screen? startMenuScreen;
+        private StackPanel? serversDialog;
 
         public MenuScreen(Game game, GuiSystem guiSystem, MessageHub messageHub) : base(game)
         {
             this.guiSystem = guiSystem;
             this.messageHub = messageHub;
+
+            messageHub.Subscribe<ServerDiscoveredMessage>(OnServerDiscovered);
+        }
+
+        private void OnServerDiscovered(ServerDiscoveredMessage msg)
+        {
+            if (serversPanel != null) {
+                serversPanel.Items.Add(CreateButton(msg.EndPoint.ToString(), () => JoinServerClicked(msg.EndPoint)));
+                serversPanel.InvalidateMeasure();
+            }
+        }
+
+        private void JoinServer(IPEndPoint msgEndPoint)
+        {
+            Console.WriteLine("Joining server " + msgEndPoint);
         }
 
         public override void LoadContent()
@@ -80,7 +98,7 @@ namespace BunnyLand.DesktopGL.Screens
             var startLanGame = new Button {
                 Content = "Start LAN game"
             };
-            startLanGame.Clicked += (obj, args) => StartLanGameClicked();
+            startLanGame.Clicked += async (obj, args) => await StartLanGameClicked();
             menuPanel.Items.Add(startLanGame);
 
             var joinLanGame = new Button {
@@ -96,11 +114,11 @@ namespace BunnyLand.DesktopGL.Screens
             };
         }
 
-        private void StartLanGameClicked()
+        private async Task StartLanGameClicked()
         {
             ShowLoadingMessage("Starting server...");
 
-            var success = messageHub.Send(new StartServerRequest(OnlineType.LAN));
+            var success = await messageHub.Send(new StartServerRequest(OnlineType.LAN));
 
             if (success) {
                 messageHub.Publish(new StartGameMessage(new GameOptions {OnlineType = OnlineType.LAN}));
@@ -111,12 +129,12 @@ namespace BunnyLand.DesktopGL.Screens
 
         private void JoinLanGameClicked()
         {
-            ShowLoadingMessage("Loading servers...");
+            // ShowLoadingMessage("Loading servers...");
             // ShowLoadingMessage("Joining game...");
 
-            var servers = messageHub.Send(new ListServersRequest());
+            messageHub.Publish(new StartServerSearchMessage());
 
-            ShowServerList(servers);
+            ShowServerList();
 
             // var success = await mediator.Send(new JoinServerRequest(OnlineType.LAN));
             //
@@ -127,33 +145,34 @@ namespace BunnyLand.DesktopGL.Screens
             // }
         }
 
-        private void ShowServerList(List<IPAddress> servers)
+        private void ShowServerList()
         {
-            var serversPanel = new StackPanel {
+            serversDialog = new StackPanel {
                 Width = 400,
                 Height = 400,
                 Position = guiSystem.BoundingRectangle.Center - new Point(200, 200)
             };
 
-            foreach (var server in servers) {
-                var button = new Button {
-                    Content = server.ToString()
-                };
-                button.Clicked += async (obj, args) => await JoinServerClicked(server);
-                serversPanel.Items.Add(button);
-            }
+            serversDialog.Items.Add(new Label("Searching..."));
+
+            serversPanel = new StackPanel {
+                Height = 200
+            };
+            serversDialog.Items.Add(serversPanel);
+
+            serversDialog.Items.Add(CreateButton("Back", () => ActivateStartMenu()));
 
             var screen = new Screen {
                 Content = new Canvas {
                     Items = {
-                        serversPanel
+                        serversDialog
                     }
                 }
             };
             guiSystem.ActiveScreen = screen;
         }
 
-        private async Task JoinServerClicked(IPAddress server)
+        private void JoinServerClicked(IPEndPoint server)
         {
             ShowLoadingMessage($"Joining game {server}...");
         }
