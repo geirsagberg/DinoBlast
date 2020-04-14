@@ -4,6 +4,7 @@ using System.Linq;
 using BunnyLand.DesktopGL.Components;
 using BunnyLand.DesktopGL.Extensions;
 using BunnyLand.DesktopGL.Messages;
+using BunnyLand.DesktopGL.Serialization;
 using BunnyLand.DesktopGL.Services;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
@@ -36,13 +37,34 @@ namespace BunnyLand.DesktopGL.Systems
             this.entityFactory = entityFactory;
             this.gameSettings = gameSettings;
             this.random = random;
-            messageHub.Subscribe((ResetWorldMessage _) => {
+            messageHub.Subscribe((ResetWorldMessage msg) => {
                 foreach (var entity in entities) {
                     DestroyEntity(entity);
                 }
-                SetupEntities();
+                if (msg.GameState == null)
+                    SetupEntities();
+                else
+                    SetupEntities(msg.GameState);
             });
             messageHub.Subscribe((RespawnPlayerMessage msg) => RespawnPlayer(msg.PlayerIndex));
+        }
+
+        private void SetupEntities(FullGameState gameState)
+        {
+            entityFactory.CreateLevel(CreateEntity(), gameSettings.Width, gameSettings.Height);
+
+            foreach (var serializable in gameState.Components.Serializables) {
+                var entity = CreateEntity();
+                entity.Attach(serializable);
+                if (gameState.Components.Transforms.TryGetValue(serializable.Id, out var serializableTransform)) {
+                    var transform = new Transform2(serializableTransform.Position, serializableTransform.Rotation, serializableTransform.Scale);
+                    entity.Attach(transform);
+                }
+
+                if (gameState.Components.Transforms.TryGetValue(serializable.Id, out var movable)) {
+                    entity.Attach(movable);
+                }
+            }
         }
 
         public void RespawnPlayer(PlayerIndex playerIndex)

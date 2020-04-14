@@ -1,25 +1,29 @@
-﻿using Microsoft.Xna.Framework;
-using MonoGame.Extended;
+﻿using MessagePack;
+using Microsoft.Xna.Framework;
 
 namespace BunnyLand.DesktopGL.Components
 {
+    [MessagePackObject]
     public class Movable
     {
-        public Transform2 Transform { get; }
+        [Key(0)] public Vector2 Velocity { get; set; }
 
-        public Vector2 Position => Transform.Position;
+        [Key(1)] public Vector2 Acceleration { get; set; }
 
-        public Vector2 Velocity { get; set; }
-        public Vector2 Acceleration { get; set; }
-        public float GravityMultiplier { get; set; }
-        public Vector2 GravityPull { get; set; }
+        [Key(2)] public float GravityMultiplier { get; set; } = 1f;
 
-        public float BrakingForce { get; set; }
-        public bool WrapAround { get; set; } = true;
+        [Key(3)] public Vector2 GravityPull { get; set; }
 
-        public Movable(Transform2 transform, float gravityMultiplier = 1)
+        [Key(4)] public float BrakingForce { get; set; }
+
+        [Key(5)] public bool WrapAround { get; set; } = true;
+
+        public Movable()
         {
-            Transform = transform;
+        }
+
+        public Movable(float gravityMultiplier)
+        {
             GravityMultiplier = gravityMultiplier;
         }
     }

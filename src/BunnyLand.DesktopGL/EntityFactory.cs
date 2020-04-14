@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using BunnyLand.DesktopGL.Components;
-using BunnyLand.DesktopGL.Enums;
 using BunnyLand.DesktopGL.Resources;
 using Microsoft.Xna.Framework;
 using MonoGame.Extended;
@@ -15,12 +14,13 @@ namespace BunnyLand.DesktopGL
     public class EntityFactory
     {
         private readonly Textures textures;
-        private readonly Variables variables;
 
-        public EntityFactory(Textures textures, Variables variables)
+        /// For unit testing
+        internal bool skipSprites = false;
+
+        public EntityFactory(Textures textures)
         {
             this.textures = textures;
-            this.variables = variables;
         }
 
         private Sprite GetAnkiSprite()
@@ -42,21 +42,25 @@ namespace BunnyLand.DesktopGL
             });
             spriteSheet.Cycles.Add("running",
                 new SpriteSheetAnimationCycle
-                    {Frames = Enumerable.Range(1, 8).Select(i => new SpriteSheetAnimationFrame(1)).ToList()});
+                    { Frames = Enumerable.Range(1, 8).Select(i => new SpriteSheetAnimationFrame(1)).ToList() });
             var animatedSprite = new AnimatedSprite(spriteSheet);
             return animatedSprite;
         }
 
         public Entity CreatePlayer(Entity entity, Vector2 position, PlayerIndex playerIndex)
         {
+            entity.Attach(new Serializable(entity.Id));
             var transform = new Transform2(position);
             entity.Attach(transform);
-            var sprite = GetAnkiSprite();
-            entity.Attach(sprite);
+            if (!skipSprites) {
+                var sprite = GetPlayerSprite();
+                entity.Attach(sprite);
+            }
+
             entity.Attach(new CollisionBody(new CircleF(Point2.Zero, 15), transform, ColliderTypes.Player,
                 ColliderTypes.Player | ColliderTypes.Projectile | ColliderTypes.Static));
             entity.Attach(new Player(playerIndex));
-            entity.Attach(new Movable(transform));
+            entity.Attach(new Movable());
             entity.Attach(new Health(100));
 
             var emitter = new Emitter {
@@ -69,11 +73,18 @@ namespace BunnyLand.DesktopGL
 
         public Entity CreatePlanet(Entity entity, Vector2 position, float mass, float scale = 1)
         {
+            entity.Attach(new Serializable(entity.Id));
             var transform = new Transform2(position, scale: new Vector2(scale));
             entity.Attach(transform);
-            var sprite = new Sprite(textures.redplanet);
-            entity.Attach(sprite);
-            var boundingRectangle = sprite.GetBoundingRectangle(position, 0, new Vector2(scale));
+            RectangleF boundingRectangle;
+            if (!skipSprites) {
+                var sprite = new Sprite(textures.redplanet);
+                entity.Attach(sprite);
+                boundingRectangle = sprite.GetBoundingRectangle(position, 0, new Vector2(scale));
+            } else {
+                boundingRectangle = new RectangleF(position, new Size2(100, 100) * scale);
+            }
+
             entity.Attach(new CollisionBody(new CircleF(Point2.Zero, boundingRectangle.Width / 2f), transform,
                 ColliderTypes.Static, ColliderTypes.Player | ColliderTypes.Projectile));
             entity.Attach(new GravityPoint(transform, mass));
@@ -99,9 +110,10 @@ namespace BunnyLand.DesktopGL
         public Entity CreateBullet(Entity entity, Vector2 position, Vector2 velocity,
             TimeSpan lifeSpan)
         {
+            entity.Attach(new Serializable(entity.Id));
             var transform = new Transform2(position);
             entity.Attach(transform);
-            var movable = new Movable(transform) {
+            var movable = new Movable {
                 Velocity = velocity,
                 GravityMultiplier = 0.3f,
                 WrapAround = false
@@ -110,11 +122,12 @@ namespace BunnyLand.DesktopGL
             var collisionBody = new CollisionBody(new CircleF(Point2.Zero, 1), transform,
                 ColliderTypes.Projectile, ColliderTypes.Player | ColliderTypes.Static);
             entity.Attach(collisionBody);
-            var projectile = new Projectile(movable, collisionBody);
-            entity.Attach(projectile);
 
-            var sprite = new Sprite(textures.bullet);
-            entity.Attach(sprite);
+            if (!skipSprites) {
+                var sprite = new Sprite(textures.bullet);
+                entity.Attach(sprite);
+            }
+
             var lifetime = new Lifetime(lifeSpan);
             entity.Attach(lifetime);
             entity.Attach(new Damaging(30));

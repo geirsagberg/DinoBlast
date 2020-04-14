@@ -24,9 +24,9 @@ namespace BunnyLand.DesktopGL
     {
         private readonly GameSettings gameSettings;
 
-        protected GraphicsDeviceManager Graphics { get; }
+        internal GraphicsDeviceManager Graphics { get; }
 
-        private new IServiceProvider Services { get; set; }
+        internal new IServiceProvider Services { get; set; }
 
         public BunnyGame(GameSettings gameSettings)
         {
@@ -68,8 +68,9 @@ namespace BunnyLand.DesktopGL
 
             services.AddSingleton(BuildWorld);
             services.AddSingleton(provider => {
-                var textures = new Textures(provider.GetRequiredService<ContentManager>());
-                textures.Load();
+                var loader = provider.GetRequiredService<ResourceLoader>();
+                var textures = new Textures();
+                loader.Load<Texture2D>(textures);
                 return textures;
             });
             services.AddSingleton(provider => {
@@ -128,10 +129,15 @@ namespace BunnyLand.DesktopGL
             var bitmapFont = Content.Load<BitmapFont>("Fonts/bryndan-medium");
             Skin.CreateDefault(bitmapFont);
 
-            Services.GetRequiredService<MessageHub>().Subscribe<StartGameMessage>(_ => LoadScreen<BattleScreen>());
+            MessageHub.Subscribe<StartGameMessage>(msg => {
+                LoadScreen<BattleScreen>();
+                MessageHub.Publish(new ResetWorldMessage(msg.GameState));
+            });
 
             LoadScreen<MenuScreen>();
         }
+
+        private MessageHub MessageHub => Services.GetRequiredService<MessageHub>();
 
         private void LoadScreen<T>() where T : Screen
         {

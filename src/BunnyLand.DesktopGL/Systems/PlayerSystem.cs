@@ -40,7 +40,7 @@ namespace BunnyLand.DesktopGL.Systems
             playerMapper.TryGet(entityId).IfSome(player => {
                 movableMapper.TryGet(entityId).IfSome(movable => {
                     var isShooting = player.PlayerKeys[PlayerKey.Fire].HasFlag(KeyState.Pressed);
-
+                    var transform = transformMapper.Get(entityId);
                     emitterMapper.TryGet(entityId).IfSome(emitter => {
                         emitter.IsEmitting = isShooting;
                         emitter.EmitInterval = TimeSpan.FromSeconds(variables.Global[GlobalVariable.FiringInterval]);
@@ -48,7 +48,7 @@ namespace BunnyLand.DesktopGL.Systems
                             var velocity = movable.Velocity + player.DirectionalInputs.AimDirection * variables.Global[GlobalVariable.BulletSpeed];
 
                             entityFactory.CreateBullet(entity,
-                                movable.Position + player.DirectionalInputs.AimDirection.NormalizedCopy() * 20,
+                                transform.Position + player.DirectionalInputs.AimDirection.NormalizedCopy() * 20,
                                 velocity, TimeSpan.FromSeconds(variables.Global[GlobalVariable.BulletLifespan]));
                         };
                     });

@@ -21,10 +21,11 @@ namespace BunnyLand.DesktopGL.Systems
         private readonly System.Collections.Generic.HashSet<(int entityA, int entityB)> checkedPairs =
             new System.Collections.Generic.HashSet<(int entityA, int entityB)>();
 
+        private readonly MessageHub messageHub;
+
         private readonly Stopwatch stopwatch = new Stopwatch();
         private readonly TimeSpan[] timeSpans = new TimeSpan[LogCollisionDetectionEveryNthFrame];
         private readonly Variables variables;
-        private readonly MessageHub messageHub;
         private ComponentMapper<CollisionBody> bodyMapper;
         private ComponentMapper<Damaging> damagingMapper;
         private ComponentMapper<Health> healthMapper;
@@ -33,6 +34,7 @@ namespace BunnyLand.DesktopGL.Systems
         private ComponentMapper<Player> playerMapper;
 
         private int timeSpanCounter;
+        private ComponentMapper<Transform2> transformMapper;
 
         public Option<Level> Level { get; set; }
 
@@ -52,6 +54,7 @@ namespace BunnyLand.DesktopGL.Systems
             healthMapper = mapperService.GetMapper<Health>();
             damagingMapper = mapperService.GetMapper<Damaging>();
             playerMapper = mapperService.GetMapper<Player>();
+            transformMapper = mapperService.GetMapper<Transform2>();
         }
 
         protected override void OnEntityAdded(int entityId)
@@ -121,16 +124,18 @@ namespace BunnyLand.DesktopGL.Systems
                                 }
                             }));
                         var otherBody = bodyMapper.Get(other);
-                        switch (body.ColliderType) {
-                            case ColliderTypes.Player when otherBody.ColliderType == ColliderTypes.Static:
-                                movable.Transform.Position += penetrationVector;
-                                movable.Velocity += penetrationVector / elapsedTicks;
-                                break;
-                            case ColliderTypes.Projectile:
-                                movable.Transform.Position += penetrationVector;
-                                DestroyEntity(entityId);
-                                break;
-                        }
+                        transformMapper.TryGet(entityId).IfSome(transform => {
+                            switch (body.ColliderType) {
+                                case ColliderTypes.Player when otherBody.ColliderType == ColliderTypes.Static:
+                                    transform.Position += penetrationVector;
+                                    movable.Velocity += penetrationVector / elapsedTicks;
+                                    break;
+                                case ColliderTypes.Projectile:
+                                    transform.Position += penetrationVector;
+                                    DestroyEntity(entityId);
+                                    break;
+                            }
+                        });
                     }
                 });
             });

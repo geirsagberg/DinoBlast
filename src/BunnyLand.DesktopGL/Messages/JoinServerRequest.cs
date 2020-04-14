@@ -1,16 +1,14 @@
-﻿using System;
-using BunnyLand.DesktopGL.Services;
+﻿using System.Net;
 
 namespace BunnyLand.DesktopGL.Messages
 {
     public class JoinServerRequest : IRequest<bool>
     {
-        public OnlineType OnlineType { get; }
+        public IPEndPoint EndPoint { get; }
 
-        public JoinServerRequest(OnlineType onlineType)
+        public JoinServerRequest(IPEndPoint endPoint)
         {
-            if (onlineType == OnlineType.Offline) throw new ArgumentOutOfRangeException(nameof(onlineType));
-            OnlineType = onlineType;
+            EndPoint = endPoint;
         }
     }
 }

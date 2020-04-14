@@ -1,14 +1,14 @@
-﻿using BunnyLand.DesktopGL.Services;
+﻿using BunnyLand.DesktopGL.Serialization;
 
 namespace BunnyLand.DesktopGL.Messages
 {
     internal class StartGameMessage : INotification
     {
-        public GameOptions GameOptions { get; }
+        public FullGameState? GameState { get; }
 
-        public StartGameMessage(GameOptions gameOptions)
+        public StartGameMessage(FullGameState gameState = null)
         {
-            GameOptions = gameOptions;
+            GameState = gameState;
         }
     }
 }

@@ -6,12 +6,8 @@ using Microsoft.Xna.Framework.Graphics;
 
 namespace BunnyLand.DesktopGL.Resources
 {
-    public partial class Textures : ResourcesBase<Texture2D>
+    public partial class Textures
     {
-        public Textures(ContentManager contentManager) : base(contentManager)
-        {
-        }
-
         [Description("Fonts/arial_0")]
         public Texture2D arial0 { get; set; }
         [Description("Fonts/bryndan-large_0")]

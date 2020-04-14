@@ -5,7 +5,12 @@ using BunnyLand.DesktopGL.Services;
 
 namespace BunnyLand.DesktopGL
 {
-    public class Variables
+    public interface IVariables
+    {
+        IReadOnlyDictionary<GlobalVariable, float> Global { get; }
+    }
+
+    public class Variables : IVariables
     {
         private readonly Dictionary<GlobalVariable, float> global = new Dictionary<GlobalVariable, float> {
             {GlobalVariable.JetpackAcceleration, 0.2f},

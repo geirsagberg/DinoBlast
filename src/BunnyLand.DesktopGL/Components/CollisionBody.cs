@@ -27,9 +27,9 @@ namespace BunnyLand.DesktopGL.Components
 
         public RectangleF CollisionBounds { get; set; }
 
-        public CollisionBody(IShapeF shape, Transform2 transform, ColliderTypes isColliderType, ColliderTypes collidesWith)
+        public CollisionBody(IShapeF shape, Transform2 transform, ColliderTypes colliderType, ColliderTypes collidesWith)
         {
-            ColliderType = isColliderType;
+            ColliderType = colliderType;
             CollidesWith = collidesWith;
             this.shape = shape;
             this.transform = transform;

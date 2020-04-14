@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using BunnyLand.DesktopGL.Messages;
 using BunnyLand.DesktopGL.Services;
 using Microsoft.Xna.Framework;
+using MonoGame.Extended;
 using MonoGame.Extended.Gui;
 using MonoGame.Extended.Gui.Controls;
 using MonoGame.Extended.Screens;
@@ -19,9 +20,9 @@ namespace BunnyLand.DesktopGL.Screens
         private Label loadingLabel;
         private Screen? loadingScreen;
         private Screen? serverListScreen;
+        private StackPanel? serversDialog;
         private StackPanel? serversPanel;
         private Screen? startMenuScreen;
-        private StackPanel? serversDialog;
 
         public MenuScreen(Game game, GuiSystem guiSystem, MessageHub messageHub) : base(game)
         {
@@ -34,7 +35,7 @@ namespace BunnyLand.DesktopGL.Screens
         private void OnServerDiscovered(ServerDiscoveredMessage msg)
         {
             if (serversPanel != null) {
-                serversPanel.Items.Add(CreateButton(msg.EndPoint.ToString(), () => JoinServerClicked(msg.EndPoint)));
+                serversPanel.Items.Add(CreateButton(msg.EndPoint.ToString(), async () => await JoinServerClicked(msg.EndPoint)));
                 serversPanel.InvalidateMeasure();
             }
         }
@@ -59,8 +60,8 @@ namespace BunnyLand.DesktopGL.Screens
         {
             loadingScreen ??= SetupLoading();
             loadingLabel.Content = message;
-            loadingLabel.Position = guiSystem.BoundingRectangle.Center
-                - new Point(loadingLabel.Width / 2, loadingLabel.Height / 2);
+            var size = loadingLabel.CalculateActualSize(guiSystem);
+            loadingLabel.Position = (Size) guiSystem.BoundingRectangle.Center - size / 2;
             guiSystem.ActiveScreen = loadingScreen;
         }
 
@@ -89,9 +90,7 @@ namespace BunnyLand.DesktopGL.Screens
                 Content = "Start local game"
             };
             startLocalButton.Clicked += delegate {
-                messageHub.Publish(new StartGameMessage(new GameOptions {
-                    OnlineType = OnlineType.Offline
-                }));
+                messageHub.Publish(new StartGameMessage());
             };
             menuPanel.Items.Add(startLocalButton);
 
@@ -121,7 +120,7 @@ namespace BunnyLand.DesktopGL.Screens
             var success = await messageHub.Send(new StartServerRequest(OnlineType.LAN));
 
             if (success) {
-                messageHub.Publish(new StartGameMessage(new GameOptions {OnlineType = OnlineType.LAN}));
+                messageHub.Publish(new StartGameMessage());
             } else {
                 ActivateStartMenu();
             }
@@ -129,20 +128,9 @@ namespace BunnyLand.DesktopGL.Screens
 
         private void JoinLanGameClicked()
         {
-            // ShowLoadingMessage("Loading servers...");
-            // ShowLoadingMessage("Joining game...");
-
             messageHub.Publish(new StartServerSearchMessage());
 
             ShowServerList();
-
-            // var success = await mediator.Send(new JoinServerRequest(OnlineType.LAN));
-            //
-            // if (success) {
-            //     ShowLoadingMessage("Success!");
-            // } else {
-            //     ActivateStartMenu();
-            // }
         }
 
         private void ShowServerList()
@@ -160,7 +148,7 @@ namespace BunnyLand.DesktopGL.Screens
             };
             serversDialog.Items.Add(serversPanel);
 
-            serversDialog.Items.Add(CreateButton("Back", () => ActivateStartMenu()));
+            serversDialog.Items.Add(CreateButton("Back", ActivateStartMenu));
 
             var screen = new Screen {
                 Content = new Canvas {
@@ -172,9 +160,15 @@ namespace BunnyLand.DesktopGL.Screens
             guiSystem.ActiveScreen = screen;
         }
 
-        private void JoinServerClicked(IPEndPoint server)
+        private async Task JoinServerClicked(IPEndPoint server)
         {
             ShowLoadingMessage($"Joining game {server}...");
+            var success = await messageHub.Send(new JoinServerRequest(server));
+            if (success) {
+                ShowLoadingMessage($"Server {server} joined!");
+            } else {
+                ShowLoadingMessage($"Could not connect to {server}");
+            }
         }
 
         public override void Update(GameTime gameTime)

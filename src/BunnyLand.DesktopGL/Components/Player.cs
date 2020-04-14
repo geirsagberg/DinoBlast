@@ -11,10 +11,6 @@ namespace BunnyLand.DesktopGL.Components
         public Dictionary<PlayerKey, KeyState> PlayerKeys =
             EnumHelper.GetValues<PlayerKey>().ToDictionary(k => k, _ => KeyState.None);
 
-        public Player(PlayerIndex playerIndex)
-        {
-            PlayerIndex = playerIndex;
-        }
         public DirectionalInputs DirectionalInputs { get; set; } = new DirectionalInputs();
 
         public PlayerIndex PlayerIndex { get; set; }
@@ -23,5 +19,10 @@ namespace BunnyLand.DesktopGL.Components
         public Facing Facing { get; set; }
 
         public bool IsBraking { get; set; } = true;
+
+        public Player(PlayerIndex playerIndex)
+        {
+            PlayerIndex = playerIndex;
+        }
     }
 }

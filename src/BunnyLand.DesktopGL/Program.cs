@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Runtime.CompilerServices;
 using Microsoft.Extensions.Configuration;
+[assembly: InternalsVisibleTo("BunnyLand.Tests")]
 
 namespace BunnyLand.DesktopGL
 {

@@ -4,6 +4,7 @@ using System.Linq;
 using BunnyLand.DesktopGL.Controls;
 using BunnyLand.DesktopGL.Enums;
 using BunnyLand.DesktopGL.Messages;
+using BunnyLand.DesktopGL.Serialization;
 using BunnyLand.DesktopGL.Services;
 using Microsoft.Xna.Framework;
 using MonoGame.Extended.Gui;
@@ -29,7 +30,6 @@ namespace BunnyLand.DesktopGL.Screens
         public override void LoadContent()
         {
             SetupDebugGui();
-            messageHub.Publish(new ResetWorldMessage());
         }
 
         private void SetupDebugGui()
