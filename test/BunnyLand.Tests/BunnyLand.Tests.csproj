@@ -19,9 +19,4 @@
       <ProjectReference Include="..\..\src\BunnyLand.DesktopGL\BunnyLand.DesktopGL.csproj" />
     </ItemGroup>
   
-  <ItemGroup>
-
-    <FrameworkReference Include="Microsoft.WindowsDesktop.App" />
-  </ItemGroup>
-
 </Project>
