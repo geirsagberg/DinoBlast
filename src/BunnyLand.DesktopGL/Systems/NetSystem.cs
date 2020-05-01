@@ -88,32 +88,7 @@ namespace BunnyLand.DesktopGL.Systems
         {
             var serverListener = new EventBasedNetListener();
             serverListener.ConnectionRequestEvent += request => { request.Accept(); };
-            serverListener.PeerConnectedEvent += peer => {
-                Console.WriteLine("Peer connected: {0}", peer.EndPoint);
-                Console.WriteLine("Sending initial world data");
-
-                var state = new FullGameState(serializer);
-
-                var serializables = new List<Serializable>();
-                var transforms = new Dictionary<int, Transform2>();
-                var movables = new Dictionary<int, Movable>();
-
-                foreach (var entity in ActiveEntities) {
-                    serializables.Add(serializableMapper.Get(entity));
-                    transformMapper.TryGet(entity).IfSome(transform => transforms[entity] = transform);
-                    movableMapper.TryGet(entity).IfSome(movable => movables[entity] = movable);
-                }
-
-                var serializableTransforms = transforms.ToDictionary(kvp => kvp.Key,
-                    kvp => new SerializableTransform { Position = kvp.Value.Position, Rotation = kvp.Value.Rotation, Scale = kvp.Value.Scale });
-
-                state.Components = new SerializableComponents(serializables, serializableTransforms, movables);
-
-                var writer = new NetDataWriter();
-                writer.Put((byte) NetMessageType.FullGameState);
-                writer.Put(state);
-                peer.Send(writer, DeliveryMethod.ReliableOrdered);
-            };
+            serverListener.PeerConnectedEvent += OnServerListenerOnPeerConnectedEvent;
             serverListener.NetworkReceiveEvent += (peer, reader, method) => {
                 Console.WriteLine("Server received: {0}", reader.GetString(100));
                 reader.Recycle();
@@ -131,6 +106,33 @@ namespace BunnyLand.DesktopGL.Systems
                 }
             };
             return serverListener;
+        }
+
+        private void OnServerListenerOnPeerConnectedEvent(NetPeer peer)
+        {
+            Console.WriteLine("Peer connected: {0}", peer.EndPoint);
+            Console.WriteLine("Sending initial world data");
+
+            var state = new FullGameState(serializer);
+
+            var serializables = new List<Serializable>();
+            var transforms = new Dictionary<int, Transform2>();
+            var movables = new Dictionary<int, Movable>();
+
+            foreach (var entity in ActiveEntities) {
+                serializables.Add(serializableMapper.Get(entity));
+                transformMapper.TryGet(entity).IfSome(transform => transforms[entity] = transform);
+                movableMapper.TryGet(entity).IfSome(movable => movables[entity] = movable);
+            }
+
+            var serializableTransforms = transforms.ToDictionary(kvp => kvp.Key, kvp => new SerializableTransform { Position = kvp.Value.Position, Rotation = kvp.Value.Rotation, Scale = kvp.Value.Scale });
+
+            state.Components = new SerializableComponents(serializables, serializableTransforms, movables);
+
+            var writer = new NetDataWriter();
+            writer.Put((byte) NetMessageType.FullGameState);
+            writer.Put(state);
+            peer.Send(writer, DeliveryMethod.ReliableOrdered);
         }
 
         private EventBasedNetListener CreateClientListener()

@@ -26,15 +26,15 @@ namespace BunnyLand.DesktopGL.Systems
         private readonly Stopwatch stopwatch = new Stopwatch();
         private readonly TimeSpan[] timeSpans = new TimeSpan[LogCollisionDetectionEveryNthFrame];
         private readonly Variables variables;
-        private ComponentMapper<CollisionBody> bodyMapper;
-        private ComponentMapper<Damaging> damagingMapper;
-        private ComponentMapper<Health> healthMapper;
-        private ComponentMapper<Level> levelMapper;
-        private ComponentMapper<Movable> movableMapper;
-        private ComponentMapper<Player> playerMapper;
+        private ComponentMapper<CollisionBody> bodyMapper = null!;
+        private ComponentMapper<Damaging> damagingMapper = null!;
+        private ComponentMapper<Health> healthMapper = null!;
+        private ComponentMapper<Level> levelMapper = null!;
+        private ComponentMapper<Movable> movableMapper = null!;
+        private ComponentMapper<Player> playerMapper = null!;
+        private ComponentMapper<Transform2> transformMapper = null!;
 
         private int timeSpanCounter;
-        private ComponentMapper<Transform2> transformMapper;
 
         public Option<Level> Level { get; set; }
 

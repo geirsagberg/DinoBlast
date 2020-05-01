@@ -1,9 +1,11 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using BunnyLand.DesktopGL.Components;
 using BunnyLand.DesktopGL.Enums;
 using BunnyLand.DesktopGL.Extensions;
+using BunnyLand.DesktopGL.Resources;
 using LanguageExt;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
@@ -13,6 +15,7 @@ using MonoGame.Extended.BitmapFonts;
 using MonoGame.Extended.Entities;
 using MonoGame.Extended.Entities.Systems;
 using MonoGame.Extended.Sprites;
+using MonoGame.Extended.TextureAtlases;
 
 namespace BunnyLand.DesktopGL.Systems
 {
@@ -22,16 +25,18 @@ namespace BunnyLand.DesktopGL.Systems
 
         private readonly LinkedList<int> fpsList = new LinkedList<int>();
         private readonly SpriteBatch spriteBatch;
+
+        private readonly ConcurrentDictionary<int, Sprite> spriteByEntity = new ConcurrentDictionary<int, Sprite>();
+        private readonly Textures textures;
         private readonly Variables variables;
-        private ComponentMapper<AnimatedSprite> animatedSpriteMapper;
-        private ComponentMapper<CollisionBody> collisionMapper;
-        private ComponentMapper<Health> healthMapper;
-        private ComponentMapper<Level> levelMapper;
-        private ComponentMapper<Movable> movableMapper;
-        private ComponentMapper<Player> playerMapper;
-        private ComponentMapper<SolidColor> solidColorMapper;
-        private ComponentMapper<Sprite> spriteMapper;
-        private ComponentMapper<Transform2> transformMapper;
+        private ComponentMapper<CollisionBody> collisionMapper = null!;
+        private ComponentMapper<Health> healthMapper = null!;
+        private ComponentMapper<Level> levelMapper = null!;
+        private ComponentMapper<Movable> movableMapper = null!;
+        private ComponentMapper<Player> playerMapper = null!;
+        private ComponentMapper<SolidColor> solidColorMapper = null!;
+        private ComponentMapper<SpriteInfo> spriteMapper = null!;
+        private ComponentMapper<Transform2> transformMapper = null!;
 
         public Option<Level> Level { get; set; }
 
@@ -39,20 +44,20 @@ namespace BunnyLand.DesktopGL.Systems
 
         public Option<Player> Player { get; set; }
 
-        public RenderSystem(SpriteBatch spriteBatch, ContentManager contentManager, Variables variables) : base(Aspect
+        public RenderSystem(SpriteBatch spriteBatch, ContentManager contentManager, Variables variables, Textures textures) : base(Aspect
             .All(typeof(Transform2))
-            .One(typeof(AnimatedSprite), typeof(Sprite), typeof(SolidColor), typeof(Player)))
+            .One(typeof(SpriteInfo), typeof(SolidColor)))
         {
             this.spriteBatch = spriteBatch;
             this.variables = variables;
+            this.textures = textures;
             font = contentManager.Load<BitmapFont>("Fonts/bryndan-medium");
         }
 
         public override void Initialize(IComponentMapperService mapperService)
         {
             transformMapper = mapperService.GetMapper<Transform2>();
-            animatedSpriteMapper = mapperService.GetMapper<AnimatedSprite>();
-            spriteMapper = mapperService.GetMapper<Sprite>();
+            spriteMapper = mapperService.GetMapper<SpriteInfo>();
             collisionMapper = mapperService.GetMapper<CollisionBody>();
             movableMapper = mapperService.GetMapper<Movable>();
             levelMapper = mapperService.GetMapper<Level>();
@@ -74,14 +79,15 @@ namespace BunnyLand.DesktopGL.Systems
 
             spriteBatch.Begin();
             foreach (var entity in ActiveEntities) {
-                animatedSpriteMapper.TryGet(entity).IfSome(animatedSprite => {
-                    animatedSprite.Update(elapsedSeconds);
-                    RenderSprite(entity, animatedSprite);
+                spriteMapper.TryGet(entity).IfSome(spriteInfo => {
+                    var sprite = spriteByEntity.GetOrAdd(entity, id => CreateSprite(spriteInfo));
+                    if (sprite is AnimatedSprite animatedSprite) {
+                        animatedSprite.Update(elapsedSeconds);
+                    }
+
+                    RenderSprite(entity, sprite);
                 });
-                spriteMapper.TryGet(entity).IfSome(sprite => RenderSprite(entity, sprite));
-                solidColorMapper.TryGet(entity).IfSome(solidColor => {
-                    spriteBatch.DrawRectangle(solidColor.Bounds, solidColor.Color);
-                });
+                solidColorMapper.TryGet(entity).IfSome(solidColor => { spriteBatch.DrawRectangle(solidColor.Bounds, solidColor.Color); });
                 transformMapper.TryGet(entity).IfSome(transform => {
                     DrawCollisionBoundsAndInfo(entity, transform);
                     DrawGravityPull(entity, transform);
@@ -121,9 +127,7 @@ namespace BunnyLand.DesktopGL.Systems
                     PlayerIndex.Four => Color.Green,
                     _ => Color.White
                 };
-                healthMapper.TryGet(entity).IfSome(health => {
-                    transform.Scale = Vector2.One * health.CurrentHealth / health.MaxHealth;
-                });
+                healthMapper.TryGet(entity).IfSome(health => { transform.Scale = Vector2.One * health.CurrentHealth / health.MaxHealth; });
             });
 
             spriteBatch.Draw(sprite, transform);
@@ -134,6 +138,32 @@ namespace BunnyLand.DesktopGL.Systems
                     DrawLevelWrapping(sprite, transform);
                 }
             });
+        }
+
+        private Sprite CreateSprite(SpriteInfo spriteInfo) => spriteInfo.SpriteType switch {
+            SpriteType.Bunny => GetPlayerSprite(),
+            SpriteType.Anki => new Sprite(textures.miniAnki),
+            SpriteType.Planet1 => new Sprite(textures.redplanet),
+            SpriteType.Bullet => new Sprite(textures.bullet),
+            _ => throw new ArgumentException("Unknown spriteType")
+        };
+
+        private AnimatedSprite GetPlayerSprite()
+        {
+            var atlas = TextureAtlas.Create("bunny", textures.PlayerAnimation, 35, 50);
+            var spriteSheet = new SpriteSheet {
+                TextureAtlas = atlas
+            };
+            spriteSheet.Cycles.Add("idle", new SpriteSheetAnimationCycle {
+                Frames = new List<SpriteSheetAnimationFrame> {
+                    new SpriteSheetAnimationFrame(0)
+                }
+            });
+            spriteSheet.Cycles.Add("running",
+                new SpriteSheetAnimationCycle
+                    { Frames = Enumerable.Range(1, 8).Select(i => new SpriteSheetAnimationFrame(1)).ToList() });
+            var animatedSprite = new AnimatedSprite(spriteSheet);
+            return animatedSprite;
         }
 
         private int GetSmoothedFps(GameTime gameTime)

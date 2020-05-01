@@ -28,9 +28,6 @@ namespace BunnyLand.DesktopGL.Systems
         private readonly EntityFactory entityFactory;
         private readonly GameSettings gameSettings;
         private readonly Random random;
-        private ComponentMapper<Player> playerMapper;
-        private readonly Dictionary<PlayerIndex, int> playerEntities = new Dictionary<PlayerIndex, int>();
-        private ComponentMapper<Health> healthMapper;
 
         public BattleSystem(EntityFactory entityFactory, GameSettings gameSettings, Random random, MessageHub messageHub) : base(Aspect.All())
         {
@@ -95,7 +92,6 @@ namespace BunnyLand.DesktopGL.Systems
         protected override void OnEntityAdded(int entityId)
         {
             entities.Add(entityId);
-            playerMapper.TryGet(entityId).IfSome(player => playerEntities[player.PlayerIndex] = entityId);
         }
 
         protected override void OnEntityRemoved(int entityId)
@@ -105,8 +101,6 @@ namespace BunnyLand.DesktopGL.Systems
 
         public override void Initialize(IComponentMapperService mapperService)
         {
-            playerMapper = mapperService.GetMapper<Player>();
-            healthMapper = mapperService.GetMapper<Health>();
         }
     }
 }

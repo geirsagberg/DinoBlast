@@ -15,36 +15,9 @@ namespace BunnyLand.DesktopGL
     {
         private readonly Textures textures;
 
-        /// For unit testing
-        internal bool skipSprites = false;
-
         public EntityFactory(Textures textures)
         {
             this.textures = textures;
-        }
-
-        private Sprite GetAnkiSprite()
-        {
-            var sprite = new Sprite(textures.miniAnki);
-            return sprite;
-        }
-
-        private AnimatedSprite GetPlayerSprite()
-        {
-            var atlas = TextureAtlas.Create("bunny", textures.PlayerAnimation, 35, 50);
-            var spriteSheet = new SpriteSheet {
-                TextureAtlas = atlas
-            };
-            spriteSheet.Cycles.Add("idle", new SpriteSheetAnimationCycle {
-                Frames = new List<SpriteSheetAnimationFrame> {
-                    new SpriteSheetAnimationFrame(0)
-                }
-            });
-            spriteSheet.Cycles.Add("running",
-                new SpriteSheetAnimationCycle
-                    { Frames = Enumerable.Range(1, 8).Select(i => new SpriteSheetAnimationFrame(1)).ToList() });
-            var animatedSprite = new AnimatedSprite(spriteSheet);
-            return animatedSprite;
         }
 
         public Entity CreatePlayer(Entity entity, Vector2 position, PlayerIndex playerIndex)
@@ -52,10 +25,9 @@ namespace BunnyLand.DesktopGL
             entity.Attach(new Serializable(entity.Id));
             var transform = new Transform2(position);
             entity.Attach(transform);
-            if (!skipSprites) {
-                var sprite = GetPlayerSprite();
-                entity.Attach(sprite);
-            }
+
+            var sprite = new SpriteInfo(SpriteType.Bunny, new Size(35, 50));
+            entity.Attach(sprite);
 
             entity.Attach(new CollisionBody(new CircleF(Point2.Zero, 15), transform, ColliderTypes.Player,
                 ColliderTypes.Player | ColliderTypes.Projectile | ColliderTypes.Static));
@@ -76,16 +48,13 @@ namespace BunnyLand.DesktopGL
             entity.Attach(new Serializable(entity.Id));
             var transform = new Transform2(position, scale: new Vector2(scale));
             entity.Attach(transform);
-            RectangleF boundingRectangle;
-            if (!skipSprites) {
-                var sprite = new Sprite(textures.redplanet);
-                entity.Attach(sprite);
-                boundingRectangle = sprite.GetBoundingRectangle(position, 0, new Vector2(scale));
-            } else {
-                boundingRectangle = new RectangleF(position, new Size2(100, 100) * scale);
-            }
 
-            entity.Attach(new CollisionBody(new CircleF(Point2.Zero, boundingRectangle.Width / 2f), transform,
+            const int planetSize = 400;
+
+            var sprite = new SpriteInfo(SpriteType.Planet1, new Size(planetSize, planetSize));
+            entity.Attach(sprite);
+
+            entity.Attach(new CollisionBody(new CircleF(Point2.Zero, planetSize * scale / 2f), transform,
                 ColliderTypes.Static, ColliderTypes.Player | ColliderTypes.Projectile));
             entity.Attach(new GravityPoint(transform, mass));
             return entity;
@@ -123,10 +92,8 @@ namespace BunnyLand.DesktopGL
                 ColliderTypes.Projectile, ColliderTypes.Player | ColliderTypes.Static);
             entity.Attach(collisionBody);
 
-            if (!skipSprites) {
-                var sprite = new Sprite(textures.bullet);
-                entity.Attach(sprite);
-            }
+            var sprite = new SpriteInfo(SpriteType.Bullet, new Size(2, 2));
+            entity.Attach(sprite);
 
             var lifetime = new Lifetime(lifeSpan);
             entity.Attach(lifetime);

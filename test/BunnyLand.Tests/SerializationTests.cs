@@ -3,7 +3,6 @@ using System.Linq;
 using BunnyLand.DesktopGL;
 using BunnyLand.DesktopGL.Components;
 using BunnyLand.DesktopGL.Extensions;
-using BunnyLand.DesktopGL.Messages;
 using BunnyLand.DesktopGL.Resources;
 using BunnyLand.DesktopGL.Serialization;
 using FluentAssertions;
@@ -23,7 +22,7 @@ namespace BunnyLand.Tests
             var componentManager = new ComponentManager();
             var entityManager = new EntityManager(componentManager);
             var textures = new Textures();
-            var entityFactory = new EntityFactory(textures) { skipSprites = true };
+            var entityFactory = new EntityFactory(textures);
 
 
             entityFactory.CreatePlayer(entityManager.Create(), new Vector2(200, 400), PlayerIndex.One);
