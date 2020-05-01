@@ -1,10 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Net.Sockets;
 using System.Threading.Tasks;
 using BunnyLand.DesktopGL.Components;
-using BunnyLand.DesktopGL.Extensions;
 using BunnyLand.DesktopGL.Messages;
 using BunnyLand.DesktopGL.Serialization;
 using BunnyLand.DesktopGL.Services;
@@ -36,8 +33,9 @@ namespace BunnyLand.DesktopGL.Systems
         private NetPeer? joinedPeer;
         private TaskCompletionSource<bool> joinServerTaskCompletionSource;
         private ComponentMapper<Movable> movableMapper;
-        private ComponentMapper<Transform2> transformMapper;
         private ComponentMapper<Serializable> serializableMapper;
+        private ComponentMapper<SpriteInfo> spriteInfoMapper;
+        private ComponentMapper<Transform2> transformMapper;
 
         public NetSystem(GameSettings gameSettings, MessageHub messageHub, Serializer serializer) : base(Aspect.All(typeof(Serializable)))
         {
@@ -88,7 +86,7 @@ namespace BunnyLand.DesktopGL.Systems
         {
             var serverListener = new EventBasedNetListener();
             serverListener.ConnectionRequestEvent += request => { request.Accept(); };
-            serverListener.PeerConnectedEvent += OnServerListenerOnPeerConnectedEvent;
+            serverListener.PeerConnectedEvent += OnPlayerJoined;
             serverListener.NetworkReceiveEvent += (peer, reader, method) => {
                 Console.WriteLine("Server received: {0}", reader.GetString(100));
                 reader.Recycle();
@@ -108,26 +106,12 @@ namespace BunnyLand.DesktopGL.Systems
             return serverListener;
         }
 
-        private void OnServerListenerOnPeerConnectedEvent(NetPeer peer)
+        private void OnPlayerJoined(NetPeer peer)
         {
             Console.WriteLine("Peer connected: {0}", peer.EndPoint);
             Console.WriteLine("Sending initial world data");
 
-            var state = new FullGameState(serializer);
-
-            var serializables = new List<Serializable>();
-            var transforms = new Dictionary<int, Transform2>();
-            var movables = new Dictionary<int, Movable>();
-
-            foreach (var entity in ActiveEntities) {
-                serializables.Add(serializableMapper.Get(entity));
-                transformMapper.TryGet(entity).IfSome(transform => transforms[entity] = transform);
-                movableMapper.TryGet(entity).IfSome(movable => movables[entity] = movable);
-            }
-
-            var serializableTransforms = transforms.ToDictionary(kvp => kvp.Key, kvp => new SerializableTransform { Position = kvp.Value.Position, Rotation = kvp.Value.Rotation, Scale = kvp.Value.Scale });
-
-            state.Components = new SerializableComponents(serializables, serializableTransforms, movables);
+            var state = FullGameState.CreateFullGameState(serializer, ActiveEntities, serializableMapper, transformMapper, movableMapper, spriteInfoMapper);
 
             var writer = new NetDataWriter();
             writer.Put((byte) NetMessageType.FullGameState);
@@ -185,6 +169,7 @@ namespace BunnyLand.DesktopGL.Systems
             serializableMapper = mapperService.GetMapper<Serializable>();
             transformMapper = mapperService.GetMapper<Transform2>();
             movableMapper = mapperService.GetMapper<Movable>();
+            spriteInfoMapper = mapperService.GetMapper<SpriteInfo>();
         }
     }
 }

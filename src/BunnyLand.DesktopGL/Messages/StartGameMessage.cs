@@ -6,7 +6,7 @@ namespace BunnyLand.DesktopGL.Messages
     {
         public FullGameState? GameState { get; }
 
-        public StartGameMessage(FullGameState gameState = null)
+        public StartGameMessage(FullGameState? gameState = null)
         {
             GameState = gameState;
         }

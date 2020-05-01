@@ -31,32 +31,16 @@ namespace BunnyLand.Tests
             var serializableMapper = componentManager.GetMapper<Serializable>();
             var transformMapper = componentManager.GetMapper<Transform2>();
             var movableMapper = componentManager.GetMapper<Movable>();
+            var spriteInfoMapper = componentManager.GetMapper<SpriteInfo>();
 
-            var serializables = new List<Serializable>();
-            var transforms = new Dictionary<int, Transform2>();
-            var movables = new Dictionary<int, Movable>();
+            var state = FullGameState.CreateFullGameState(new Serializer(), entityManager.Entities, serializableMapper, transformMapper, movableMapper, spriteInfoMapper);
 
-            foreach (var entity in entityManager.Entities) {
-                serializables.Add(serializableMapper.Get(entity));
-                transformMapper.TryGet(entity).IfSome(transform => transforms[entity] = transform);
-                movableMapper.TryGet(entity).IfSome(movable => movables[entity] = movable);
-            }
-
-            var serializableTransforms = transforms.ToDictionary(kvp => kvp.Key,
-                kvp => new SerializableTransform { Position = kvp.Value.Position, Rotation = kvp.Value.Rotation, Scale = kvp.Value.Scale });
-
-            var serializer = new Serializer();
-
-            var state = new FullGameState(serializer) {
-                Components = new SerializableComponents(serializables, serializableTransforms, movables)
-            };
             var writer = new NetDataWriter();
-
 
             state.Serialize(writer);
             var bytes = writer.CopyData();
             var reader = new NetDataReader(bytes);
-            var target = new FullGameState(serializer);
+            var target = new FullGameState(new Serializer());
             target.Deserialize(reader);
 
 
