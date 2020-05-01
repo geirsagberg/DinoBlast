@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Net.Sockets;
 using System.Threading.Tasks;
 using BunnyLand.DesktopGL.Components;
@@ -20,8 +21,13 @@ namespace BunnyLand.DesktopGL.Systems
         {
             ListServersRequest,
             ListServersResponse,
-            FullGameState
+            FullGameState,
+            FullGameStateUpdate
         }
+
+        private const int LogBroadcastedBytesEveryNthFrame = 60;
+
+        private readonly int[] broadcastedBytes = new int[LogBroadcastedBytesEveryNthFrame];
 
         private readonly int clientPort;
         private readonly MessageHub messageHub;
@@ -30,7 +36,9 @@ namespace BunnyLand.DesktopGL.Systems
         private readonly Serializer serializer;
         private readonly int serverPort;
 
-        private NetPeer? joinedPeer;
+        private byte broadcastedBytesCounter;
+
+        private NetPeer? joinedServer;
         private TaskCompletionSource<bool> joinServerTaskCompletionSource;
         private ComponentMapper<Movable> movableMapper;
         private ComponentMapper<Serializable> serializableMapper;
@@ -44,13 +52,15 @@ namespace BunnyLand.DesktopGL.Systems
             var clientListener = CreateClientListener();
             netClient = new NetManager(clientListener) {
                 UnconnectedMessagesEnabled = true,
-                AutoRecycle = true
+                AutoRecycle = true,
+                BroadcastReceiveEnabled = true,
             };
 
             var serverListener = CreateServerListener();
             netServer = new NetManager(serverListener) {
                 UnconnectedMessagesEnabled = true,
-                AutoRecycle = true
+                AutoRecycle = true,
+                BroadcastReceiveEnabled = true
             };
             serverPort = gameSettings.ServerPort;
             clientPort = gameSettings.ClientPort;
@@ -62,24 +72,42 @@ namespace BunnyLand.DesktopGL.Systems
 
         private void OnStartServerSearch(StartServerSearchMessage _)
         {
-            netClient.Start();
+            StartClient();
+
             if (!netClient.SendBroadcast(new[] { (byte) NetMessageType.ListServersRequest }, serverPort)) {
                 throw new Exception("Could not send broadcast");
+            }
+        }
+
+        private void StartClient()
+        {
+            if (!netClient.IsRunning) {
+                if (netClient.Start(clientPort))
+                    Console.WriteLine("Client listening at port {0}", clientPort);
+                else
+                    Console.WriteLine("Client not started!");
             }
         }
 
         public Task<bool> HandleJoinServer(JoinServerRequest request)
         {
             joinServerTaskCompletionSource = new TaskCompletionSource<bool>();
-            netClient.Start();
-            joinedPeer = netClient.Connect("localhost", serverPort, "BunnyLand");
+            StartClient();
+            joinedServer = netClient.Connect("localhost", serverPort, "BunnyLand");
             return joinServerTaskCompletionSource.Task;
         }
 
         public bool HandleStartServer(StartServerRequest request)
         {
-            netServer.BroadcastReceiveEnabled = true;
-            return netServer.Start(serverPort);
+            if (netServer.IsRunning)
+                return true;
+
+            var started = netServer.Start(serverPort);
+            if (started)
+                Console.WriteLine("Server listening at port {0}", serverPort);
+            else
+                Console.WriteLine("Server not started!");
+            return started;
         }
 
         private EventBasedNetListener CreateServerListener()
@@ -87,10 +115,7 @@ namespace BunnyLand.DesktopGL.Systems
             var serverListener = new EventBasedNetListener();
             serverListener.ConnectionRequestEvent += request => { request.Accept(); };
             serverListener.PeerConnectedEvent += OnPlayerJoined;
-            serverListener.NetworkReceiveEvent += (peer, reader, method) => {
-                Console.WriteLine("Server received: {0}", reader.GetString(100));
-                reader.Recycle();
-            };
+            serverListener.NetworkReceiveEvent += (peer, reader, method) => { Console.WriteLine("Server received: {0}", reader.GetString(100)); };
             serverListener.NetworkReceiveUnconnectedEvent += (endPoint, reader, type) => {
                 if (endPoint.AddressFamily == AddressFamily.InterNetwork && type == UnconnectedMessageType.Broadcast) {
                     if (reader.TryGetByte(out var b)) {
@@ -109,6 +134,7 @@ namespace BunnyLand.DesktopGL.Systems
         private void OnPlayerJoined(NetPeer peer)
         {
             Console.WriteLine("Peer connected: {0}", peer.EndPoint);
+
             Console.WriteLine("Sending initial world data");
 
             var state = FullGameState.CreateFullGameState(serializer, ActiveEntities, serializableMapper, transformMapper, movableMapper, spriteInfoMapper);
@@ -122,7 +148,7 @@ namespace BunnyLand.DesktopGL.Systems
         private EventBasedNetListener CreateClientListener()
         {
             var clientListener = new EventBasedNetListener();
-            clientListener.ConnectionRequestEvent += request => { request.Accept(); };
+            clientListener.ConnectionRequestEvent += request => request.Accept();
             clientListener.NetworkReceiveEvent += (peer, reader, method) => {
                 if (reader.TryGetByte(out var b)) {
                     var netMessageType = (NetMessageType) b;
@@ -134,6 +160,12 @@ namespace BunnyLand.DesktopGL.Systems
                             messageHub.Publish(new StartGameMessage(state));
                             break;
                         }
+                        case NetMessageType.FullGameStateUpdate: {
+                            var state = new FullGameState(serializer);
+                            state.Deserialize(reader);
+                            messageHub.Publish(new UpdateGameMessage(state.Components!));
+                            break;
+                        }
                     }
                 }
             };
@@ -141,8 +173,10 @@ namespace BunnyLand.DesktopGL.Systems
                 Console.WriteLine($"Peer connected: {peer.EndPoint}");
                 joinServerTaskCompletionSource?.SetResult(true);
             };
-            clientListener.NetworkErrorEvent += (endPoint, error) => { Console.WriteLine("Network error: {0}", error); };
+            clientListener.NetworkErrorEvent += (endPoint, error) => Console.WriteLine("Network error: {0} - {1}", endPoint, error);
+            clientListener.PeerDisconnectedEvent += (peer, info) => Console.WriteLine("Peer disconnected: {0} - {1}", peer, info);
             clientListener.NetworkReceiveUnconnectedEvent += (endPoint, reader, type) => {
+                Console.WriteLine("Client received unconnected event from: {0}", endPoint);
                 if (type == UnconnectedMessageType.BasicMessage) {
                     if (reader.TryGetByte(out var b)) {
                         var netMessageType = (NetMessageType) b;
@@ -160,8 +194,31 @@ namespace BunnyLand.DesktopGL.Systems
 
         public override void Update(GameTime gameTime)
         {
+            BroadcastUpdate();
+
             netServer.PollEvents();
             netClient.PollEvents();
+        }
+
+        private void BroadcastUpdate()
+        {
+            // TODO: Real broadcast for LAN optimization with many players?
+            if (netServer.ConnectedPeersCount > 0) {
+                var state = FullGameState.CreateFullGameState(serializer, ActiveEntities, serializableMapper, transformMapper, movableMapper, spriteInfoMapper);
+
+                var writer = new NetDataWriter();
+                writer.Put((byte) NetMessageType.FullGameStateUpdate);
+                writer.Put(state);
+
+                netServer.SendToAll(writer, DeliveryMethod.Sequenced);
+
+                broadcastedBytes[broadcastedBytesCounter] = writer.Length;
+                broadcastedBytesCounter += 1;
+                broadcastedBytesCounter %= LogBroadcastedBytesEveryNthFrame;
+                if (broadcastedBytesCounter == 0) {
+                    Console.WriteLine("Broadcasted {0:N} bytes last {1} frames", broadcastedBytes.Sum(), LogBroadcastedBytesEveryNthFrame);
+                }
+            }
         }
 
         public override void Initialize(IComponentMapperService mapperService)

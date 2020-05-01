@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using BunnyLand.DesktopGL.Components;
 using BunnyLand.DesktopGL.Extensions;
 using BunnyLand.DesktopGL.Messages;
 using BunnyLand.DesktopGL.Serialization;
@@ -15,7 +17,7 @@ namespace BunnyLand.DesktopGL.Systems
 {
     public class BattleSystem : EntitySystem
     {
-        private readonly HashSet<int> entities = new HashSet<int>();
+        private readonly ConcurrentDictionary<int, int> entitiesBySerializableId = new ConcurrentDictionary<int, int>();
 
         private readonly EntityFactory entityFactory;
         private readonly GameSettings gameSettings;
@@ -28,45 +30,98 @@ namespace BunnyLand.DesktopGL.Systems
             { PlayerIndex.Four, (900, 600) }
         };
 
+        private ComponentMapper<Serializable> serializableMapper = null!;
+
         public BattleSystem(EntityFactory entityFactory, GameSettings gameSettings, Random random, MessageHub messageHub) : base(Aspect.All())
         {
             this.entityFactory = entityFactory;
             this.gameSettings = gameSettings;
             this.random = random;
             messageHub.Subscribe((ResetWorldMessage msg) => {
-                foreach (var entity in entities) {
+                foreach (var entity in ActiveEntities) {
                     DestroyEntity(entity);
                 }
 
                 if (msg.GameState == null)
                     SetupEntities();
-                else
-                    SetupEntities(msg.GameState);
+                else {
+                    if (msg.GameState.Components != null) {
+                        SetupEntities(msg.GameState.Components);
+                    }
+                }
+            });
+            messageHub.Subscribe((UpdateGameMessage msg) => {
+                foreach (var serializable in msg.Components.Serializables) {
+                    if (entitiesBySerializableId.TryGetValue(serializable.Id, out var entityId)) {
+                        var entity = GetEntity(entityId);
+                        if (msg.Components.Movables.TryGetValue(serializable.Id, out var movable)) {
+                            if (entity.Get<Movable>() is {} existing) {
+                                existing.Acceleration = movable.Acceleration;
+                                existing.Velocity = movable.Velocity;
+                                existing.BrakingForce = movable.BrakingForce;
+                                existing.GravityMultiplier = movable.GravityMultiplier;
+                                existing.GravityPull = movable.GravityPull;
+                                existing.WrapAround = movable.WrapAround;
+                            } else {
+                                entity.Attach(movable);
+                            }
+                        }
+
+                        if (msg.Components.Transforms.TryGetValue(serializable.Id, out var serializableTransform)) {
+                            if (entity.Get<Transform2>() is {} existing) {
+                                existing.Position = serializableTransform.Position;
+                                existing.Rotation = serializableTransform.Rotation;
+                                existing.Scale = serializableTransform.Scale;
+                            } else {
+                                var transform = new Transform2 {
+                                    Position = serializableTransform.Position,
+                                    Rotation = serializableTransform.Rotation,
+                                    Scale = serializableTransform.Scale
+                                };
+                                entity.Attach(transform);
+                            }
+                        }
+
+                        if (msg.Components.SpriteInfos.TryGetValue(serializable.Id, out var spriteInfo)) {
+                            if (entity.Get<SpriteInfo>() is {} existing) {
+                                existing.Size = spriteInfo.Size;
+                                existing.SpriteType = spriteInfo.SpriteType;
+                            } else {
+                                entity.Attach(spriteInfo);
+                            }
+                        }
+                    } else {
+                        CreateEntity(serializable, msg.Components);
+                    }
+                }
             });
             messageHub.Subscribe((RespawnPlayerMessage msg) => RespawnPlayer(msg.PlayerIndex));
         }
 
-        private void SetupEntities(FullGameState gameState)
+        private void SetupEntities(SerializableComponents gameStateComponents)
         {
             entityFactory.CreateLevel(CreateEntity(), gameSettings.Width, gameSettings.Height);
 
-            if (gameState.Components != null) {
-                foreach (var serializable in gameState.Components.Serializables) {
-                    var entity = CreateEntity();
-                    entity.Attach(serializable);
-                    if (gameState.Components.Transforms.TryGetValue(serializable.Id, out var serializableTransform)) {
-                        var transform = new Transform2(serializableTransform.Position, serializableTransform.Rotation, serializableTransform.Scale);
-                        entity.Attach(transform);
-                    }
+            foreach (var serializable in gameStateComponents.Serializables) {
+                CreateEntity(serializable, gameStateComponents);
+            }
+        }
 
-                    if (gameState.Components.Movables.TryGetValue(serializable.Id, out var movable)) {
-                        entity.Attach(movable);
-                    }
+        private void CreateEntity(Serializable serializable, SerializableComponents gameStateComponents)
+        {
+            var entity = CreateEntity();
+            entity.Attach(serializable);
+            if (gameStateComponents.Transforms.TryGetValue(serializable.Id, out var serializableTransform)) {
+                var transform = new Transform2(serializableTransform.Position, serializableTransform.Rotation, serializableTransform.Scale);
+                entity.Attach(transform);
+            }
 
-                    if (gameState.Components.SpriteInfos.TryGetValue(serializable.Id, out var spriteInfo)) {
-                        entity.Attach(spriteInfo);
-                    }
-                }
+            if (gameStateComponents.Movables.TryGetValue(serializable.Id, out var movable)) {
+                entity.Attach(movable);
+            }
+
+            if (gameStateComponents.SpriteInfos.TryGetValue(serializable.Id, out var spriteInfo)) {
+                entity.Attach(spriteInfo);
             }
         }
 
@@ -97,16 +152,17 @@ namespace BunnyLand.DesktopGL.Systems
 
         protected override void OnEntityAdded(int entityId)
         {
-            entities.Add(entityId);
+            serializableMapper.TryGet(entityId).IfSome(serializable => entitiesBySerializableId[serializable.Id] = entityId);
         }
 
         protected override void OnEntityRemoved(int entityId)
         {
-            entities.Remove(entityId);
+            serializableMapper.TryGet(entityId).IfSome(serializable => entitiesBySerializableId.Remove(serializable.Id, out _));
         }
 
         public override void Initialize(IComponentMapperService mapperService)
         {
+            serializableMapper = mapperService.GetMapper<Serializable>();
         }
     }
 }
