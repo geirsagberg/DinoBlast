@@ -1,9 +1,6 @@
-﻿using System.Collections.Generic;
-using System.Linq;
+﻿using System.Linq;
 using BunnyLand.DesktopGL;
 using BunnyLand.DesktopGL.Components;
-using BunnyLand.DesktopGL.Extensions;
-using BunnyLand.DesktopGL.Resources;
 using BunnyLand.DesktopGL.Serialization;
 using FluentAssertions;
 using LiteNetLib.Utils;
@@ -21,8 +18,7 @@ namespace BunnyLand.Tests
         {
             var componentManager = new ComponentManager();
             var entityManager = new EntityManager(componentManager);
-            var textures = new Textures();
-            var entityFactory = new EntityFactory(textures);
+            var entityFactory = new EntityFactory();
 
 
             entityFactory.CreatePlayer(entityManager.Create(), new Vector2(200, 400), PlayerIndex.One);
@@ -33,7 +29,8 @@ namespace BunnyLand.Tests
             var movableMapper = componentManager.GetMapper<Movable>();
             var spriteInfoMapper = componentManager.GetMapper<SpriteInfo>();
 
-            var state = FullGameState.CreateFullGameState(new Serializer(), entityManager.Entities, serializableMapper, transformMapper, movableMapper, spriteInfoMapper);
+            var state = FullGameState.CreateFullGameState(new Serializer(), entityManager.Entities, serializableMapper, transformMapper, movableMapper,
+                spriteInfoMapper);
 
             var writer = new NetDataWriter();
 
@@ -45,6 +42,17 @@ namespace BunnyLand.Tests
 
 
             target.Components.Should().BeEquivalentTo(state.Components);
+        }
+
+        [Fact]
+        public void Serialized_HashSet_is_smaller_than_dictionary()
+        {
+            var range = Enumerable.Range(0, 1000).ToList();
+            var hashSet = range.ToHashSet();
+            var dictionary = range.ToDictionary(r => r);
+            var serializer = new Serializer();
+
+            serializer.Serialize(hashSet).Length.Should().BeLessThan(serializer.Serialize(dictionary).Length);
         }
     }
 }

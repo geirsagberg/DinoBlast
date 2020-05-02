@@ -140,6 +140,11 @@ namespace BunnyLand.DesktopGL.Systems
             });
         }
 
+        protected override void OnEntityRemoved(int entityId)
+        {
+            spriteByEntity.Remove(entityId, out _);
+        }
+
         private Sprite CreateSprite(SpriteInfo spriteInfo) => spriteInfo.SpriteType switch {
             SpriteType.Bunny => GetPlayerSprite(),
             SpriteType.Anki => new Sprite(textures.miniAnki),
@@ -229,9 +234,9 @@ namespace BunnyLand.DesktopGL.Systems
         {
             collisionMapper.TryGet(entity).IfSome(body => {
                 var color = body.Collisions.Any() ? Color.Red : Color.Aqua;
-                if (body.Bounds is CircleF circle) {
+                if (body.Shape is CircleF circle) {
                     spriteBatch.DrawCircle(circle, 32, color);
-                } else if (body.Bounds is RectangleF rectangle) {
+                } else if (body.Shape is RectangleF rectangle) {
                     spriteBatch.DrawRectangle(rectangle, color);
                 }
 

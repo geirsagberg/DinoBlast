@@ -49,7 +49,7 @@ namespace BunnyLand.DesktopGL.Serialization
                 kvp => new SerializableTransform { Position = kvp.Value.Position, Rotation = kvp.Value.Rotation, Scale = kvp.Value.Scale });
 
             return new FullGameState(serializer) {
-                Components = new SerializableComponents(serializables, serializableTransforms, movables, spriteInfos)
+                Components = new SerializableComponents(serializables.Select(s => s.Id).ToHashSet(), serializableTransforms, movables, spriteInfos)
             };
         }
     }

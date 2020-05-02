@@ -4,7 +4,6 @@ using System.Diagnostics;
 using System.Linq;
 using BunnyLand.DesktopGL.Components;
 using BunnyLand.DesktopGL.Extensions;
-using BunnyLand.DesktopGL.Messages;
 using BunnyLand.DesktopGL.Services;
 using LanguageExt;
 using Microsoft.Xna.Framework;
@@ -32,9 +31,9 @@ namespace BunnyLand.DesktopGL.Systems
         private ComponentMapper<Level> levelMapper = null!;
         private ComponentMapper<Movable> movableMapper = null!;
         private ComponentMapper<Player> playerMapper = null!;
-        private ComponentMapper<Transform2> transformMapper = null!;
 
         private int timeSpanCounter;
+        private ComponentMapper<Transform2> transformMapper = null!;
 
         public Option<Level> Level { get; set; }
 
@@ -93,38 +92,33 @@ namespace BunnyLand.DesktopGL.Systems
 
             bodyMapper.TryGet(entityId).IfSome(body => {
                 movableMapper.TryGet(entityId).IfSome(movable => {
-                    var collisionBounds = body.Bounds switch {
-                        CircleF circle => FindCollisionBounds(movable, circle.ToRectangleF(), elapsedTicks),
-                        RectangleF rectangle => FindCollisionBounds(movable, rectangle, elapsedTicks),
-                        _ => throw new Exception("Unknown shape")
-                    };
-                    body.CollisionBounds = collisionBounds;
+                    transformMapper.TryGet(entityId).IfSome(transform => {
+                        var bounds = body.GetBounds(transform.Position);
+                        var collisionBounds = bounds switch {
+                            CircleF circle => FindCollisionBounds(movable, circle.ToRectangleF(), elapsedTicks),
+                            RectangleF rectangle => FindCollisionBounds(movable, rectangle, elapsedTicks),
+                            _ => throw new Exception("Unknown shape")
+                        };
+                        body.CollisionBounds = collisionBounds;
 
-                    // TODO: If performance becomes a problem, look into broadphase algorithms like SAP or Dynamic tree, or separate collision tables per collidertype
-                    var potentialCollisions = Bodies.Where(kvp => {
-                        var b = kvp.Value;
-                        return b != body && b.CollidesWith.HasFlag(body.ColliderType)
-                            // && !checkedPairs.Contains((kvp.Key, entityId))
-                            && b.Bounds.Intersects(collisionBounds);
-                    }).ToList();
+                        // TODO: If performance becomes a problem, look into broadphase algorithms like SAP or Dynamic tree, or separate collision tables per collidertype
+                        var potentialCollisions = Bodies.Where(kvp => {
+                            var otherEntityId = kvp.Key;
+                            var otherBody = kvp.Value;
+                            var otherTransform = transformMapper.Get(otherEntityId);
+                            var otherBounds = otherBody.GetBounds(otherTransform.Position);
+                            return otherBody != body && otherBody.CollidesWith.HasFlag(body.ColliderType)
+                                // && !checkedPairs.Contains((kvp.Key, entityId))
+                                && otherBounds.Intersects(collisionBounds);
+                        }).ToList();
 
-                    body.Collisions = potentialCollisions
-                        .Select(other => (other.Key, body.CalculatePenetrationVector(other.Value)))
-                        .Where(t => t.Item2 != Vector2.Zero).ToList();
-                    // potentialCollisions.ForEach(b => checkedPairs.Add((entityId, b.Key)));
+                        body.Collisions = potentialCollisions
+                            .Select(other => (other.Key, body.CalculatePenetrationVector(other.Value, transform, transformMapper.Get(other.Key))))
+                            .Where(t => t.Item2 != Vector2.Zero).ToList();
+                        // potentialCollisions.ForEach(b => checkedPairs.Add((entityId, b.Key)));
 
-                    foreach (var (other, penetrationVector) in body.Collisions) {
-                        damagingMapper.TryGet(entityId).IfSome(damaging =>
-                            healthMapper.TryGet(other).IfSome(health => {
-                                health.CurrentHealth -= damaging.Damage;
-                                if (health.CurrentHealth < 0) {
-                                    DestroyEntity(other);
-                                    playerMapper.TryGet(other).IfSome(player =>
-                                        messageHub.Publish(new RespawnPlayerMessage(player.PlayerIndex)));
-                                }
-                            }));
-                        var otherBody = bodyMapper.Get(other);
-                        transformMapper.TryGet(entityId).IfSome(transform => {
+                        foreach (var (other, penetrationVector) in body.Collisions) {
+                            var otherBody = bodyMapper.Get(other);
                             switch (body.ColliderType) {
                                 case ColliderTypes.Player when otherBody.ColliderType == ColliderTypes.Static:
                                     transform.Position += penetrationVector;
@@ -135,8 +129,8 @@ namespace BunnyLand.DesktopGL.Systems
                                     DestroyEntity(entityId);
                                     break;
                             }
-                        });
-                    }
+                        }
+                    });
                 });
             });
         }

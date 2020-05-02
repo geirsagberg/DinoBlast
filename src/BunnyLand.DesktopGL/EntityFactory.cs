@@ -1,26 +1,14 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using BunnyLand.DesktopGL.Components;
-using BunnyLand.DesktopGL.Resources;
 using Microsoft.Xna.Framework;
 using MonoGame.Extended;
 using MonoGame.Extended.Entities;
-using MonoGame.Extended.Sprites;
-using MonoGame.Extended.TextureAtlases;
 
 namespace BunnyLand.DesktopGL
 {
     public class EntityFactory
     {
-        private readonly Textures textures;
-
-        public EntityFactory(Textures textures)
-        {
-            this.textures = textures;
-        }
-
-        public Entity CreatePlayer(Entity entity, Vector2 position, PlayerIndex playerIndex)
+        public Entity CreatePlayer(Entity entity, Vector2 position, PlayerIndex playerIndex, bool isLocal = true)
         {
             entity.Attach(new Serializable(entity.Id));
             var transform = new Transform2(position);
@@ -31,7 +19,7 @@ namespace BunnyLand.DesktopGL
 
             entity.Attach(new CollisionBody(new CircleF(Point2.Zero, 15), transform, ColliderTypes.Player,
                 ColliderTypes.Player | ColliderTypes.Projectile | ColliderTypes.Static));
-            entity.Attach(new Player(playerIndex));
+            entity.Attach(new Player(playerIndex) { IsLocal = isLocal });
             entity.Attach(new Movable());
             entity.Attach(new Health(100));
 

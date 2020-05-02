@@ -9,8 +9,14 @@ namespace BunnyLand.DesktopGL.Components
         public bool IsEmitting { get; set; }
         public TimeSpan TimeSinceLastEmit { get; set; }
 
-        public Emit? Emit { get; set; }
+        public EmitterType EmitterType { get; set; }
+        // public Emit? Emit { get; set; }
     }
 
-    public delegate void Emit(Entity entity);
+    public enum EmitterType
+    {
+        Bullet
+    }
+
+    // public delegate void Emit(Entity entity);
 }

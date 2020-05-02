@@ -98,7 +98,8 @@ namespace BunnyLand.DesktopGL
         }
 
         private static World BuildWorld(IServiceProvider provider) => provider.CreateWorld()
-            .AddSystemService<NetSystem>()
+            .AddSystemService<NetServerSystem>()
+            .AddSystemService<NetClientSystem>()
             .AddSystemService<LifetimeSystem>()
             .AddSystemService<InputSystem>()
             .AddSystemService<PlayerSystem>()

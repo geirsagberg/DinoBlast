@@ -15,20 +15,26 @@ using MonoGame.Extended.Entities.Systems;
 
 namespace BunnyLand.DesktopGL.Systems
 {
-    public class BattleSystem : EntitySystem
+    public class BattleSystem : EntityProcessingSystem
     {
         private readonly ConcurrentDictionary<int, int> entitiesBySerializableId = new ConcurrentDictionary<int, int>();
 
         private readonly EntityFactory entityFactory;
         private readonly GameSettings gameSettings;
+
+        private readonly ConcurrentDictionary<int, Player> playerEntities = new ConcurrentDictionary<int, Player>();
         private readonly Random random;
 
-        private readonly Dictionary<PlayerIndex, (int, int)> startPositions = new Dictionary<PlayerIndex, (int, int)> {
-            { PlayerIndex.One, (100, 100) },
-            { PlayerIndex.Two, (900, 100) },
-            { PlayerIndex.Three, (100, 600) },
-            { PlayerIndex.Four, (900, 600) }
+        private readonly Dictionary<PlayerIndex, Vector2> startPositions = new Dictionary<PlayerIndex, Vector2> {
+            { PlayerIndex.One, new Vector2(100, 100) },
+            { PlayerIndex.Two, new Vector2(900, 100) },
+            { PlayerIndex.Three, new Vector2(100, 600) },
+            { PlayerIndex.Four, new Vector2(900, 600) }
         };
+
+        private ComponentMapper<CollisionBody> bodyMapper = null!;
+
+        private ComponentMapper<Player> playerMapper = null!;
 
         private ComponentMapper<Serializable> serializableMapper = null!;
 
@@ -37,90 +43,131 @@ namespace BunnyLand.DesktopGL.Systems
             this.entityFactory = entityFactory;
             this.gameSettings = gameSettings;
             this.random = random;
-            messageHub.Subscribe((ResetWorldMessage msg) => {
-                foreach (var entity in ActiveEntities) {
-                    DestroyEntity(entity);
-                }
-
-                if (msg.GameState == null)
-                    SetupEntities();
-                else {
-                    if (msg.GameState.Components != null) {
-                        SetupEntities(msg.GameState.Components);
-                    }
-                }
-            });
-            messageHub.Subscribe((UpdateGameMessage msg) => {
-                foreach (var serializable in msg.Components.Serializables) {
-                    if (entitiesBySerializableId.TryGetValue(serializable.Id, out var entityId)) {
-                        var entity = GetEntity(entityId);
-                        if (msg.Components.Movables.TryGetValue(serializable.Id, out var movable)) {
-                            if (entity.Get<Movable>() is {} existing) {
-                                existing.Acceleration = movable.Acceleration;
-                                existing.Velocity = movable.Velocity;
-                                existing.BrakingForce = movable.BrakingForce;
-                                existing.GravityMultiplier = movable.GravityMultiplier;
-                                existing.GravityPull = movable.GravityPull;
-                                existing.WrapAround = movable.WrapAround;
-                            } else {
-                                entity.Attach(movable);
-                            }
-                        }
-
-                        if (msg.Components.Transforms.TryGetValue(serializable.Id, out var serializableTransform)) {
-                            if (entity.Get<Transform2>() is {} existing) {
-                                existing.Position = serializableTransform.Position;
-                                existing.Rotation = serializableTransform.Rotation;
-                                existing.Scale = serializableTransform.Scale;
-                            } else {
-                                var transform = new Transform2 {
-                                    Position = serializableTransform.Position,
-                                    Rotation = serializableTransform.Rotation,
-                                    Scale = serializableTransform.Scale
-                                };
-                                entity.Attach(transform);
-                            }
-                        }
-
-                        if (msg.Components.SpriteInfos.TryGetValue(serializable.Id, out var spriteInfo)) {
-                            if (entity.Get<SpriteInfo>() is {} existing) {
-                                existing.Size = spriteInfo.Size;
-                                existing.SpriteType = spriteInfo.SpriteType;
-                            } else {
-                                entity.Attach(spriteInfo);
-                            }
-                        }
-                    } else {
-                        CreateEntity(serializable, msg.Components);
-                    }
-                }
-            });
+            messageHub.Subscribe<ResetWorldMessage>(HandleResetWorld);
+            messageHub.Subscribe<UpdateGameMessage>(HandleUpdateGame);
+            messageHub.Subscribe<PlayerJoinedMessage>(HandlePlayerJoined);
+            messageHub.Subscribe<PlayerLeftMessage>(HandlePlayerLeft);
             messageHub.Subscribe((RespawnPlayerMessage msg) => RespawnPlayer(msg.PlayerIndex));
+        }
+
+        private void HandlePlayerLeft(PlayerLeftMessage msg)
+        {
+            var (entityId, player) = playerEntities.FirstOrDefault(kvp => kvp.Value.PeerId == msg.PeerId);
+            if (player != null) {
+                DestroyEntity(entityId);
+            }
+        }
+
+        private void HandlePlayerJoined(PlayerJoinedMessage msg)
+        {
+            var firstFreePlayerIndex = (PlayerIndex) Enumerable.Range(1, 16).First(i => playerEntities.Values.All(p => p.PlayerIndex != (PlayerIndex) i));
+            entityFactory.CreatePlayer(CreateEntity(), startPositions[firstFreePlayerIndex], firstFreePlayerIndex, false);
+        }
+
+        private void HandleResetWorld(ResetWorldMessage msg)
+        {
+            foreach (var entity in ActiveEntities) {
+                DestroyEntity(entity);
+            }
+
+            if (msg.GameState == null)
+                SetupEntities();
+            else {
+                if (msg.GameState.Components != null) {
+                    SetupEntities(msg.GameState.Components);
+                }
+            }
+        }
+
+        private void HandleUpdateGame(UpdateGameMessage msg)
+        {
+            foreach (var serializable in msg.Components.SerializableIds) {
+                if (entitiesBySerializableId.TryGetValue(serializable, out var entityId)) {
+                    var entity = GetEntity(entityId);
+                    if (msg.Components.Movables.TryGetValue(serializable, out var movable)) {
+                        UpdateMovable(entity, movable);
+                    }
+
+                    if (msg.Components.Transforms.TryGetValue(serializable, out var serializableTransform)) {
+                        UpdateTransform(entity, serializableTransform);
+                    }
+
+                    if (msg.Components.SpriteInfos.TryGetValue(serializable, out var spriteInfo)) {
+                        UpdateSpriteInfo(entity, spriteInfo);
+                    }
+                } else {
+                    CreateEntity(serializable, msg.Components);
+                }
+            }
+
+            foreach (var (entityId, _) in entitiesBySerializableId.Where(kvp => !msg.Components.SerializableIds.Contains(kvp.Key))) {
+                DestroyEntity(entityId);
+            }
+        }
+
+        private static void UpdateSpriteInfo(Entity entity, SpriteInfo spriteInfo)
+        {
+            if (entity.Get<SpriteInfo>() is {} existing) {
+                existing.Size = spriteInfo.Size;
+                existing.SpriteType = spriteInfo.SpriteType;
+            } else {
+                entity.Attach(spriteInfo);
+            }
+        }
+
+        private static void UpdateTransform(Entity entity, SerializableTransform serializableTransform)
+        {
+            if (entity.Get<Transform2>() is {} existing) {
+                existing.Position = serializableTransform.Position;
+                existing.Rotation = serializableTransform.Rotation;
+                existing.Scale = serializableTransform.Scale;
+            } else {
+                var transform = new Transform2 {
+                    Position = serializableTransform.Position,
+                    Rotation = serializableTransform.Rotation,
+                    Scale = serializableTransform.Scale
+                };
+                entity.Attach(transform);
+            }
+        }
+
+        private static void UpdateMovable(Entity entity, Movable movable)
+        {
+            if (entity.Get<Movable>() is {} existing) {
+                existing.Acceleration = movable.Acceleration;
+                existing.Velocity = movable.Velocity;
+                existing.BrakingForce = movable.BrakingForce;
+                existing.GravityMultiplier = movable.GravityMultiplier;
+                existing.GravityPull = movable.GravityPull;
+                existing.WrapAround = movable.WrapAround;
+            } else {
+                entity.Attach(movable);
+            }
         }
 
         private void SetupEntities(SerializableComponents gameStateComponents)
         {
             entityFactory.CreateLevel(CreateEntity(), gameSettings.Width, gameSettings.Height);
 
-            foreach (var serializable in gameStateComponents.Serializables) {
+            foreach (var serializable in gameStateComponents.SerializableIds) {
                 CreateEntity(serializable, gameStateComponents);
             }
         }
 
-        private void CreateEntity(Serializable serializable, SerializableComponents gameStateComponents)
+        private void CreateEntity(int serializableId, SerializableComponents gameStateComponents)
         {
             var entity = CreateEntity();
-            entity.Attach(serializable);
-            if (gameStateComponents.Transforms.TryGetValue(serializable.Id, out var serializableTransform)) {
+            entity.Attach(new Serializable(serializableId));
+            if (gameStateComponents.Transforms.TryGetValue(serializableId, out var serializableTransform)) {
                 var transform = new Transform2(serializableTransform.Position, serializableTransform.Rotation, serializableTransform.Scale);
                 entity.Attach(transform);
             }
 
-            if (gameStateComponents.Movables.TryGetValue(serializable.Id, out var movable)) {
+            if (gameStateComponents.Movables.TryGetValue(serializableId, out var movable)) {
                 entity.Attach(movable);
             }
 
-            if (gameStateComponents.SpriteInfos.TryGetValue(serializable.Id, out var spriteInfo)) {
+            if (gameStateComponents.SpriteInfos.TryGetValue(serializableId, out var spriteInfo)) {
                 entity.Attach(spriteInfo);
             }
         }
@@ -144,8 +191,7 @@ namespace BunnyLand.DesktopGL.Systems
             var playerIndices = EnumHelper.GetValues<PlayerIndex>();
             foreach (var index in playerIndices.Skip(1)) {
                 if (GamePad.GetState(index).IsConnected) {
-                    var (x, y) = startPositions[index];
-                    entityFactory.CreatePlayer(CreateEntity(), new Vector2(x, y), index);
+                    entityFactory.CreatePlayer(CreateEntity(), startPositions[index], index);
                 }
             }
         }
@@ -153,16 +199,46 @@ namespace BunnyLand.DesktopGL.Systems
         protected override void OnEntityAdded(int entityId)
         {
             serializableMapper.TryGet(entityId).IfSome(serializable => entitiesBySerializableId[serializable.Id] = entityId);
+            playerMapper.TryGet(entityId).IfSome(player => playerEntities[entityId] = player);
         }
 
         protected override void OnEntityRemoved(int entityId)
         {
             serializableMapper.TryGet(entityId).IfSome(serializable => entitiesBySerializableId.Remove(serializable.Id, out _));
+            playerEntities.Remove(entityId, out _);
         }
 
         public override void Initialize(IComponentMapperService mapperService)
         {
             serializableMapper = mapperService.GetMapper<Serializable>();
+            playerMapper = mapperService.GetMapper<Player>();
+            bodyMapper = mapperService.GetMapper<CollisionBody>();
+        }
+
+        public override void Process(GameTime gameTime, int entityId)
+        {
+            bodyMapper.TryGet(entityId).IfSome(body => {
+                var entity = GetEntity(entityId);
+
+                foreach (var (other, penetrationVector) in body.Collisions) {
+                    var otherEntity = GetEntity(other);
+                    entity.TryGet<Damaging>().IfSome(damaging => otherEntity.TryGet<Health>().IfSome(health => {
+                        health.CurrentHealth -= damaging.Damage;
+                        if (health.CurrentHealth < 0) {
+                            Kill(otherEntity);
+                        }
+                    }));
+                }
+            });
+        }
+
+        private void Kill(Entity otherEntity)
+        {
+            otherEntity.TryGet<Player>().IfSome(player => {
+                otherEntity.Attach(new Health(100));
+                otherEntity.Attach(new Movable());
+                otherEntity.Attach(new Transform2(startPositions[player.PlayerIndex]));
+            });
         }
     }
 }
