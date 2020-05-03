@@ -13,10 +13,10 @@ namespace BunnyLand.DesktopGL.Systems
     public class PhysicsSystem : EntityProcessingSystem
     {
         private readonly Variables variables;
-        private ComponentMapper<CollisionBody> bodyMapper;
-        private ComponentMapper<Level> levelMapper;
-        private ComponentMapper<Movable> movableMapper;
-        private ComponentMapper<Transform2> transformMapper;
+        private ComponentMapper<CollisionBody> bodyMapper = null!;
+        private ComponentMapper<Level> levelMapper = null!;
+        private ComponentMapper<Movable> movableMapper = null!;
+        private ComponentMapper<Transform2> transformMapper = null!;
 
         private Option<Level> Level { get; set; }
 
@@ -58,8 +58,12 @@ namespace BunnyLand.DesktopGL.Systems
                 * variables.Global[GlobalVariable.InertiaRatio];
 
             // Update position
-            bodyMapper.TryGet(entityId).IfSome(body => body.OldPosition = transform.Position);
+            var oldPosition = transform.Position;
             transform.Position += movable.Velocity * elapsedTicks;
+            bodyMapper.TryGet(entityId).IfSome(body => {
+                body.OldPosition = oldPosition;
+                body.Position = transform.Position;
+            });
 
             if (movable.WrapAround) {
                 Level.IfSome(level => transform.Wrap(level.Bounds));

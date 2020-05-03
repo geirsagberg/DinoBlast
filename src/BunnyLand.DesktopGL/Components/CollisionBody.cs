@@ -9,46 +9,43 @@ namespace BunnyLand.DesktopGL.Components
 {
     public class CollisionBody
     {
-        public IShapeF Shape { get; }
+        private readonly IShapeF shape;
+
+        public IShapeF Bounds {
+            get {
+                shape.Position = Position;
+                return shape;
+            }
+        }
+
         public ColliderTypes ColliderType { get; }
         public ColliderTypes CollidesWith { get; }
-        // private readonly IShapeF shape;
-        // private readonly Transform2 transform;
 
         public List<(int entityId, Vector2 penetrationVector)> Collisions { get; set; } = new List<(int entityId, Vector2 penetrationVector)>();
 
+        public Vector2 Position { get; set; }
         public Vector2 OldPosition { get; set; }
-
-        // public IShapeF Bounds {
-        //     get {
-        //         shape.Position = transform.Position;
-        //         return shape;
-        //     }
-        // }
 
         public RectangleF CollisionBounds { get; set; }
 
-        public CollisionBody(IShapeF shape, Transform2 transform, ColliderTypes colliderType, ColliderTypes collidesWith)
+        public CollisionBody(IShapeF shape, Vector2 position, ColliderTypes colliderType, ColliderTypes collidesWith)
         {
-            Shape = shape;
+            this.shape = shape;
+            OldPosition = Position = position;
             ColliderType = colliderType;
             CollidesWith = collidesWith;
-            // this.shape = shape;
-            // this.transform = transform;
-            // OldPosition = transform.Position;
         }
 
-        public Vector2 CalculatePenetrationVector(CollisionBody otherBody, Transform2 transform, Transform2 otherTransform)
+        public Vector2 CalculatePenetrationVector(CollisionBody otherBody)
         {
-            var bounds = GetBounds(this, transform.Position);
-            var otherBounds = GetBounds(otherBody, otherTransform.Position);
+            var bounds = Bounds;
+            var otherBounds = otherBody.Bounds;
             if (otherBounds.Intersects(bounds)) return otherBounds.CalculatePenetrationVector(bounds);
 
             // Swept AABB / Circle algorithm
 
-            var velocity = transform.Position - OldPosition;
-            var otherVelocity = otherTransform.Position - otherBody.OldPosition;
-            var oldDistance = otherBody.OldPosition - OldPosition;
+            var velocity = Position - OldPosition;
+            var otherVelocity = otherBody.Position - otherBody.OldPosition;
 
             // Currently ignoring velocity of rectangles
             return bounds switch {
@@ -62,14 +59,14 @@ namespace BunnyLand.DesktopGL.Components
 
         public static IShapeF GetBounds(CollisionBody collisionBody, Vector2 position)
         {
-            collisionBody.Shape.Position = position;
-            return collisionBody.Shape;
+            collisionBody.Bounds.Position = position;
+            return collisionBody.Bounds;
         }
 
         public IShapeF GetBounds(Vector2 position)
         {
-            Shape.Position = position;
-            return Shape;
+            Bounds.Position = position;
+            return Bounds;
         }
     }
 

@@ -17,7 +17,7 @@ namespace BunnyLand.DesktopGL
             var sprite = new SpriteInfo(SpriteType.Bunny, new Size(35, 50));
             entity.Attach(sprite);
 
-            entity.Attach(new CollisionBody(new CircleF(Point2.Zero, 15), transform, ColliderTypes.Player,
+            entity.Attach(new CollisionBody(new CircleF(Point2.Zero, 15), position, ColliderTypes.Player,
                 ColliderTypes.Player | ColliderTypes.Projectile | ColliderTypes.Static));
             entity.Attach(new Player(playerIndex) { IsLocal = isLocal });
             entity.Attach(new Movable());
@@ -42,7 +42,7 @@ namespace BunnyLand.DesktopGL
             var sprite = new SpriteInfo(SpriteType.Planet1, new Size(planetSize, planetSize));
             entity.Attach(sprite);
 
-            entity.Attach(new CollisionBody(new CircleF(Point2.Zero, planetSize * scale / 2f), transform,
+            entity.Attach(new CollisionBody(new CircleF(Point2.Zero, planetSize * scale / 2f), position,
                 ColliderTypes.Static, ColliderTypes.Player | ColliderTypes.Projectile));
             entity.Attach(new GravityPoint(transform, mass));
             return entity;
@@ -58,7 +58,7 @@ namespace BunnyLand.DesktopGL
         {
             var transform = new Transform2(rectangleF.Position);
             entity.Attach(transform);
-            entity.Attach(new CollisionBody(rectangleF, transform, ColliderTypes.Static,
+            entity.Attach(new CollisionBody(rectangleF, rectangleF.Position, ColliderTypes.Static,
                 ColliderTypes.Player | ColliderTypes.Projectile));
             entity.Attach(new SolidColor(Color.LightCoral, rectangleF));
             return entity;
@@ -76,7 +76,7 @@ namespace BunnyLand.DesktopGL
                 WrapAround = false
             };
             entity.Attach(movable);
-            var collisionBody = new CollisionBody(new CircleF(Point2.Zero, 1), transform,
+            var collisionBody = new CollisionBody(new CircleF(Point2.Zero, 1), position,
                 ColliderTypes.Projectile, ColliderTypes.Player | ColliderTypes.Static);
             entity.Attach(collisionBody);
 

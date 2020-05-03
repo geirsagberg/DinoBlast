@@ -234,9 +234,9 @@ namespace BunnyLand.DesktopGL.Systems
         {
             collisionMapper.TryGet(entity).IfSome(body => {
                 var color = body.Collisions.Any() ? Color.Red : Color.Aqua;
-                if (body.Shape is CircleF circle) {
+                if (body.Bounds is CircleF circle) {
                     spriteBatch.DrawCircle(circle, 32, color);
-                } else if (body.Shape is RectangleF rectangle) {
+                } else if (body.Bounds is RectangleF rectangle) {
                     spriteBatch.DrawRectangle(rectangle, color);
                 }
 

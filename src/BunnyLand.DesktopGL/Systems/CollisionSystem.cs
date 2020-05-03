@@ -26,11 +26,8 @@ namespace BunnyLand.DesktopGL.Systems
         private readonly TimeSpan[] timeSpans = new TimeSpan[LogCollisionDetectionEveryNthFrame];
         private readonly Variables variables;
         private ComponentMapper<CollisionBody> bodyMapper = null!;
-        private ComponentMapper<Damaging> damagingMapper = null!;
-        private ComponentMapper<Health> healthMapper = null!;
         private ComponentMapper<Level> levelMapper = null!;
         private ComponentMapper<Movable> movableMapper = null!;
-        private ComponentMapper<Player> playerMapper = null!;
 
         private int timeSpanCounter;
         private ComponentMapper<Transform2> transformMapper = null!;
@@ -50,9 +47,6 @@ namespace BunnyLand.DesktopGL.Systems
             bodyMapper = mapperService.GetMapper<CollisionBody>();
             movableMapper = mapperService.GetMapper<Movable>();
             levelMapper = mapperService.GetMapper<Level>();
-            healthMapper = mapperService.GetMapper<Health>();
-            damagingMapper = mapperService.GetMapper<Damaging>();
-            playerMapper = mapperService.GetMapper<Player>();
             transformMapper = mapperService.GetMapper<Transform2>();
         }
 
@@ -113,7 +107,7 @@ namespace BunnyLand.DesktopGL.Systems
                         }).ToList();
 
                         body.Collisions = potentialCollisions
-                            .Select(other => (other.Key, body.CalculatePenetrationVector(other.Value, transform, transformMapper.Get(other.Key))))
+                            .Select(other => (other.Key, body.CalculatePenetrationVector(other.Value)))
                             .Where(t => t.Item2 != Vector2.Zero).ToList();
                         // potentialCollisions.ForEach(b => checkedPairs.Add((entityId, b.Key)));
 
