@@ -2,6 +2,7 @@
 using BunnyLand.DesktopGL.Components;
 using BunnyLand.DesktopGL.Enums;
 using BunnyLand.DesktopGL.Extensions;
+using BunnyLand.DesktopGL.Models;
 using LanguageExt;
 using Microsoft.Xna.Framework;
 using MonoGame.Extended;
@@ -13,6 +14,7 @@ namespace BunnyLand.DesktopGL.Systems
     public class PhysicsSystem : EntityProcessingSystem
     {
         private readonly Variables variables;
+        private readonly SharedContext sharedContext;
         private ComponentMapper<CollisionBody> bodyMapper = null!;
         private ComponentMapper<Level> levelMapper = null!;
         private ComponentMapper<Movable> movableMapper = null!;
@@ -20,9 +22,10 @@ namespace BunnyLand.DesktopGL.Systems
 
         private Option<Level> Level { get; set; }
 
-        public PhysicsSystem(Variables variables) : base(Aspect.All(typeof(Transform2)).One(typeof(Movable)))
+        public PhysicsSystem(Variables variables, SharedContext sharedContext) : base(Aspect.All(typeof(Transform2)).One(typeof(Movable)))
         {
             this.variables = variables;
+            this.sharedContext = sharedContext;
         }
 
         protected override void OnEntityAdded(int entityId)
@@ -40,6 +43,8 @@ namespace BunnyLand.DesktopGL.Systems
 
         public override void Process(GameTime gameTime, int entityId)
         {
+            if (sharedContext.IsClient) return;
+
             var transform = transformMapper.Get(entityId);
             var movable = movableMapper.Get(entityId);
             var elapsedTicks = gameTime.GetElapsedTicks(variables);

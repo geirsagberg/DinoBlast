@@ -25,6 +25,7 @@ namespace BunnyLand.DesktopGL.Systems
 
         public override void Process(GameTime gameTime, int entityId)
         {
+
             var lifetime = lifetimeMapper.Get(entityId);
             lifetime.LifeSpanLeft -= gameTime.GetElapsedTimeSpan(variables);
             if (lifetime.LifeSpanLeft < TimeSpan.Zero) {

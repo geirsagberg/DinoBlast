@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using LanguageExt;
 
@@ -38,6 +39,14 @@ namespace BunnyLand.DesktopGL.Services
                 };
             }).None(() => throw new Exception("No handler for request " + request.GetType()));
 
+        public void SubscribeMany(Action<INotification> action, params Type[] messageTypes)
+        {
+            foreach (var messageType in messageTypes) {
+                notificationHandlers.GetOrAdd(messageType, new List<Delegate>());
+                notificationHandlers[messageType].Add(action);
+            }
+        }
+
         public void Subscribe<T>(Action<T> action) where T : INotification
         {
             notificationHandlers.GetOrAdd(typeof(T), new List<Delegate>());
@@ -56,6 +65,11 @@ namespace BunnyLand.DesktopGL.Services
             if (!requestHandlers.TryAdd(typeof(TRequest), handler)) {
                 throw new Exception("Handler already registered for " + typeof(TRequest));
             }
+        }
+
+        public void SubscribeMany(Action<INotification> action, Dictionary<Type, Delegate> handlers)
+        {
+            SubscribeMany(action, handlers.Keys.ToArray());
         }
     }
 }

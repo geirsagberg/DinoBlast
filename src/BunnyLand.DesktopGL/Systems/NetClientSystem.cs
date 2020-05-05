@@ -3,10 +3,12 @@ using System.Threading.Tasks;
 using BunnyLand.DesktopGL.Components;
 using BunnyLand.DesktopGL.Enums;
 using BunnyLand.DesktopGL.Messages;
+using BunnyLand.DesktopGL.Models;
 using BunnyLand.DesktopGL.Serialization;
 using BunnyLand.DesktopGL.Services;
 using LiteNetLib;
 using Microsoft.Xna.Framework;
+using MonoGame.Extended;
 using MonoGame.Extended.Entities;
 using MonoGame.Extended.Entities.Systems;
 
@@ -16,15 +18,20 @@ namespace BunnyLand.DesktopGL.Systems
     {
         private readonly GameSettings gameSettings;
         private readonly MessageHub messageHub;
-        private readonly Serializer serializer;
         private readonly NetManager netClient;
+        private readonly Serializer serializer;
+        private readonly SharedContext sharedContext;
 
-        public NetClientSystem(GameSettings gameSettings, MessageHub messageHub, Serializer serializer) : base(Aspect.All(typeof(Serializable)))
+        private NetPeer? joinedServer;
+        private TaskCompletionSource<bool>? joinServerTaskCompletionSource;
+
+        public NetClientSystem(GameSettings gameSettings, MessageHub messageHub, Serializer serializer, SharedContext sharedContext) : base(Aspect.All(typeof(Serializable)))
         {
             this.gameSettings = gameSettings;
             this.messageHub = messageHub;
             this.serializer = serializer;
-             
+            this.sharedContext = sharedContext;
+
             var clientListener = CreateClientListener();
             netClient = new NetManager(clientListener) {
                 UnconnectedMessagesEnabled = true,
@@ -34,8 +41,6 @@ namespace BunnyLand.DesktopGL.Systems
             messageHub.Handle<JoinServerRequest, bool>(HandleJoinServer);
             messageHub.Subscribe<StartServerSearchMessage>(OnStartServerSearch);
         }
-        
-        private NetPeer? joinedServer;
 
         public Task<bool> HandleJoinServer(JoinServerRequest request)
         {
@@ -44,12 +49,14 @@ namespace BunnyLand.DesktopGL.Systems
             joinedServer = netClient.Connect("localhost", gameSettings.ServerPort, "BunnyLand");
             return joinServerTaskCompletionSource.Task;
         }
-        
+
         private void StartClient()
         {
             if (!netClient.IsRunning) {
-                if (netClient.Start(gameSettings.ClientPort))
+                if (netClient.Start(gameSettings.ClientPort)) {
                     Console.WriteLine("Client listening at port {0}", gameSettings.ClientPort);
+                    sharedContext.IsClient = true;
+                }
                 else
                     Console.WriteLine("Client not started!");
             }
@@ -84,7 +91,13 @@ namespace BunnyLand.DesktopGL.Systems
                 joinServerTaskCompletionSource?.SetResult(true);
             };
             clientListener.NetworkErrorEvent += (endPoint, error) => Console.WriteLine("Network error: {0} - {1}", endPoint, error);
-            clientListener.PeerDisconnectedEvent += (peer, info) => Console.WriteLine("Peer disconnected: {0} - {1}", peer, info);
+            clientListener.PeerDisconnectedEvent += (peer, info) => {
+                Console.WriteLine("Peer disconnected: {0} - {1}", peer, info);
+                if (peer == joinedServer) {
+                    messageHub.Publish(new ServerDisconnectedMessage());
+                    netClient.Stop();
+                }
+            };
             clientListener.NetworkReceiveUnconnectedEvent += (endPoint, reader, type) => {
                 Console.WriteLine("Client received unconnected event from: {0}", endPoint);
                 if (type == UnconnectedMessageType.BasicMessage) {
@@ -101,7 +114,6 @@ namespace BunnyLand.DesktopGL.Systems
             };
             return clientListener;
         }
-        private TaskCompletionSource<bool>? joinServerTaskCompletionSource;
 
         public override void Initialize(IComponentMapperService mapperService)
         {

@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Linq;
 using BunnyLand.DesktopGL.Components;
 using BunnyLand.DesktopGL.Extensions;
+using BunnyLand.DesktopGL.Models;
 using BunnyLand.DesktopGL.Services;
 using LanguageExt;
 using Microsoft.Xna.Framework;
@@ -21,6 +22,7 @@ namespace BunnyLand.DesktopGL.Systems
             new System.Collections.Generic.HashSet<(int entityA, int entityB)>();
 
         private readonly MessageHub messageHub;
+        private readonly SharedContext sharedContext;
 
         private readonly Stopwatch stopwatch = new Stopwatch();
         private readonly TimeSpan[] timeSpans = new TimeSpan[LogCollisionDetectionEveryNthFrame];
@@ -36,10 +38,11 @@ namespace BunnyLand.DesktopGL.Systems
 
         public Dictionary<int, CollisionBody> Bodies { get; } = new Dictionary<int, CollisionBody>();
 
-        public CollisionSystem(Variables variables, MessageHub messageHub) : base(Aspect.All(typeof(CollisionBody)))
+        public CollisionSystem(Variables variables, MessageHub messageHub, SharedContext sharedContext) : base(Aspect.All(typeof(CollisionBody)))
         {
             this.variables = variables;
             this.messageHub = messageHub;
+            this.sharedContext = sharedContext;
         }
 
         public override void Initialize(IComponentMapperService mapperService)
@@ -82,6 +85,8 @@ namespace BunnyLand.DesktopGL.Systems
 
         public override void Process(GameTime gameTime, int entityId)
         {
+            if (sharedContext.IsClient) return;
+
             var elapsedTicks = gameTime.GetElapsedTicks(variables);
 
             bodyMapper.TryGet(entityId).IfSome(body => {

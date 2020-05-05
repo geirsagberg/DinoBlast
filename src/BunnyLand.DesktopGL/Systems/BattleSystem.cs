@@ -5,6 +5,7 @@ using System.Linq;
 using BunnyLand.DesktopGL.Components;
 using BunnyLand.DesktopGL.Extensions;
 using BunnyLand.DesktopGL.Messages;
+using BunnyLand.DesktopGL.Models;
 using BunnyLand.DesktopGL.Serialization;
 using BunnyLand.DesktopGL.Services;
 using Microsoft.Xna.Framework;
@@ -22,8 +23,12 @@ namespace BunnyLand.DesktopGL.Systems
         private readonly EntityFactory entityFactory;
         private readonly GameSettings gameSettings;
 
+        private readonly List<INotification> newMessages = new List<INotification>();
+        private readonly Dictionary<Type, Delegate> notificationHandlers;
+
         private readonly ConcurrentDictionary<int, Player> playerEntities = new ConcurrentDictionary<int, Player>();
         private readonly Random random;
+        private readonly SharedContext sharedContext;
 
         private readonly Dictionary<PlayerIndex, Vector2> startPositions = new Dictionary<PlayerIndex, Vector2> {
             { PlayerIndex.One, new Vector2(100, 100) },
@@ -38,16 +43,31 @@ namespace BunnyLand.DesktopGL.Systems
 
         private ComponentMapper<Serializable> serializableMapper = null!;
 
-        public BattleSystem(EntityFactory entityFactory, GameSettings gameSettings, Random random, MessageHub messageHub) : base(Aspect.All())
+        public BattleSystem(EntityFactory entityFactory, GameSettings gameSettings, Random random, MessageHub messageHub, SharedContext sharedContext) :
+            base(Aspect.All())
         {
             this.entityFactory = entityFactory;
             this.gameSettings = gameSettings;
             this.random = random;
-            messageHub.Subscribe<ResetWorldMessage>(HandleResetWorld);
-            messageHub.Subscribe<UpdateGameMessage>(HandleUpdateGame);
-            messageHub.Subscribe<PlayerJoinedMessage>(HandlePlayerJoined);
-            messageHub.Subscribe<PlayerLeftMessage>(HandlePlayerLeft);
-            messageHub.Subscribe((RespawnPlayerMessage msg) => RespawnPlayer(msg.PlayerIndex));
+            this.sharedContext = sharedContext;
+
+            notificationHandlers = new Dictionary<Type, Delegate> {
+                { typeof(ResetWorldMessage), new Action<ResetWorldMessage>(HandleResetWorld) },
+                { typeof(UpdateGameMessage), new Action<UpdateGameMessage>(HandleUpdateGame) },
+                { typeof(PlayerJoinedMessage), new Action<PlayerJoinedMessage>(HandlePlayerJoined) },
+                { typeof(PlayerLeftMessage), new Action<PlayerLeftMessage>(HandlePlayerLeft) },
+                { typeof(RespawnPlayerMessage), new Action<RespawnPlayerMessage>(msg => RespawnPlayer(msg.PlayerIndex)) }
+            };
+
+            messageHub.SubscribeMany(HandleNewMessage, notificationHandlers);
+        }
+
+        private void HandleNewMessage(INotification msg)
+        {
+            if (msg is UpdateGameMessage) {
+                newMessages.RemoveAll(m => m is UpdateGameMessage);
+            }
+            newMessages.Add(msg);
         }
 
         private void HandlePlayerLeft(PlayerLeftMessage msg)
@@ -61,7 +81,7 @@ namespace BunnyLand.DesktopGL.Systems
         private void HandlePlayerJoined(PlayerJoinedMessage msg)
         {
             var firstFreePlayerIndex = (PlayerIndex) Enumerable.Range(1, 16).First(i => playerEntities.Values.All(p => p.PlayerIndex != (PlayerIndex) i));
-            entityFactory.CreatePlayer(CreateEntity(), startPositions[firstFreePlayerIndex], firstFreePlayerIndex, false);
+            entityFactory.CreatePlayer(CreateEntity(), startPositions[firstFreePlayerIndex], firstFreePlayerIndex, false, msg.PeerId);
         }
 
         private void HandleResetWorld(ResetWorldMessage msg)
@@ -100,7 +120,7 @@ namespace BunnyLand.DesktopGL.Systems
                 }
             }
 
-            foreach (var (entityId, _) in entitiesBySerializableId.Where(kvp => !msg.Components.SerializableIds.Contains(kvp.Key))) {
+            foreach (var (_, entityId) in entitiesBySerializableId.Where(kvp => !msg.Components.SerializableIds.Contains(kvp.Key))) {
                 DestroyEntity(entityId);
             }
         }
@@ -215,12 +235,25 @@ namespace BunnyLand.DesktopGL.Systems
             bodyMapper = mapperService.GetMapper<CollisionBody>();
         }
 
+        public override void End()
+        {
+            foreach (var message in newMessages) {
+                if (message is UpdateGameMessage updateGameMessage) {
+                    Console.WriteLine(updateGameMessage.Components.SerializableIds.ToJoinedString());
+                }
+                notificationHandlers[message.GetType()].DynamicInvoke(message);
+            }
+            newMessages.Clear();
+        }
+
         public override void Process(GameTime gameTime, int entityId)
         {
+            if (sharedContext.IsClient) return;
+
             bodyMapper.TryGet(entityId).IfSome(body => {
                 var entity = GetEntity(entityId);
 
-                foreach (var (other, penetrationVector) in body.Collisions) {
+                foreach (var (other, _) in body.Collisions) {
                     var otherEntity = GetEntity(other);
                     entity.TryGet<Damaging>().IfSome(damaging => otherEntity.TryGet<Health>().IfSome(health => {
                         health.CurrentHealth -= damaging.Damage;

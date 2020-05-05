@@ -2,6 +2,7 @@
 using BunnyLand.DesktopGL.Components;
 using BunnyLand.DesktopGL.Enums;
 using BunnyLand.DesktopGL.Extensions;
+using BunnyLand.DesktopGL.Models;
 using Microsoft.Xna.Framework;
 using MonoGame.Extended;
 using MonoGame.Extended.Collections;
@@ -14,13 +15,15 @@ namespace BunnyLand.DesktopGL.Systems
     {
         private readonly Bag<GravityPoint> points = new Bag<GravityPoint>();
         private readonly Variables variables;
+        private readonly SharedContext sharedContext;
         private ComponentMapper<GravityPoint> gravityPointMapper;
         private ComponentMapper<Movable> movableMapper;
         private ComponentMapper<Transform2> transformMapper;
 
-        public GravitySystem(Variables variables) : base(Aspect.All(typeof(Movable)))
+        public GravitySystem(Variables variables, SharedContext sharedContext) : base(Aspect.All(typeof(Movable)))
         {
             this.variables = variables;
+            this.sharedContext = sharedContext;
         }
 
         public override void Initialize(IComponentMapperService mapperService)
@@ -42,6 +45,8 @@ namespace BunnyLand.DesktopGL.Systems
 
         public override void Process(GameTime gameTime, int entityId)
         {
+            if (sharedContext.IsClient) return;
+
             var movable = movableMapper.Get(entityId);
             var transform = transformMapper.Get(entityId);
 

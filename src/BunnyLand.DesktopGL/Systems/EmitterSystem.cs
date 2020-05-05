@@ -2,6 +2,7 @@
 using BunnyLand.DesktopGL.Components;
 using BunnyLand.DesktopGL.Enums;
 using BunnyLand.DesktopGL.Extensions;
+using BunnyLand.DesktopGL.Models;
 using Microsoft.Xna.Framework;
 using MonoGame.Extended;
 using MonoGame.Extended.Entities;
@@ -12,14 +13,16 @@ namespace BunnyLand.DesktopGL.Systems
     public class EmitterSystem : EntityProcessingSystem
     {
         private readonly EntityFactory entityFactory;
+        private readonly SharedContext sharedContext;
         private readonly Variables variables;
-        private ComponentMapper<Emitter> emitterMapper;
-        private ComponentMapper<Transform2> transformMapper;
+        private ComponentMapper<Emitter> emitterMapper = null!;
+        private ComponentMapper<Transform2> transformMapper = null!;
 
-        public EmitterSystem(Variables variables, EntityFactory entityFactory) : base(Aspect.All(typeof(Emitter), typeof(Transform2)))
+        public EmitterSystem(Variables variables, EntityFactory entityFactory, SharedContext sharedContext) : base(Aspect.All(typeof(Emitter), typeof(Transform2)))
         {
             this.variables = variables;
             this.entityFactory = entityFactory;
+            this.sharedContext = sharedContext;
         }
 
         public override void Initialize(IComponentMapperService mapperService)
@@ -30,6 +33,10 @@ namespace BunnyLand.DesktopGL.Systems
 
         public override void Process(GameTime gameTime, int entityId)
         {
+
+            if (sharedContext.IsClient) return;
+
+
             var elapsedTimeSpan = gameTime.GetElapsedTimeSpan(variables);
 
             var emitter = emitterMapper.Get(entityId);

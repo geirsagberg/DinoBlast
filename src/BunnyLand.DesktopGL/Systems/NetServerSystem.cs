@@ -119,7 +119,7 @@ namespace BunnyLand.DesktopGL.Systems
                 writer.Put((byte) NetMessageType.FullGameStateUpdate);
                 writer.Put(state);
 
-                netServer.SendToAll(writer, DeliveryMethod.ReliableOrdered);
+                netServer.SendToAll(writer, DeliveryMethod.ReliableSequenced);
 
                 broadcastedBytes[broadcastedBytesCounter] = writer.Length;
                 broadcastedBytesCounter += 1;
