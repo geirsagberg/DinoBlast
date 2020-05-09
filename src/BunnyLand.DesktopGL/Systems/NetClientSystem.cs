@@ -69,7 +69,7 @@ namespace BunnyLand.DesktopGL.Systems
             clientListener.NetworkReceiveEvent += (peer, reader, method) => {
                 if (reader.TryGetByte(out var b)) {
                     var netMessageType = (NetMessageType) b;
-                    Console.WriteLine($"Received {netMessageType} from {peer.EndPoint}");
+                    // Console.WriteLine($"Received {netMessageType} from {peer.EndPoint}");
                     switch (netMessageType) {
                         case NetMessageType.FullGameState: {
                             var state = new FullGameState(serializer);

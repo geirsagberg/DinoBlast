@@ -42,6 +42,7 @@ namespace BunnyLand.DesktopGL.Systems
         private ComponentMapper<Player> playerMapper = null!;
 
         private ComponentMapper<Serializable> serializableMapper = null!;
+        private bool stateInitializationCompleted;
 
         public BattleSystem(EntityFactory entityFactory, GameSettings gameSettings, Random random, MessageHub messageHub, SharedContext sharedContext) :
             base(Aspect.All())
@@ -86,6 +87,7 @@ namespace BunnyLand.DesktopGL.Systems
 
         private void HandleResetWorld(ResetWorldMessage msg)
         {
+            entitiesBySerializableId.Clear();
             foreach (var entity in ActiveEntities) {
                 DestroyEntity(entity);
             }
@@ -101,6 +103,7 @@ namespace BunnyLand.DesktopGL.Systems
 
         private void HandleUpdateGame(UpdateGameMessage msg)
         {
+            if (!stateInitializationCompleted) return;
             foreach (var serializable in msg.Components.SerializableIds) {
                 if (entitiesBySerializableId.TryGetValue(serializable, out var entityId)) {
                     var entity = GetEntity(entityId);
@@ -238,12 +241,15 @@ namespace BunnyLand.DesktopGL.Systems
         public override void End()
         {
             foreach (var message in newMessages) {
-                if (message is UpdateGameMessage updateGameMessage) {
-                    Console.WriteLine(updateGameMessage.Components.SerializableIds.ToJoinedString());
-                }
+                // if (message is UpdateGameMessage updateGameMessage) {
+                //     Console.WriteLine(updateGameMessage.Components.SerializableIds.ToJoinedString());
+                // }
                 notificationHandlers[message.GetType()].DynamicInvoke(message);
             }
             newMessages.Clear();
+            if (!stateInitializationCompleted && ActiveEntities.Any()) {
+                stateInitializationCompleted = true;
+            }
         }
 
         public override void Process(GameTime gameTime, int entityId)
