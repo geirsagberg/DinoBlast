@@ -1,10 +1,13 @@
-﻿using MonoGame.Extended;
+﻿using MessagePack;
+using MonoGame.Extended;
 
 namespace BunnyLand.DesktopGL.Components
 {
+    [MessagePackObject]
     public class Level
     {
-        public RectangleF Bounds { get; set; }
+        [Key(0)]
+        public RectangleF Bounds { get; }
 
         public Level(RectangleF bounds)
         {

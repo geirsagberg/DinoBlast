@@ -1,9 +1,13 @@
-﻿namespace BunnyLand.DesktopGL.Components
+﻿using MessagePack;
+
+namespace BunnyLand.DesktopGL.Components
 {
+    [MessagePackObject]
     public class Health
     {
-        public float MaxHealth { get; set; }
-        public float CurrentHealth { get; set; }
+        [Key(0)] public float MaxHealth { get; set; }
+
+        [Key(1)] public float CurrentHealth { get; set; }
 
         public Health(float maxHealth)
         {

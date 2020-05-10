@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using BunnyLand.DesktopGL.Extensions;
-using LanguageExt;
+using BunnyLand.DesktopGL.Utils;
 using Microsoft.Xna.Framework;
 using MonoGame.Extended;
 
@@ -52,7 +52,8 @@ namespace BunnyLand.DesktopGL.Components
                 RectangleF rect when otherBounds is RectangleF otherRect => Vector2.Zero,
                 RectangleF rect when otherBounds is CircleF otherCircle => Vector2.Zero,
                 CircleF circle when otherBounds is RectangleF otherRect => CollisionHelper.CalculatePenetrationVector(circle, otherRect, velocity),
-                CircleF circle when otherBounds is CircleF otherCircle => CollisionHelper.CalculatePenetrationVector(circle, otherCircle, velocity, otherVelocity),
+                CircleF circle when otherBounds is CircleF otherCircle => CollisionHelper.CalculatePenetrationVector(circle, otherCircle, velocity,
+                    otherVelocity),
                 _ => throw new NotImplementedException()
             };
         }

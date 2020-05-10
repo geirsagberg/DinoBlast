@@ -1,8 +1,11 @@
-﻿namespace BunnyLand.DesktopGL.Components
+﻿using MessagePack;
+
+namespace BunnyLand.DesktopGL.Components
 {
+    [MessagePackObject]
     public class Damaging
     {
-        public float Damage { get; set; }
+        [Key(0)] public float Damage { get; }
 
         public Damaging(float damage)
         {

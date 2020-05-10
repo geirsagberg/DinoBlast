@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using BunnyLand.DesktopGL.Utils;
 using LanguageExt;
 
 namespace BunnyLand.DesktopGL.Services
@@ -67,7 +68,7 @@ namespace BunnyLand.DesktopGL.Services
             }
         }
 
-        public void SubscribeMany(Action<INotification> action, Dictionary<Type, Delegate> handlers)
+        public void SubscribeMany(Action<INotification> action, Dictionary<Type, BoundMethod> handlers)
         {
             SubscribeMany(action, handlers.Keys.ToArray());
         }

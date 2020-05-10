@@ -3,7 +3,7 @@ using BunnyLand.DesktopGL.Extensions;
 using Microsoft.Xna.Framework;
 using MonoGame.Extended;
 
-namespace BunnyLand.DesktopGL.Components
+namespace BunnyLand.DesktopGL.Utils
 {
     public static class CollisionHelper
     {

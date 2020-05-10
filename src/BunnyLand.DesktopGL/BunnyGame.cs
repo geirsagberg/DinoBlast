@@ -40,7 +40,7 @@ namespace BunnyLand.DesktopGL
             };
 
             Content.RootDirectory = "Content";
-            IsFixedTimeStep = gameSettings.FixedTimeStep;
+            IsFixedTimeStep = true;
             TargetElapsedTime = TimeSpan.FromSeconds(1f / gameSettings.Fps);
 
             this.gameSettings = gameSettings;

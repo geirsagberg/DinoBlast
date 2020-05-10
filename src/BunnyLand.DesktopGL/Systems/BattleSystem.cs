@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using BunnyLand.DesktopGL.Components;
@@ -8,6 +7,7 @@ using BunnyLand.DesktopGL.Messages;
 using BunnyLand.DesktopGL.Models;
 using BunnyLand.DesktopGL.Serialization;
 using BunnyLand.DesktopGL.Services;
+using BunnyLand.DesktopGL.Utils;
 using LanguageExt;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
@@ -19,44 +19,44 @@ namespace BunnyLand.DesktopGL.Systems
 {
     public class BattleSystem : EntityProcessingSystem
     {
+        private static readonly IEnumerable<byte> _playerNumbers = Enumerable.Range(1, 16).Select(i => (byte) i);
         private readonly IDictionary<int, int> entitiesByPeerId = new Dictionary<int, int>();
-
-        private readonly ConcurrentDictionary<byte, int> entitiesByPlayerNumber = new ConcurrentDictionary<byte, int>();
-        private readonly ConcurrentDictionary<int, int> entitiesBySerializableId = new ConcurrentDictionary<int, int>();
+        private readonly IDictionary<byte, int> entitiesByPlayerNumber = new Dictionary<byte, int>();
+        private readonly IDictionary<int, int> entitiesBySerializableId = new Dictionary<int, int>();
 
         private readonly EntityFactory entityFactory;
         private readonly GameSettings gameSettings;
 
         private readonly List<INotification> newMessages = new List<INotification>();
-        private readonly Dictionary<Type, Delegate> notificationHandlers;
-        private readonly Random random;
+        private readonly Dictionary<Type, BoundMethod> notificationHandlers;
         private readonly SharedContext sharedContext;
 
         private ComponentMapper<CollisionBody> bodyMapper = null!;
-
         private ComponentMapper<PlayerState> playerMapper = null!;
-
         private ComponentMapper<Serializable> serializableMapper = null!;
         private bool stateInitializationCompleted;
-        private static readonly IEnumerable<byte> _playerNumbers = Enumerable.Range(1, 16).Select(i => (byte) i);
 
-        public BattleSystem(EntityFactory entityFactory, GameSettings gameSettings, Random random, MessageHub messageHub, SharedContext sharedContext) :
+        public BattleSystem(EntityFactory entityFactory, GameSettings gameSettings, MessageHub messageHub, SharedContext sharedContext) :
             base(Aspect.All())
         {
             this.entityFactory = entityFactory;
             this.gameSettings = gameSettings;
-            this.random = random;
             this.sharedContext = sharedContext;
 
-            notificationHandlers = new Dictionary<Type, Delegate> {
-                { typeof(ResetWorldMessage), new Action<ResetWorldMessage>(HandleResetWorld) },
-                { typeof(UpdateGameMessage), new Action<UpdateGameMessage>(HandleUpdateGame) },
-                { typeof(PlayerJoinedMessage), new Action<PlayerJoinedMessage>(HandlePlayerJoined) },
-                { typeof(PlayerLeftMessage), new Action<PlayerLeftMessage>(HandlePlayerLeft) },
-                { typeof(RespawnPlayerMessage), new Action<RespawnPlayerMessage>(msg => RespawnPlayer(msg.PlayerNumber)) }
+            notificationHandlers = new Dictionary<Type, BoundMethod> {
+                { typeof(ResetWorldMessage), new Action<ResetWorldMessage>(HandleResetWorld).Method.Bind() },
+                { typeof(UpdateGameMessage), new Action<UpdateGameMessage>(HandleUpdateGame).Method.Bind() },
+                { typeof(PlayerJoinedMessage), new Action<PlayerJoinedMessage>(HandlePlayerJoined).Method.Bind() },
+                { typeof(PlayerLeftMessage), new Action<PlayerLeftMessage>(HandlePlayerLeft).Method.Bind() },
+                { typeof(RespawnPlayerMessage), new Action<RespawnPlayerMessage>(HandleRespawnPlayer).Method.Bind() }
             };
 
             messageHub.SubscribeMany(HandleNewMessage, notificationHandlers);
+        }
+
+        private void HandleRespawnPlayer(RespawnPlayerMessage msg)
+        {
+            RespawnPlayer(msg.PlayerNumber);
         }
 
         private void HandleNewMessage(INotification msg)
@@ -253,10 +253,8 @@ namespace BunnyLand.DesktopGL.Systems
         public override void End()
         {
             foreach (var message in newMessages) {
-                // if (message is UpdateGameMessage updateGameMessage) {
-                //     Console.WriteLine(updateGameMessage.Components.SerializableIds.ToJoinedString());
-                // }
-                notificationHandlers[message.GetType()].DynamicInvoke(message);
+                var notificationHandler = notificationHandlers[message.GetType()];
+                notificationHandler(this, new object[] { message });
             }
 
             newMessages.Clear();

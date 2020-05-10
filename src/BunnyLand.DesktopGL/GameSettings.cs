@@ -8,7 +8,6 @@ namespace BunnyLand.DesktopGL
         public bool FullScreen { get; set; }
         public bool BrakeWhileJetpacking { get; set; }
         public bool VSyncEnabled { get; set; } = false;
-        public bool FixedTimeStep { get; set; } = true;
         public int Fps { get; set; } = 60;
         public int ServerPort { get; set; } = 9050;
         public int ClientPort { get; set; } = 9051;
