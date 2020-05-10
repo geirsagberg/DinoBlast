@@ -7,6 +7,7 @@ using Microsoft.Xna.Framework;
 using MonoGame.Extended;
 using MonoGame.Extended.Entities;
 using MonoGame.Extended.Entities.Systems;
+using PlayerState = BunnyLand.DesktopGL.Components.PlayerState;
 
 namespace BunnyLand.DesktopGL.Systems
 {
@@ -49,7 +50,7 @@ namespace BunnyLand.DesktopGL.Systems
 
                 switch (emitter.EmitterType) {
                     case EmitterType.Bullet: {
-                        var direction = entity.TryGet<Player>()
+                        var direction = entity.TryGet<PlayerInput>()
                             .Some(player => player.DirectionalInputs.AimDirection.NormalizedOrZero())
                             .None(Vector2.Zero);
                         if (direction == Vector2.Zero) direction = Vector2.UnitX;

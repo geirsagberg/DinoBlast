@@ -1,14 +1,21 @@
-﻿using System;
+﻿using MessagePack;
 
 namespace BunnyLand.DesktopGL.Enums
 {
-    [Flags]
-    public enum KeyState
+    [MessagePackObject]
+    public readonly struct KeyState
     {
-        None = 0,
-        Pressed = 1,
-        Changed = 0b10,
-        JustPressed = Pressed | Changed,
-        JustReleased = None | Changed
+        public KeyState(bool pressed, bool changed)
+        {
+            Pressed = pressed;
+            Changed = changed;
+        }
+
+        [Key(0)] public bool Pressed { get; }
+        [Key(1)] public bool Changed { get; }
+
+        [IgnoreMember] public bool JustPressed => Pressed & Changed;
+
+        [IgnoreMember] public bool JustReleased => Changed & !Pressed;
     }
 }

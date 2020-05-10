@@ -3,5 +3,6 @@
     public class SharedContext
     {
         public bool IsClient { get; set; }
+        public int FrameCounter { get; set; }
     }
 }

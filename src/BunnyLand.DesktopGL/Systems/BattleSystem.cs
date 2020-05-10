@@ -8,6 +8,7 @@ using BunnyLand.DesktopGL.Messages;
 using BunnyLand.DesktopGL.Models;
 using BunnyLand.DesktopGL.Serialization;
 using BunnyLand.DesktopGL.Services;
+using LanguageExt;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
 using MonoGame.Extended;
@@ -18,6 +19,9 @@ namespace BunnyLand.DesktopGL.Systems
 {
     public class BattleSystem : EntityProcessingSystem
     {
+        private readonly IDictionary<int, int> entitiesByPeerId = new Dictionary<int, int>();
+
+        private readonly ConcurrentDictionary<byte, int> entitiesByPlayerNumber = new ConcurrentDictionary<byte, int>();
         private readonly ConcurrentDictionary<int, int> entitiesBySerializableId = new ConcurrentDictionary<int, int>();
 
         private readonly EntityFactory entityFactory;
@@ -25,24 +29,16 @@ namespace BunnyLand.DesktopGL.Systems
 
         private readonly List<INotification> newMessages = new List<INotification>();
         private readonly Dictionary<Type, Delegate> notificationHandlers;
-
-        private readonly ConcurrentDictionary<int, Player> playerEntities = new ConcurrentDictionary<int, Player>();
         private readonly Random random;
         private readonly SharedContext sharedContext;
 
-        private readonly Dictionary<PlayerIndex, Vector2> startPositions = new Dictionary<PlayerIndex, Vector2> {
-            { PlayerIndex.One, new Vector2(100, 100) },
-            { PlayerIndex.Two, new Vector2(900, 100) },
-            { PlayerIndex.Three, new Vector2(100, 600) },
-            { PlayerIndex.Four, new Vector2(900, 600) }
-        };
-
         private ComponentMapper<CollisionBody> bodyMapper = null!;
 
-        private ComponentMapper<Player> playerMapper = null!;
+        private ComponentMapper<PlayerState> playerMapper = null!;
 
         private ComponentMapper<Serializable> serializableMapper = null!;
         private bool stateInitializationCompleted;
+        private static readonly IEnumerable<byte> _playerNumbers = Enumerable.Range(1, 16).Select(i => (byte) i);
 
         public BattleSystem(EntityFactory entityFactory, GameSettings gameSettings, Random random, MessageHub messageHub, SharedContext sharedContext) :
             base(Aspect.All())
@@ -57,7 +53,7 @@ namespace BunnyLand.DesktopGL.Systems
                 { typeof(UpdateGameMessage), new Action<UpdateGameMessage>(HandleUpdateGame) },
                 { typeof(PlayerJoinedMessage), new Action<PlayerJoinedMessage>(HandlePlayerJoined) },
                 { typeof(PlayerLeftMessage), new Action<PlayerLeftMessage>(HandlePlayerLeft) },
-                { typeof(RespawnPlayerMessage), new Action<RespawnPlayerMessage>(msg => RespawnPlayer(msg.PlayerIndex)) }
+                { typeof(RespawnPlayerMessage), new Action<RespawnPlayerMessage>(msg => RespawnPlayer(msg.PlayerNumber)) }
             };
 
             messageHub.SubscribeMany(HandleNewMessage, notificationHandlers);
@@ -68,22 +64,30 @@ namespace BunnyLand.DesktopGL.Systems
             if (msg is UpdateGameMessage) {
                 newMessages.RemoveAll(m => m is UpdateGameMessage);
             }
+
             newMessages.Add(msg);
         }
 
         private void HandlePlayerLeft(PlayerLeftMessage msg)
         {
-            var (entityId, player) = playerEntities.FirstOrDefault(kvp => kvp.Value.PeerId == msg.PeerId);
-            if (player != null) {
-                DestroyEntity(entityId);
-            }
+            entitiesByPeerId.TryGetValue(msg.PeerId).IfSome(DestroyEntity);
         }
 
         private void HandlePlayerJoined(PlayerJoinedMessage msg)
         {
-            var firstFreePlayerIndex = (PlayerIndex) Enumerable.Range(1, 16).First(i => playerEntities.Values.All(p => p.PlayerIndex != (PlayerIndex) i));
-            entityFactory.CreatePlayer(CreateEntity(), startPositions[firstFreePlayerIndex], firstFreePlayerIndex, false, msg.PeerId);
+            var firstFreePlayerNumber = GetFirstFreePlayerNumber();
+            entityFactory.CreatePlayer(CreateEntity(), GetStartPosition(firstFreePlayerNumber), firstFreePlayerNumber, default, msg.PeerId);
         }
+
+        private byte GetFirstFreePlayerNumber() => _playerNumbers.First(i => !entitiesByPlayerNumber.ContainsKey(i));
+
+        private static Vector2 GetStartPosition(in int playerNumber) => playerNumber switch {
+            1 => new Vector2(100, 100),
+            2 => new Vector2(900, 600),
+            3 => new Vector2(600, 100),
+            4 => new Vector2(600, 600),
+            _ => new Vector2(900, 900)
+        };
 
         private void HandleResetWorld(ResetWorldMessage msg)
         {
@@ -92,12 +96,11 @@ namespace BunnyLand.DesktopGL.Systems
                 DestroyEntity(entity);
             }
 
-            if (msg.GameState == null)
+            sharedContext.FrameCounter = msg.FrameCounter;
+            if (msg.GameState == null) {
                 SetupEntities();
-            else {
-                if (msg.GameState.Components != null) {
-                    SetupEntities(msg.GameState.Components);
-                }
+            } else if (msg.GameState.Components != null) {
+                SetupEntities(msg.GameState.Components);
             }
         }
 
@@ -195,11 +198,13 @@ namespace BunnyLand.DesktopGL.Systems
             }
         }
 
-        public void RespawnPlayer(PlayerIndex playerIndex)
+        public void RespawnPlayer(byte playerNumber)
         {
+            var entity = entitiesByPlayerNumber[playerNumber];
+            var playerState = GetEntity(entity).Get<PlayerState>();
             entityFactory.CreatePlayer(CreateEntity(),
-                new Vector2(gameSettings.Width * random.NextSingle(), gameSettings.Height * random.NextSingle()),
-                playerIndex);
+                GetStartPosition(playerNumber), playerNumber,
+                playerState.LocalPlayerIndex);
         }
 
         private void SetupEntities()
@@ -207,14 +212,15 @@ namespace BunnyLand.DesktopGL.Systems
             entityFactory.CreateLevel(CreateEntity(), gameSettings.Width, gameSettings.Height);
             entityFactory.CreatePlanet(CreateEntity(), new Vector2(250, 500), 3000, 0.3f);
             entityFactory.CreatePlanet(CreateEntity(), new Vector2(700, 300), 5000, 0.5f);
-            entityFactory.CreatePlayer(CreateEntity(), new Vector2(100, 100), PlayerIndex.One);
+            entityFactory.CreatePlayer(CreateEntity(), new Vector2(100, 100), GetFirstFreePlayerNumber(), PlayerIndex.One);
             // entityFactory.CreatePlayer(CreateEntity(), new Vector2(800, 700), PlayerIndex.Two);
             // entityFactory.CreatePlanet(CreateEntity(), new Vector2(800, 600), 0, 0.05f);
             // entityFactory.CreateBlock(CreateEntity(), new RectangleF(600, 600, 10, 200));
             var playerIndices = EnumHelper.GetValues<PlayerIndex>();
             foreach (var index in playerIndices.Skip(1)) {
                 if (GamePad.GetState(index).IsConnected) {
-                    entityFactory.CreatePlayer(CreateEntity(), startPositions[index], index);
+                    var nextPlayerNumber = GetFirstFreePlayerNumber();
+                    entityFactory.CreatePlayer(CreateEntity(), GetStartPosition(nextPlayerNumber), nextPlayerNumber, index);
                 }
             }
         }
@@ -222,19 +228,25 @@ namespace BunnyLand.DesktopGL.Systems
         protected override void OnEntityAdded(int entityId)
         {
             serializableMapper.TryGet(entityId).IfSome(serializable => entitiesBySerializableId[serializable.Id] = entityId);
-            playerMapper.TryGet(entityId).IfSome(player => playerEntities[entityId] = player);
+            playerMapper.TryGet(entityId).IfSome(player => {
+                entitiesByPlayerNumber[player.PlayerNumber] = entityId;
+                player.PeerId.IfSome(peerId => entitiesByPeerId[peerId] = entityId);
+            });
         }
 
         protected override void OnEntityRemoved(int entityId)
         {
             serializableMapper.TryGet(entityId).IfSome(serializable => entitiesBySerializableId.Remove(serializable.Id, out _));
-            playerEntities.Remove(entityId, out _);
+            playerMapper.TryGet(entityId).IfSome(player => {
+                entitiesByPlayerNumber.Remove(player.PlayerNumber, out _);
+                player.PeerId.IfSome(peerId => entitiesByPeerId.Remove(peerId, out _));
+            });
         }
 
         public override void Initialize(IComponentMapperService mapperService)
         {
             serializableMapper = mapperService.GetMapper<Serializable>();
-            playerMapper = mapperService.GetMapper<Player>();
+            playerMapper = mapperService.GetMapper<PlayerState>();
             bodyMapper = mapperService.GetMapper<CollisionBody>();
         }
 
@@ -246,6 +258,7 @@ namespace BunnyLand.DesktopGL.Systems
                 // }
                 notificationHandlers[message.GetType()].DynamicInvoke(message);
             }
+
             newMessages.Clear();
             if (!stateInitializationCompleted && ActiveEntities.Any()) {
                 stateInitializationCompleted = true;
@@ -273,10 +286,10 @@ namespace BunnyLand.DesktopGL.Systems
 
         private void Kill(Entity otherEntity)
         {
-            otherEntity.TryGet<Player>().IfSome(player => {
+            otherEntity.TryGet<PlayerState>().IfSome(player => {
                 otherEntity.Attach(new Health(100));
                 otherEntity.Attach(new Movable());
-                otherEntity.Attach(new Transform2(startPositions[player.PlayerIndex]));
+                otherEntity.Attach(new Transform2(GetStartPosition(player.PlayerNumber)));
             });
         }
     }

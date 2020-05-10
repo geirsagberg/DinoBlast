@@ -5,6 +5,7 @@
         ListServersRequest,
         ListServersResponse,
         FullGameState,
-        FullGameStateUpdate
+        FullGameStateUpdate,
+        ClientAction
     }
 }

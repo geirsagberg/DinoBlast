@@ -6,6 +6,7 @@ using Microsoft.Xna.Framework;
 using MonoGame.Extended;
 using MonoGame.Extended.Entities;
 using MonoGame.Extended.Entities.Systems;
+using PlayerState = BunnyLand.DesktopGL.Components.PlayerState;
 
 namespace BunnyLand.DesktopGL.Systems
 {
@@ -16,9 +17,10 @@ namespace BunnyLand.DesktopGL.Systems
         private readonly Variables variables;
         private ComponentMapper<Accelerator> acceleratorMapper;
         private ComponentMapper<Movable> movableMapper;
-        private ComponentMapper<Player> playerMapper;
+        private ComponentMapper<PlayerState> playerMapper;
+        private ComponentMapper<PlayerInput> playerInputMapper;
 
-        public AcceleratorSystem(GameSettings gameSettings, Variables variables) : base(Aspect.All(typeof(Player),
+        public AcceleratorSystem(GameSettings gameSettings, Variables variables) : base(Aspect.All(typeof(PlayerState), typeof(PlayerInput),
             typeof(Movable)))
         {
             this.gameSettings = gameSettings;
@@ -27,9 +29,10 @@ namespace BunnyLand.DesktopGL.Systems
 
         public override void Initialize(IComponentMapperService mapperService)
         {
-            playerMapper = mapperService.GetMapper<Player>();
+            playerMapper = mapperService.GetMapper<PlayerState>();
             acceleratorMapper = mapperService.GetMapper<Accelerator>();
             movableMapper = mapperService.GetMapper<Movable>();
+            playerInputMapper = mapperService.GetMapper<PlayerInput>();
         }
 
         public new void Dispose()
@@ -43,11 +46,12 @@ namespace BunnyLand.DesktopGL.Systems
             // TODO: Use acceleration in some way to calculate new acceleration
             var player = playerMapper.Get(entityId);
             var movable = movableMapper.Get(entityId);
+            var input = playerInputMapper.Get(entityId);
             // TODO: How to handle keyboard keys (WASD) vs Controller inputs? How to know which to use?
-            var intendedAcceleration = player.DirectionalInputs.AccelerationDirection;
+            var intendedAcceleration = input.DirectionalInputs.AccelerationDirection;
 
             movable.Acceleration = player.StandingOn switch {
-                StandingOn.Nothing => ResultAcceleration(player.PlayerKeys, intendedAcceleration, movable.Velocity),
+                StandingOn.Nothing => ResultAcceleration(input.PlayerKeys, intendedAcceleration, movable.Velocity),
                 StandingOn.Planet => Vector2.Zero,
                 _ => Vector2.Zero
             };
@@ -69,7 +73,7 @@ namespace BunnyLand.DesktopGL.Systems
             var jetpackAcceleration = variables.Global[GlobalVariable.JetpackAcceleration];
             var jetpackBoostAcceleration = variables.Global[GlobalVariable.JetpackBoostAcceleration];
 
-            var isBoosting = keys[PlayerKey.Jump] == KeyState.Pressed;
+            var isBoosting = keys[PlayerKey.Jump].Pressed;
             var accelerationMultiplier = isBoosting ? jetpackBoostAcceleration : jetpackAcceleration;
 
             var attemptedNewVelocity = currentVelocity + intendedAcceleration * accelerationMultiplier;

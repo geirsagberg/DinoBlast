@@ -12,25 +12,25 @@ namespace BunnyLand.DesktopGL.Systems
     {
         private readonly Variables variables;
         private ComponentMapper<Emitter> emitterMapper = null!;
-        private ComponentMapper<Player> playerMapper = null!;
+        private ComponentMapper<PlayerInput> inputMapper = null!;
 
         public PlayerSystem(Variables variables) : base(
-            Aspect.All(typeof(Player)))
+            Aspect.All(typeof(PlayerInput)))
         {
             this.variables = variables;
         }
 
         public override void Initialize(IComponentMapperService mapperService)
         {
-            playerMapper = mapperService.GetMapper<Player>();
+            inputMapper = mapperService.GetMapper<PlayerInput>();
             emitterMapper = mapperService.GetMapper<Emitter>();
         }
 
         public override void Process(GameTime gameTime, int entityId)
         {
-            playerMapper.TryGet(entityId).IfSome(player => {
+            inputMapper.TryGet(entityId).IfSome(player => {
                 emitterMapper.TryGet(entityId).IfSome(emitter => {
-                    var isShooting = player.PlayerKeys[PlayerKey.Fire].HasFlag(KeyState.Pressed);
+                    var isShooting = player.PlayerKeys[PlayerKey.Fire].Pressed;
                     emitter.IsEmitting = isShooting;
                     emitter.EmitInterval = TimeSpan.FromSeconds(variables.Global[GlobalVariable.FiringInterval]);
                 });

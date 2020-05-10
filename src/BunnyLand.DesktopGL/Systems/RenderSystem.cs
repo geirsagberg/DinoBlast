@@ -16,6 +16,7 @@ using MonoGame.Extended.Entities;
 using MonoGame.Extended.Entities.Systems;
 using MonoGame.Extended.Sprites;
 using MonoGame.Extended.TextureAtlases;
+using PlayerState = BunnyLand.DesktopGL.Components.PlayerState;
 
 namespace BunnyLand.DesktopGL.Systems
 {
@@ -33,16 +34,17 @@ namespace BunnyLand.DesktopGL.Systems
         private ComponentMapper<Health> healthMapper = null!;
         private ComponentMapper<Level> levelMapper = null!;
         private ComponentMapper<Movable> movableMapper = null!;
-        private ComponentMapper<Player> playerMapper = null!;
+        private ComponentMapper<PlayerState> playerMapper = null!;
         private ComponentMapper<SolidColor> solidColorMapper = null!;
         private ComponentMapper<SpriteInfo> spriteMapper = null!;
         private ComponentMapper<Transform2> transformMapper = null!;
+        private ComponentMapper<PlayerInput> inputMapper = null!;
 
         public Option<Level> Level { get; set; }
 
         private GraphicsDevice GraphicsDevice => spriteBatch.GraphicsDevice;
 
-        public Option<Player> Player { get; set; }
+        public Option<PlayerState> Player { get; set; }
 
         public RenderSystem(SpriteBatch spriteBatch, ContentManager contentManager, Variables variables, Textures textures) : base(Aspect
             .All(typeof(Transform2))
@@ -61,9 +63,10 @@ namespace BunnyLand.DesktopGL.Systems
             collisionMapper = mapperService.GetMapper<CollisionBody>();
             movableMapper = mapperService.GetMapper<Movable>();
             levelMapper = mapperService.GetMapper<Level>();
-            playerMapper = mapperService.GetMapper<Player>();
+            playerMapper = mapperService.GetMapper<PlayerState>();
             solidColorMapper = mapperService.GetMapper<SolidColor>();
             healthMapper = mapperService.GetMapper<Health>();
+            inputMapper = mapperService.GetMapper<PlayerInput>();
         }
 
         protected override void OnEntityAdded(int entityId)
@@ -92,7 +95,7 @@ namespace BunnyLand.DesktopGL.Systems
                     DrawCollisionBoundsAndInfo(entity, transform);
                     DrawGravityPull(entity, transform);
 
-                    playerMapper.TryGet(entity).IfSome(player => {
+                    inputMapper.TryGet(entity).IfSome(player => {
                         spriteBatch.DrawLine(transform.Position,
                             transform.Position + player.DirectionalInputs.AimDirection * 100, Color.White);
                     });
@@ -120,11 +123,11 @@ namespace BunnyLand.DesktopGL.Systems
             var transform = transformMapper.Get(entity);
 
             playerMapper.TryGet(entity).IfSome(player => {
-                sprite.Color = player.PlayerIndex switch {
-                    PlayerIndex.One => new Color(128, 128, 255),
-                    PlayerIndex.Two => new Color(255, 128, 128),
-                    PlayerIndex.Three => Color.Yellow,
-                    PlayerIndex.Four => Color.Green,
+                sprite.Color = player.PlayerNumber switch {
+                    1 => new Color(128, 128, 255),
+                    2 => new Color(255, 128, 128),
+                    3 => Color.Yellow,
+                    4 => Color.Green,
                     _ => Color.White
                 };
                 healthMapper.TryGet(entity).IfSome(health => { transform.Scale = Vector2.One * health.CurrentHealth / health.MaxHealth; });

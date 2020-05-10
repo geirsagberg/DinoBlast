@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using BunnyLand.DesktopGL.Components;
 using BunnyLand.DesktopGL.Extensions;
+using BunnyLand.DesktopGL.Models;
 using LanguageExt;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
@@ -11,11 +12,13 @@ using MonoGame.Extended.Entities;
 using MonoGame.Extended.Entities.Systems;
 using MonoGame.Extended.Input.InputListeners;
 using KeyState = BunnyLand.DesktopGL.Enums.KeyState;
+using PlayerState = BunnyLand.DesktopGL.Components.PlayerState;
 
 namespace BunnyLand.DesktopGL.Systems
 {
     public class InputSystem : EntityProcessingSystem
     {
+        private const float ThumbStickDeadZone = 0.1f;
         private readonly IButtonMap buttonMap;
 
         // TODO: Can it just be a tuple of vector vector?
@@ -28,22 +31,21 @@ namespace BunnyLand.DesktopGL.Systems
         private readonly IDictionary<PlayerIndex, GamePadListener> gamePadListeners;
         private readonly KeyboardListener keyboardListener;
         private readonly MouseListener mouseListener;
-        private readonly IDictionary<PlayerIndex, int> playerEntities = new Dictionary<PlayerIndex, int>();
-        private readonly IDictionary<PlayerIndex, Player> players = new Dictionary<PlayerIndex, Player>();
+        private readonly IDictionary<PlayerIndex, int> playerEntitiesByIndex = new Dictionary<PlayerIndex, int>();
 
         private readonly Dictionary<PlayerIndex, System.Collections.Generic.HashSet<PlayerKey>> pressedKeys = Enum
             .GetValues(typeof(PlayerIndex))
             .Cast<PlayerIndex>().ToDictionary(i => i, _ => new System.Collections.Generic.HashSet<PlayerKey>());
 
-        private ComponentMapper<Player> playerMapper;
+        private ComponentMapper<PlayerInput> inputMapper;
 
-        private ComponentMapper<Transform2> transformMapper;
-        // private ComponentMapper<Accelerator> acceleratorMapper;
+        private ComponentMapper<PlayerState> playerMapper = null!;
+        private ComponentMapper<Transform2> transformMapper = null!;
 
         public InputSystem(MouseListener mouseListener, KeyboardListener keyboardListener,
             IEnumerable<GamePadListener> gamePadListeners, IButtonMap buttonMap
         ) : base(
-            Aspect.All(typeof(Player)))
+            Aspect.All(typeof(PlayerState), typeof(PlayerInput)))
         {
             this.mouseListener = mouseListener;
             this.keyboardListener = keyboardListener;
@@ -75,7 +77,7 @@ namespace BunnyLand.DesktopGL.Systems
 
         private void OnMouseMoved(object? sender, MouseEventArgs e)
         {
-            playerEntities.TryGetValue(PlayerIndex.One).IfSome(entityId => transformMapper.TryGet(entityId).IfSome(
+            playerEntitiesByIndex.TryGetValue(PlayerIndex.One).IfSome(entityId => transformMapper.TryGet(entityId).IfSome(
                 movable => { HandleAimInput(PlayerIndex.One, e.Position.ToVector2() - movable.Position); }));
         }
 
@@ -122,18 +124,16 @@ namespace BunnyLand.DesktopGL.Systems
 
         private void HandleAccelerationInput(PlayerIndex index, Vector2 acceleration)
         {
-            players.TryGetValue(index)
-                .IfSome(player => player.DirectionalInputs.AccelerationDirection = acceleration);
+            playerEntitiesByIndex.TryGetValue(index)
+                .IfSome(player => GetEntity(player).Get<PlayerInput>().DirectionalInputs.AccelerationDirection = acceleration);
         }
 
         private void HandleAimInput(PlayerIndex index, Vector2 aimVector)
         {
-            players.TryGetValue(index)
-                .IfSome(player => {
-                    if (aimVector.Length() > 0.1) {
-                        player.DirectionalInputs.AimDirection = aimVector.NormalizedOrZero();
-                    }
-                });
+            if (aimVector.Length() > ThumbStickDeadZone) {
+                playerEntitiesByIndex.TryGetValue(index)
+                    .IfSome(player => GetEntity(player).Get<PlayerInput>().DirectionalInputs.AimDirection = aimVector.NormalizedOrZero());
+            }
         }
 
         private void HandlePlayerKeyInput(PlayerIndex index, PlayerKey key, bool released = false)
@@ -152,33 +152,29 @@ namespace BunnyLand.DesktopGL.Systems
 
         public override void Process(GameTime gameTime, int entityId)
         {
-            var player = playerMapper.Get(entityId);
-            // var accelerator = acceleratorMapper.Get(entityId);
+            var state = playerMapper.Get(entityId);
 
-            var playerPressedKeys = pressedKeys[player.PlayerIndex];
+            state.LocalPlayerIndex.IfSome(playerIndex => {
+                var input = inputMapper.Get(entityId);
+                var playerPressedKeys = pressedKeys[playerIndex];
 
-            player.PlayerKeys = UpdatePlayerKeys(player.PlayerKeys, playerPressedKeys);
+                input.PlayerKeys = UpdatePlayerKeys(input.PlayerKeys, playerPressedKeys);
 
-            if (player.PlayerKeys[PlayerKey.ToggleBrake].HasFlag(KeyState.JustPressed)) {
-                player.IsBraking = !player.IsBraking;
-            }
+                if (input.PlayerKeys[PlayerKey.ToggleBrake].JustPressed) {
+                    state.IsBraking = !state.IsBraking;
+                }
+            });
         }
 
         private static Dictionary<PlayerKey, KeyState> UpdatePlayerKeys(
             Dictionary<PlayerKey, KeyState> currentPlayerKeys,
-            System.Collections.Generic.HashSet<PlayerKey> pressedKeys)
+            ICollection<PlayerKey> pressedKeys)
         {
             return currentPlayerKeys.ToDictionary(kvp => kvp.Key,
-                kvp =>
-                    (pressedKeys.Contains(kvp.Key)
-                        ? KeyState.Pressed
-                        : KeyState.None)
-                    | (pressedKeys.Contains(kvp.Key) != kvp.Value.HasFlag(KeyState.Pressed)
-                        ? KeyState.Changed
-                        : KeyState.None));
+                kvp => new KeyState(pressedKeys.Contains(kvp.Key), pressedKeys.Contains(kvp.Key) != kvp.Value.Pressed));
         }
 
-        private Vector2 KeysToDirectionalInput(ICollection<PlayerKey> keys)
+        private static Vector2 KeysToDirectionalInput(ICollection<PlayerKey> keys)
         {
             var attemptedAcceleration = new Vector2(
                     (keys.Contains(PlayerKey.Left) ? -1 : 0)
@@ -204,17 +200,17 @@ namespace BunnyLand.DesktopGL.Systems
 
         public override void Initialize(IComponentMapperService mapperService)
         {
-            playerMapper = mapperService.GetMapper<Player>();
+            playerMapper = mapperService.GetMapper<PlayerState>();
             transformMapper = mapperService.GetMapper<Transform2>();
+            inputMapper = mapperService.GetMapper<PlayerInput>();
             // acceleratorMapper = mapperService.GetMapper<Accelerator>();
         }
 
         protected override void OnEntityAdded(int entityId)
         {
-            playerMapper.TryGet(entityId).IfSome(player => {
-                players[player.PlayerIndex] = player;
-                playerEntities[player.PlayerIndex] = entityId;
-            });
+            playerMapper.TryGet(entityId).IfSome(player => player.LocalPlayerIndex.IfSome(playerIndex =>
+                playerEntitiesByIndex[playerIndex] = entityId
+            ));
         }
     }
 }

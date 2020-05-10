@@ -21,8 +21,8 @@ namespace BunnyLand.Tests
             var entityFactory = new EntityFactory();
 
 
-            entityFactory.CreatePlayer(entityManager.Create(), new Vector2(200, 400), PlayerIndex.One);
-            entityFactory.CreatePlayer(entityManager.Create(), new Vector2(300, 400), PlayerIndex.Two);
+            entityFactory.CreatePlayer(entityManager.Create(), new Vector2(200, 400), 1, PlayerIndex.One);
+            entityFactory.CreatePlayer(entityManager.Create(), new Vector2(300, 400), 2, PlayerIndex.Two);
 
             var serializableMapper = componentManager.GetMapper<Serializable>();
             var transformMapper = componentManager.GetMapper<Transform2>();

@@ -26,7 +26,7 @@ namespace BunnyLand.DesktopGL
 
         internal GraphicsDeviceManager Graphics { get; }
 
-        internal new IServiceProvider Services { get; set; }
+        internal new IServiceProvider Services { get; set; } = null!;
 
         public BunnyGame(GameSettings gameSettings)
         {
