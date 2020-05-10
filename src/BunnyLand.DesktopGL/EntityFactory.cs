@@ -1,9 +1,11 @@
 using System;
 using BunnyLand.DesktopGL.Components;
+using BunnyLand.DesktopGL.Models;
 using LanguageExt;
 using Microsoft.Xna.Framework;
 using MonoGame.Extended;
 using MonoGame.Extended.Entities;
+using Rectangle = BunnyLand.DesktopGL.Models.Rectangle;
 
 namespace BunnyLand.DesktopGL
 {
@@ -18,9 +20,9 @@ namespace BunnyLand.DesktopGL
             var sprite = new SpriteInfo(SpriteType.Bunny, new Size(35, 50));
             entity.Attach(sprite);
 
-            entity.Attach(new CollisionBody(new CircleF(Point2.Zero, 15), position, ColliderTypes.Player,
+            entity.Attach(new CollisionBody(new Circle(15f), position, ColliderTypes.Player,
                 ColliderTypes.Player | ColliderTypes.Projectile | ColliderTypes.Static));
-            entity.Attach(new PlayerState(playerIndex) { PeerId = peerId, PlayerNumber = playerNumber});
+            entity.Attach(new PlayerState(playerIndex) { PeerId = peerId, PlayerNumber = playerNumber });
             entity.Attach(new PlayerInput());
             entity.Attach(new Movable());
             entity.Attach(new Health(100));
@@ -44,7 +46,7 @@ namespace BunnyLand.DesktopGL
             var sprite = new SpriteInfo(SpriteType.Planet1, new Size(planetSize, planetSize));
             entity.Attach(sprite);
 
-            entity.Attach(new CollisionBody(new CircleF(Point2.Zero, planetSize * scale / 2f), position,
+            entity.Attach(new CollisionBody(new Circle(planetSize * scale / 2f), position,
                 ColliderTypes.Static, ColliderTypes.Player | ColliderTypes.Projectile));
             entity.Attach(new GravityPoint(transform, mass));
             return entity;
@@ -60,7 +62,7 @@ namespace BunnyLand.DesktopGL
         {
             var transform = new Transform2(rectangleF.Position);
             entity.Attach(transform);
-            entity.Attach(new CollisionBody(rectangleF, rectangleF.Position, ColliderTypes.Static,
+            entity.Attach(new CollisionBody(new Rectangle(rectangleF.Width, rectangleF.Height), rectangleF.Position, ColliderTypes.Static,
                 ColliderTypes.Player | ColliderTypes.Projectile));
             entity.Attach(new SolidColor(Color.LightCoral, rectangleF));
             return entity;
@@ -78,7 +80,7 @@ namespace BunnyLand.DesktopGL
                 WrapAround = false
             };
             entity.Attach(movable);
-            var collisionBody = new CollisionBody(new CircleF(Point2.Zero, 1), position,
+            var collisionBody = new CollisionBody(new Circle(1), position,
                 ColliderTypes.Projectile, ColliderTypes.Player | ColliderTypes.Static);
             entity.Attach(collisionBody);
 

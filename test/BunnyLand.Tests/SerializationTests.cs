@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System.Collections.Generic;
+using System.Linq;
 using BunnyLand.DesktopGL;
 using BunnyLand.DesktopGL.Components;
 using BunnyLand.DesktopGL.Serialization;
@@ -13,6 +14,21 @@ namespace BunnyLand.Tests
 {
     public class SerializationTests
     {
+        [Fact]
+        public void Can_serialize_and_deserialize_components()
+        {
+            var components = new SerializableGenericComponents(new Dictionary<int, List<object>> {
+                {1, new List<object> {
+                    new PlayerInput(),
+                    new SpriteInfo(SpriteType.Anki, new Size())
+                }},
+                {2, new List<object> {
+                    new CollisionBody()
+                }}
+            });
+        }
+
+
         [Fact]
         public void Can_serialize_and_deserialize_entities()
         {

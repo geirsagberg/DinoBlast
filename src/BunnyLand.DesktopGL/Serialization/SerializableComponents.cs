@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Runtime.Serialization;
 using BunnyLand.DesktopGL.Components;
 using MessagePack;
 
@@ -23,5 +24,17 @@ namespace BunnyLand.DesktopGL.Serialization
             Movables = movables;
             SpriteInfos = spriteInfos;
         }
+    }
+
+    [MessagePackObject()]
+    public class SerializableGenericComponents
+    {
+        public SerializableGenericComponents(Dictionary<int, List<object>> componentsByEntityId)
+        {
+            ComponentsByEntityId = componentsByEntityId;
+        }
+
+        [Key(0)]
+        public Dictionary<int, List<object>> ComponentsByEntityId { get; }
     }
 }

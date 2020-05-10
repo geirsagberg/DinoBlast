@@ -1,37 +1,47 @@
 using System;
 using System.Collections.Generic;
 using BunnyLand.DesktopGL.Extensions;
+using BunnyLand.DesktopGL.Models;
 using BunnyLand.DesktopGL.Utils;
+using MessagePack;
 using Microsoft.Xna.Framework;
 using MonoGame.Extended;
+using Rectangle = BunnyLand.DesktopGL.Models.Rectangle;
 
 namespace BunnyLand.DesktopGL.Components
 {
+    [MessagePackObject]
     public class CollisionBody
     {
-        private readonly IShapeF shape;
+        [IgnoreMember]
+        public IShapeF Bounds => Shape switch {
+            Circle circle => new CircleF(Position, circle.Radius),
+            Rectangle rectangle => new RectangleF(Position, new Size2(rectangle.Width, rectangle.Height)),
+            _ => throw new ArgumentOutOfRangeException()
+        };
 
-        public IShapeF Bounds {
-            get {
-                shape.Position = Position;
-                return shape;
-            }
+        [Key(0)] public SomeShape Shape { get; set; } = new Circle(0);
+
+        [Key(1)] public ColliderTypes ColliderType { get; set; }
+
+        [Key(2)] public ColliderTypes CollidesWith { get; set; }
+
+        [IgnoreMember] public List<(int entityId, Vector2 penetrationVector)> Collisions { get; set; } = new List<(int entityId, Vector2 penetrationVector)>();
+
+        [Key(3)] public Vector2 Position { get; set; }
+
+        [IgnoreMember] public Vector2 OldPosition { get; set; }
+
+        [IgnoreMember] public RectangleF CollisionBounds { get; set; }
+
+        public CollisionBody()
+        {
         }
 
-        public ColliderTypes ColliderType { get; }
-        public ColliderTypes CollidesWith { get; }
-
-        public List<(int entityId, Vector2 penetrationVector)> Collisions { get; set; } = new List<(int entityId, Vector2 penetrationVector)>();
-
-        public Vector2 Position { get; set; }
-        public Vector2 OldPosition { get; set; }
-
-        public RectangleF CollisionBounds { get; set; }
-
-        public CollisionBody(IShapeF shape, Vector2 position, ColliderTypes colliderType, ColliderTypes collidesWith)
+        public CollisionBody(SomeShape shape, Vector2 position, ColliderTypes colliderType, ColliderTypes collidesWith)
         {
-            this.shape = shape;
             OldPosition = Position = position;
+            Shape = shape;
             ColliderType = colliderType;
             CollidesWith = collidesWith;
         }
