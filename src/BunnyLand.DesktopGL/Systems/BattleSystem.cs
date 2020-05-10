@@ -267,22 +267,24 @@ namespace BunnyLand.DesktopGL.Systems
         {
             if (sharedContext.IsClient) return;
 
-            bodyMapper.TryGet(entityId).IfSome(body => {
-                var entity = GetEntity(entityId);
-
+            var entity = GetEntity(entityId);
+            var body = entity.Get<CollisionBody>();
+            if (body != null) {
                 foreach (var (other, _) in body.Collisions) {
                     var otherEntity = GetEntity(other);
-                    entity.TryGet<Damaging>().IfSome(damaging => otherEntity.TryGet<Health>().IfSome(health => {
+                    var damaging = entity.Get<Damaging>();
+                    var health = otherEntity.Get<Health>();
+                    if (damaging != null && health != null) {
                         health.CurrentHealth -= damaging.Damage;
                         if (health.CurrentHealth < 0) {
                             Kill(otherEntity);
                         }
-                    }));
+                    }
                 }
-            });
+            }
         }
 
-        private void Kill(Entity otherEntity)
+        private static void Kill(Entity otherEntity)
         {
             otherEntity.TryGet<PlayerState>().IfSome(player => {
                 otherEntity.Attach(new Health(100));
