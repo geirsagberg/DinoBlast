@@ -8,7 +8,7 @@ using MessagePack;
 namespace BunnyLand.DesktopGL.Components
 {
     [MessagePackObject]
-    public class PlayerInput
+    public class PlayerInput : ISerializableComponent
     {
         [Key(0)]
         public Dictionary<PlayerKey, KeyState> PlayerKeys { get; set; } =

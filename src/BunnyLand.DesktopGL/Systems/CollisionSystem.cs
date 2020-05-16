@@ -92,7 +92,7 @@ namespace BunnyLand.DesktopGL.Systems
             bodyMapper.TryGet(entityId).IfSome(body => {
                 movableMapper.TryGet(entityId).IfSome(movable => {
                     transformMapper.TryGet(entityId).IfSome(transform => {
-                        var bounds = body.GetBounds(transform.Position);
+                        var bounds = body.Bounds;
                         var collisionBounds = bounds switch {
                             CircleF circle => FindCollisionBounds(movable, circle.ToRectangleF(), elapsedTicks),
                             RectangleF rectangle => FindCollisionBounds(movable, rectangle, elapsedTicks),
@@ -105,7 +105,7 @@ namespace BunnyLand.DesktopGL.Systems
                             var otherEntityId = kvp.Key;
                             var otherBody = kvp.Value;
                             var otherTransform = transformMapper.Get(otherEntityId);
-                            var otherBounds = otherBody.GetBounds(otherTransform.Position);
+                            var otherBounds = otherBody.Bounds;
                             return otherBody != body && otherBody.CollidesWith.HasFlag(body.ColliderType)
                                 // && !checkedPairs.Contains((kvp.Key, entityId))
                                 && otherBounds.Intersects(collisionBounds);

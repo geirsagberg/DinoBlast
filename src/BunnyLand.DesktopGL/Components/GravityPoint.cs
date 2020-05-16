@@ -1,21 +1,14 @@
 ﻿using MessagePack;
-using Microsoft.Xna.Framework;
-using MonoGame.Extended;
 
 namespace BunnyLand.DesktopGL.Components
 {
     [MessagePackObject]
-    public class GravityPoint
+    public class GravityPoint : ISerializableComponent
     {
-        [Key(0)] private readonly Transform2 transform;
+        [Key(0)] public float GravityMass { get; }
 
-        [Key(1)] public Vector2 Position => transform.Position;
-
-        [Key(2)] public float GravityMass { get; set; }
-
-        public GravityPoint(Transform2 transform, float gravityMass)
+        public GravityPoint(float gravityMass)
         {
-            this.transform = transform;
             GravityMass = gravityMass;
         }
     }

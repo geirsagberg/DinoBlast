@@ -48,7 +48,7 @@ namespace BunnyLand.DesktopGL
 
             entity.Attach(new CollisionBody(new Circle(planetSize * scale / 2f), position,
                 ColliderTypes.Static, ColliderTypes.Player | ColliderTypes.Projectile));
-            entity.Attach(new GravityPoint(transform, mass));
+            entity.Attach(new GravityPoint(mass));
             return entity;
         }
 

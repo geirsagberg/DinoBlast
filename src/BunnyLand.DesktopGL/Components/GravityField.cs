@@ -3,7 +3,7 @@
 namespace BunnyLand.DesktopGL.Components
 {
     [MessagePackObject]
-    public class GravityField
+    public class GravityField : ISerializableComponent
     {
         [Key(0)]
         public float Angle { get; set; }

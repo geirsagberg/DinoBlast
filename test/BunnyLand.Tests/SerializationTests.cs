@@ -5,6 +5,7 @@ using BunnyLand.DesktopGL.Components;
 using BunnyLand.DesktopGL.Serialization;
 using FluentAssertions;
 using LiteNetLib.Utils;
+using MessagePack;
 using Microsoft.Xna.Framework;
 using MonoGame.Extended;
 using MonoGame.Extended.Entities;
@@ -17,15 +18,23 @@ namespace BunnyLand.Tests
         [Fact]
         public void Can_serialize_and_deserialize_components()
         {
-            var components = new SerializableGenericComponents(new Dictionary<int, List<object>> {
-                {1, new List<object> {
-                    new PlayerInput(),
-                    new SpriteInfo(SpriteType.Anki, new Size())
-                }},
-                {2, new List<object> {
-                    new CollisionBody()
-                }}
+            var components = new SerializableGenericComponents(new Dictionary<int, List<ISerializableComponent>> {
+                {
+                    1, new List<ISerializableComponent> {
+                        new PlayerInput(),
+                        new SpriteInfo(SpriteType.Anki, new Size())
+                    }
+                }, {
+                    2, new List<ISerializableComponent> {
+                        new CollisionBody()
+                    }
+                }
             });
+
+            var bytes = MessagePackSerializer.Serialize(components);
+            var deserialized = MessagePackSerializer.Deserialize<SerializableGenericComponents>(bytes);
+
+            deserialized.Should().BeEquivalentTo(components);
         }
 
 
@@ -36,28 +45,21 @@ namespace BunnyLand.Tests
             var entityManager = new EntityManager(componentManager);
             var entityFactory = new EntityFactory();
 
-
             entityFactory.CreatePlayer(entityManager.Create(), new Vector2(200, 400), 1, PlayerIndex.One);
             entityFactory.CreatePlayer(entityManager.Create(), new Vector2(300, 400), 2, PlayerIndex.Two);
 
-            var serializableMapper = componentManager.GetMapper<Serializable>();
-            var transformMapper = componentManager.GetMapper<Transform2>();
-            var movableMapper = componentManager.GetMapper<Movable>();
-            var spriteInfoMapper = componentManager.GetMapper<SpriteInfo>();
-
-            var state = FullGameState.CreateFullGameState(new Serializer(), entityManager.Entities, serializableMapper, transformMapper, movableMapper,
-                spriteInfoMapper);
+            var state = FullGameState.CreateFullGameState(new Serializer(), componentManager, entityManager.Entities);
 
             var writer = new NetDataWriter();
 
-            state.Serialize(writer);
+            writer.Put(state);
             var bytes = writer.CopyData();
             var reader = new NetDataReader(bytes);
             var target = new FullGameState(new Serializer());
             target.Deserialize(reader);
 
-
-            target.Components.Should().BeEquivalentTo(state.Components);
+            target.Components.Should()
+                .BeEquivalentTo(state.Components, o => o.Excluding(c => c.SelectedMemberPath.EndsWith(nameof(CollisionBody.OldPosition))));
         }
 
         [Fact]

@@ -11,7 +11,7 @@ using Rectangle = BunnyLand.DesktopGL.Models.Rectangle;
 namespace BunnyLand.DesktopGL.Components
 {
     [MessagePackObject]
-    public class CollisionBody
+    public class CollisionBody : ISerializableComponent
     {
         [IgnoreMember]
         public IShapeF Bounds => Shape switch {
@@ -66,18 +66,6 @@ namespace BunnyLand.DesktopGL.Components
                     otherVelocity),
                 _ => throw new NotImplementedException()
             };
-        }
-
-        public static IShapeF GetBounds(CollisionBody collisionBody, Vector2 position)
-        {
-            collisionBody.Bounds.Position = position;
-            return collisionBody.Bounds;
-        }
-
-        public IShapeF GetBounds(Vector2 position)
-        {
-            Bounds.Position = position;
-            return Bounds;
         }
     }
 

@@ -189,13 +189,24 @@ namespace BunnyLand.DesktopGL.Systems
                 entity.Attach(transform);
             }
 
-            if (gameStateComponents.Movables.TryGetValue(serializableId, out var movable)) {
+            if (gameStateComponents.Movables.TryGetValue(serializableId, out var movable))
                 entity.Attach(movable);
-            }
-
-            if (gameStateComponents.SpriteInfos.TryGetValue(serializableId, out var spriteInfo)) {
+            if (gameStateComponents.SpriteInfos.TryGetValue(serializableId, out var spriteInfo))
                 entity.Attach(spriteInfo);
-            }
+            if (gameStateComponents.Damagings.TryGetValue(serializableId, out var damaging))
+                entity.Attach(damaging);
+            if (gameStateComponents.Healths.TryGetValue(serializableId, out var health))
+                entity.Attach(health);
+            if (gameStateComponents.Levels.TryGetValue(serializableId, out var level))
+                entity.Attach(level);
+            if (gameStateComponents.CollisionBodies.TryGetValue(serializableId, out var collisionBody))
+                entity.Attach(collisionBody);
+            if (gameStateComponents.GravityFields.TryGetValue(serializableId, out var gravityField))
+                entity.Attach(gravityField);
+            if (gameStateComponents.GravityPoints.TryGetValue(serializableId, out var gravityPoint))
+                entity.Attach(gravityPoint);
+            if (gameStateComponents.PlayerInputs.TryGetValue(serializableId, out var playerInput))
+                entity.Attach(playerInput);
         }
 
         public void RespawnPlayer(byte playerNumber)

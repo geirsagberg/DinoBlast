@@ -1,4 +1,3 @@
-using BunnyLand.DesktopGL.Components;
 using BunnyLand.DesktopGL.Utils;
 using FluentAssertions;
 using Microsoft.Xna.Framework;
@@ -19,7 +18,7 @@ namespace BunnyLand.Tests
 
             var penetration = CollisionHelper.CalculatePenetrationVector(firstCircle, secondCircle, firstVelocity,
                 secondVelocity);
-            var relativeVelocity = secondVelocity - firstVelocity;
+            var relativeVelocity = firstVelocity - secondVelocity;
             var otherPenetration = CollisionHelper.CalculatePenetrationVector(firstCircle, secondCircle,
                 relativeVelocity, Vector2.Zero);
 

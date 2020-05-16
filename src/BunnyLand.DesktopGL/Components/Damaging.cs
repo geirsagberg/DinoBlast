@@ -3,7 +3,7 @@
 namespace BunnyLand.DesktopGL.Components
 {
     [MessagePackObject]
-    public class Damaging
+    public class Damaging : ISerializableComponent
     {
         [Key(0)] public float Damage { get; }
 

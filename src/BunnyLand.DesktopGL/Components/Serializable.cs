@@ -3,7 +3,7 @@
 namespace BunnyLand.DesktopGL.Components
 {
     [MessagePackObject]
-    public class Serializable
+    public class Serializable : ISerializableComponent
     {
         [Key(0)]
         public int Id { get; }

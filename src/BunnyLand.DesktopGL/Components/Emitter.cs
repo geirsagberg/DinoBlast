@@ -1,5 +1,4 @@
 ﻿using System;
-using MonoGame.Extended.Entities;
 
 namespace BunnyLand.DesktopGL.Components
 {
@@ -10,13 +9,10 @@ namespace BunnyLand.DesktopGL.Components
         public TimeSpan TimeSinceLastEmit { get; set; }
 
         public EmitterType EmitterType { get; set; }
-        // public Emit? Emit { get; set; }
     }
 
     public enum EmitterType
     {
         Bullet
     }
-
-    // public delegate void Emit(Entity entity);
 }

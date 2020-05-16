@@ -1,11 +1,11 @@
-﻿using System.Linq;
+﻿using System.Collections.Generic;
+using System.Linq;
 using BunnyLand.DesktopGL.Components;
 using BunnyLand.DesktopGL.Enums;
 using BunnyLand.DesktopGL.Extensions;
 using BunnyLand.DesktopGL.Models;
 using Microsoft.Xna.Framework;
 using MonoGame.Extended;
-using MonoGame.Extended.Collections;
 using MonoGame.Extended.Entities;
 using MonoGame.Extended.Entities.Systems;
 
@@ -13,14 +13,14 @@ namespace BunnyLand.DesktopGL.Systems
 {
     public class GravitySystem : EntityProcessingSystem
     {
-        private readonly Bag<GravityPoint> points = new Bag<GravityPoint>();
-        private readonly Variables variables;
+        private readonly HashSet<int> gravityPointEntities = new HashSet<int>();
         private readonly SharedContext sharedContext;
-        private ComponentMapper<GravityPoint> gravityPointMapper;
-        private ComponentMapper<Movable> movableMapper;
-        private ComponentMapper<Transform2> transformMapper;
+        private readonly Variables variables;
+        private ComponentMapper<GravityPoint> gravityPointMapper = null!;
+        private ComponentMapper<Movable> movableMapper = null!;
+        private ComponentMapper<Transform2> transformMapper = null!;
 
-        public GravitySystem(Variables variables, SharedContext sharedContext) : base(Aspect.All(typeof(Movable)))
+        public GravitySystem(Variables variables, SharedContext sharedContext) : base(Aspect.All(typeof(Movable), typeof(Transform2)))
         {
             this.variables = variables;
             this.sharedContext = sharedContext;
@@ -35,12 +35,13 @@ namespace BunnyLand.DesktopGL.Systems
 
         protected override void OnEntityAdded(int entityId)
         {
-            gravityPointMapper.TryGet(entityId).IfSome(points.Add);
+            if (gravityPointMapper.Has(entityId) && transformMapper.Has(entityId))
+                gravityPointEntities.Add(entityId);
         }
 
         protected override void OnEntityRemoved(int entityId)
         {
-            gravityPointMapper.TryGet(entityId).IfSome(point => points.Remove(point));
+            gravityPointEntities.Remove(entityId);
         }
 
         public override void Process(GameTime gameTime, int entityId)
@@ -51,13 +52,16 @@ namespace BunnyLand.DesktopGL.Systems
             var transform = transformMapper.Get(entityId);
 
             // Add up all the gravitational forces acting on the movable
-            var resultingGravityPull = points.Aggregate(Vector2.Zero,
-                (current, point) => current + CalculateGravityPull(point, movable, transform));
+            var resultingGravityPull = gravityPointEntities.Aggregate(Vector2.Zero,
+                (current, point) => current + CalculateGravityPull(point, transform));
             movable.GravityPull = resultingGravityPull * movable.GravityMultiplier * variables.Global[GlobalVariable.GravityMultiplier];
         }
 
-        private static Vector2 CalculateGravityPull(GravityPoint point, Movable movable, Transform2 transform) =>
-            (point.Position - transform.Position).NormalizedOrZero() * point.GravityMass /
-            (point.Position - transform.Position).LengthSquared();
+        private Vector2 CalculateGravityPull(int point, Transform2 transform)
+        {
+            var distance = transformMapper.Get(point).Position - transform.Position;
+            var gravityMass = gravityPointMapper.Get(point).GravityMass;
+            return distance.NormalizedOrZero() * gravityMass / distance.LengthSquared();
+        }
     }
 }

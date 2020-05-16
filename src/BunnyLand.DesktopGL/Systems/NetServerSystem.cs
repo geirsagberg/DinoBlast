@@ -31,6 +31,7 @@ namespace BunnyLand.DesktopGL.Systems
         private ComponentMapper<SpriteInfo> spriteInfoMapper = null!;
         private ComponentMapper<Transform2> transformMapper = null!;
         private readonly MessageHub messageHub;
+        private IComponentMapperService mapperService = null!;
 
         public NetServerSystem(GameSettings gameSettings, MessageHub messageHub, Serializer serializer) : base(Aspect.All(typeof(Serializable)))
         {
@@ -92,7 +93,7 @@ namespace BunnyLand.DesktopGL.Systems
 
             Console.WriteLine("Sending initial world data");
 
-            var state = FullGameState.CreateFullGameState(serializer, ActiveEntities, serializableMapper, transformMapper, movableMapper, spriteInfoMapper);
+            var state = FullGameState.CreateFullGameState(serializer, mapperService, ActiveEntities);
 
             var writer = new NetDataWriter();
             writer.Put((byte) NetMessageType.FullGameState);
@@ -113,25 +114,26 @@ namespace BunnyLand.DesktopGL.Systems
         private void BroadcastUpdate()
         {
             if (netServer.ConnectedPeersCount > 0) {
-                var state = FullGameState.CreateFullGameState(serializer, ActiveEntities, serializableMapper, transformMapper, movableMapper, spriteInfoMapper);
-
-                var writer = new NetDataWriter();
-                writer.Put((byte) NetMessageType.FullGameStateUpdate);
-                writer.Put(state);
-
-                netServer.SendToAll(writer, DeliveryMethod.ReliableSequenced);
-
-                broadcastedBytes[broadcastedBytesCounter] = writer.Length;
-                broadcastedBytesCounter += 1;
-                broadcastedBytesCounter %= LogBroadcastedBytesEveryNthFrame;
-                if (broadcastedBytesCounter == 0) {
-                    Console.WriteLine("Broadcasted {0:N} bytes last {1} frames", broadcastedBytes.Sum(), LogBroadcastedBytesEveryNthFrame);
-                }
+                // var state = FullGameState.CreateFullGameState(serializer, ActiveEntities, serializableMapper, transformMapper, movableMapper, spriteInfoMapper);
+                //
+                // var writer = new NetDataWriter();
+                // writer.Put((byte) NetMessageType.FullGameStateUpdate);
+                // writer.Put(state);
+                //
+                // netServer.SendToAll(writer, DeliveryMethod.ReliableSequenced);
+                //
+                // broadcastedBytes[broadcastedBytesCounter] = writer.Length;
+                // broadcastedBytesCounter += 1;
+                // broadcastedBytesCounter %= LogBroadcastedBytesEveryNthFrame;
+                // if (broadcastedBytesCounter == 0) {
+                //     Console.WriteLine("Broadcasted {0:N} bytes last {1} frames", broadcastedBytes.Sum(), LogBroadcastedBytesEveryNthFrame);
+                // }
             }
         }
 
         public override void Initialize(IComponentMapperService mapperService)
         {
+            this.mapperService = mapperService;
             serializableMapper = mapperService.GetMapper<Serializable>();
             transformMapper = mapperService.GetMapper<Transform2>();
             movableMapper = mapperService.GetMapper<Movable>();

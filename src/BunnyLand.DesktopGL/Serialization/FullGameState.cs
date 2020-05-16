@@ -1,7 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using BunnyLand.DesktopGL.Components;
-using BunnyLand.DesktopGL.Extensions;
 using LiteNetLib.Utils;
 using MonoGame.Extended;
 using MonoGame.Extended.Entities;
@@ -29,27 +28,59 @@ namespace BunnyLand.DesktopGL.Serialization
             Components = serializer.Deserialize<SerializableComponents>(reader.GetRemainingBytes());
         }
 
-        public static FullGameState CreateFullGameState(Serializer serializer, IEnumerable<int> entities,
-            ComponentMapper<Serializable> serializableMapper, ComponentMapper<Transform2> transformMapper, ComponentMapper<Movable> movableMapper,
-            ComponentMapper<SpriteInfo> spriteInfoMapper)
+        public static FullGameState CreateFullGameState(Serializer serializer, IComponentMapperService componentManager, IEnumerable<int> entities)
         {
-            var serializables = new List<Serializable>();
-            var transforms = new Dictionary<int, Transform2>();
+            var serializableMapper = componentManager.GetMapper<Serializable>();
+            var transformMapper = componentManager.GetMapper<Transform2>();
+            var movableMapper = componentManager.GetMapper<Movable>();
+            var spriteInfoMapper = componentManager.GetMapper<SpriteInfo>();
+            var collisionBodyMapper = componentManager.GetMapper<CollisionBody>();
+            var damagingMapper = componentManager.GetMapper<Damaging>();
+            var gravityFieldMapper = componentManager.GetMapper<GravityField>();
+            var gravityPointMapper = componentManager.GetMapper<GravityPoint>();
+            var healthMapper = componentManager.GetMapper<Health>();
+            var levelMapper = componentManager.GetMapper<Level>();
+            var playerInputMapper = componentManager.GetMapper<PlayerInput>();
+
+            var serializableIds = entities.Select(e => (entityId: e, serializableId: serializableMapper.Get(e).Id)).ToList();
+            var transforms = new Dictionary<int, SerializableTransform>();
             var movables = new Dictionary<int, Movable>();
             var spriteInfos = new Dictionary<int, SpriteInfo>();
+            var collisionBodies = new Dictionary<int, CollisionBody>();
+            var damagings = new Dictionary<int, Damaging>();
+            var gravityFields = new Dictionary<int, GravityField>();
+            var gravityPoints = new Dictionary<int, GravityPoint>();
+            var healths = new Dictionary<int, Health>();
+            var levels = new Dictionary<int, Level>();
+            var playerInputs = new Dictionary<int, PlayerInput>();
 
-            foreach (var entity in entities) {
-                serializables.Add(serializableMapper.Get(entity));
-                transformMapper.TryGet(entity).IfSome(transform => transforms[entity] = transform);
-                movableMapper.TryGet(entity).IfSome(movable => movables[entity] = movable);
-                spriteInfoMapper.TryGet(entity).IfSome(spriteInfo => spriteInfos[entity] = spriteInfo);
+            foreach (var (entityId, serializableId) in serializableIds) {
+                if (transformMapper.Get(entityId) is { } transform2)
+                    transforms[serializableId] = new SerializableTransform
+                        { Position = transform2.Position, Rotation = transform2.Rotation, Scale = transform2.Scale };
+                if (movableMapper.Get(entityId) is {} movable)
+                    movables[serializableId] = movable;
+                if (spriteInfoMapper.Get(entityId) is {} spriteInfo)
+                    spriteInfos[serializableId] = spriteInfo;
+                if (collisionBodyMapper.Get(entityId) is {} collisionBody)
+                    collisionBodies[serializableId] = collisionBody;
+                if (damagingMapper.Get(entityId) is {} damaging)
+                    damagings[serializableId] = damaging;
+                if (gravityFieldMapper.Get(entityId) is {} gravityField)
+                    gravityFields[serializableId] = gravityField;
+                if (gravityPointMapper.Get(entityId) is {} gravityPoint)
+                    gravityPoints[serializableId] = gravityPoint;
+                if (healthMapper.Get(entityId) is {} health)
+                    healths[serializableId] = health;
+                if (levelMapper.Get(entityId) is {} level)
+                    levels[serializableId] = level;
+                if (playerInputMapper.Get(entityId) is {} playerInput)
+                    playerInputs[serializableId] = playerInput;
             }
 
-            var serializableTransforms = transforms.ToDictionary(kvp => kvp.Key,
-                kvp => new SerializableTransform { Position = kvp.Value.Position, Rotation = kvp.Value.Rotation, Scale = kvp.Value.Scale });
-
             return new FullGameState(serializer) {
-                Components = new SerializableComponents(serializables.Select(s => s.Id).ToHashSet(), serializableTransforms, movables, spriteInfos)
+                Components = new SerializableComponents(serializableIds.Select(t => t.serializableId).ToHashSet(), transforms, movables, spriteInfos,
+                    collisionBodies, damagings, gravityFields, gravityPoints, healths, playerInputs, levels)
             };
         }
     }

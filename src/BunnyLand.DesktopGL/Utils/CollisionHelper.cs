@@ -63,14 +63,20 @@ namespace BunnyLand.DesktopGL.Utils
         public static Vector2 CalculatePenetrationVector(CircleF circle, CircleF otherCircle, Vector2 velocity,
             Vector2 otherVelocity)
         {
-            // make other circle static, expand its radius and do a ray cast
-            var relativeVelocity = velocity - otherVelocity;
-            // Reset the circles to their old positions
+            // Reset the circles to their old positions. Structs, so no external mutation.
             circle.Center -= velocity;
             otherCircle.Center -= otherVelocity;
             var oldDistance = circle.Center - otherCircle.Center;
 
             var sumRadius = circle.Radius + otherCircle.Radius;
+
+            if (oldDistance.Dot(oldDistance) <= sumRadius * sumRadius) {
+                // Already overlapping
+                return circle.CalculatePenetrationVector(otherCircle);
+            }
+
+            // make other circle static, expand its radius and do a ray cast
+            var relativeVelocity = velocity - otherVelocity;
             // Find quadratic formula coefficients:
             // u^2 coefficient
             var a = relativeVelocity.Dot(relativeVelocity);
@@ -79,10 +85,6 @@ namespace BunnyLand.DesktopGL.Utils
             // constant
             var c = oldDistance.Dot(oldDistance) - sumRadius * sumRadius;
 
-            if (oldDistance.Dot(oldDistance) <= sumRadius * sumRadius) {
-                // Already overlapping
-                return circle.CalculatePenetrationVector(otherCircle);
-            }
 
             if (SolveQuadraticFormula(a, b, c, out var u0, out var u1) && u0.IsBetween(0, 1) && u1.IsBetween(0,1)) {
                 var maxPenetrationAt = (u0 + u1) / 2;
