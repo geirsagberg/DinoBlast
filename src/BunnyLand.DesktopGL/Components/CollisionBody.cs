@@ -11,7 +11,7 @@ using Rectangle = BunnyLand.DesktopGL.Models.Rectangle;
 namespace BunnyLand.DesktopGL.Components
 {
     [MessagePackObject]
-    public class CollisionBody : ISerializableComponent
+    public class CollisionBody
     {
         [IgnoreMember]
         public IShapeF Bounds => Shape switch {

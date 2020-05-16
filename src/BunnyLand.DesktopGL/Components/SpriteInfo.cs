@@ -4,7 +4,7 @@ using MonoGame.Extended;
 namespace BunnyLand.DesktopGL.Components
 {
     [MessagePackObject]
-    public class SpriteInfo : ISerializableComponent
+    public class SpriteInfo
     {
         [Key(0)]
         public SpriteType SpriteType { get; set; }

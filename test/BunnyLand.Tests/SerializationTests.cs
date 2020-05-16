@@ -16,29 +16,6 @@ namespace BunnyLand.Tests
     public class SerializationTests
     {
         [Fact]
-        public void Can_serialize_and_deserialize_components()
-        {
-            var components = new SerializableGenericComponents(new Dictionary<int, List<ISerializableComponent>> {
-                {
-                    1, new List<ISerializableComponent> {
-                        new PlayerInput(),
-                        new SpriteInfo(SpriteType.Anki, new Size())
-                    }
-                }, {
-                    2, new List<ISerializableComponent> {
-                        new CollisionBody()
-                    }
-                }
-            });
-
-            var bytes = MessagePackSerializer.Serialize(components);
-            var deserialized = MessagePackSerializer.Deserialize<SerializableGenericComponents>(bytes);
-
-            deserialized.Should().BeEquivalentTo(components);
-        }
-
-
-        [Fact]
         public void Can_serialize_and_deserialize_entities()
         {
             var componentManager = new ComponentManager();

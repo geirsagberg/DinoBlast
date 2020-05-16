@@ -3,7 +3,7 @@
 namespace BunnyLand.DesktopGL.Components
 {
     [MessagePackObject]
-    public class Health : ISerializableComponent
+    public class Health
     {
         [Key(0)] public float MaxHealth { get; set; }
 

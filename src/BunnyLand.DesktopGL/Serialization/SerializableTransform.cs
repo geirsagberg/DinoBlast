@@ -4,7 +4,7 @@ using Microsoft.Xna.Framework;
 namespace BunnyLand.DesktopGL.Serialization
 {
     [MessagePackObject]
-    public class SerializableTransform : ISerializableComponent
+    public class SerializableTransform
     {
         [Key(0)] public Vector2 Position { get; set; }
 

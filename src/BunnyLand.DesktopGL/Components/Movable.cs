@@ -4,7 +4,7 @@ using Microsoft.Xna.Framework;
 namespace BunnyLand.DesktopGL.Components
 {
     [MessagePackObject]
-    public class Movable : ISerializableComponent
+    public class Movable
     {
         [Key(0)] public Vector2 Velocity { get; set; }
 

@@ -4,7 +4,7 @@ using MonoGame.Extended;
 namespace BunnyLand.DesktopGL.Components
 {
     [MessagePackObject]
-    public class Level : ISerializableComponent
+    public class Level
     {
         [Key(0)]
         public RectangleF Bounds { get; }
