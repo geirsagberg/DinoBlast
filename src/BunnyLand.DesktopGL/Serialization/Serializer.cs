@@ -8,7 +8,7 @@ namespace BunnyLand.DesktopGL.Serialization
 
         public Serializer()
         {
-            options = MessagePackSerializerOptions.Standard;
+            options = MessagePackSerializerOptions.Standard.WithCompression(MessagePackCompression.Lz4BlockArray);
         }
 
         public byte[] Serialize<T>(T value) => MessagePackSerializer.Serialize(value, options);

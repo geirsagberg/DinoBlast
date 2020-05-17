@@ -1,10 +1,11 @@
-﻿using System.Linq;
+﻿using System;
+using System.Collections.Generic;
 using BunnyLand.DesktopGL;
 using BunnyLand.DesktopGL.Components;
+using BunnyLand.DesktopGL.Messages;
 using BunnyLand.DesktopGL.Serialization;
 using FluentAssertions;
 using LiteNetLib.Utils;
-using MessagePack;
 using Microsoft.Xna.Framework;
 using MonoGame.Extended.Entities;
 using Xunit;
@@ -19,32 +20,42 @@ namespace BunnyLand.Tests
             var componentManager = new ComponentManager();
             var entityManager = new EntityManager(componentManager);
             var entityFactory = new EntityFactory();
+            var serializer = new Serializer();
 
             entityFactory.CreatePlayer(entityManager.Create(), new Vector2(200, 400), 1, PlayerIndex.One);
             entityFactory.CreatePlayer(entityManager.Create(), new Vector2(300, 400), 2, PlayerIndex.Two);
 
-            var state = FullGameState.CreateFullGameState(componentManager, entityManager.Entities, 1);
+            var state = FullGameState.CreateFullGameState(componentManager, entityManager.Entities, 1, DateTime.UtcNow, DateTime.UtcNow.AddSeconds(1));
 
             var writer = new NetDataWriter();
 
-            writer.Put(MessagePackSerializer.Serialize(state));
+            writer.Put(serializer.Serialize(state));
             var bytes = writer.CopyData();
             var reader = new NetDataReader(bytes);
-            var target = MessagePackSerializer.Deserialize<FullGameState>(reader.GetRemainingBytes());
+            var target = serializer.Deserialize<FullGameState>(reader.GetRemainingBytes());
 
             target.Components.Should()
-                .BeEquivalentTo(state.Components, o => o.Excluding(c => c.SelectedMemberPath.EndsWith(nameof(CollisionBody.OldPosition))));
+                .BeEquivalentTo(state.Components, o => o
+                    .Excluding(c => c.SelectedMemberPath.EndsWith(nameof(CollisionBody.OldPosition))
+                        || c.SelectedMemberPath.EndsWith(nameof(PlayerState.LocalPlayerIndex))
+                        || c.SelectedMemberPath.EndsWith(nameof(PlayerState.IsLocal))
+                    )
+                );
         }
 
         [Fact]
-        public void Serialized_HashSet_is_smaller_than_dictionary()
+        public void Can_serialize_and_deserialize_InputsUpdatedMessage()
         {
-            var range = Enumerable.Range(0, 1000).ToList();
-            var hashSet = range.ToHashSet();
-            var dictionary = range.ToDictionary(r => r);
+            var msg = new InputsUpdatedMessage(new Dictionary<byte, PlayerInput> {
+                { 1, new PlayerInput() }
+            });
             var serializer = new Serializer();
 
-            serializer.Serialize(hashSet).Length.Should().BeLessThan(serializer.Serialize(dictionary).Length);
+            var bytes = serializer.Serialize(msg);
+            var deserialized = serializer.Deserialize<InputsUpdatedMessage>(bytes);
+
+
+            deserialized.Should().BeEquivalentTo(msg);
         }
     }
 }

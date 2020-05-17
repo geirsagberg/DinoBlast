@@ -14,7 +14,7 @@ using MonoGame.Extended.Entities.Systems;
 
 namespace BunnyLand.DesktopGL.Systems
 {
-    public class CollisionSystem : EntityProcessingSystem
+    public class CollisionSystem : EntityProcessingSystem, IPausable
     {
         private const int LogCollisionDetectionEveryNthFrame = 60;
 
@@ -85,7 +85,7 @@ namespace BunnyLand.DesktopGL.Systems
 
         public override void Process(GameTime gameTime, int entityId)
         {
-            if (sharedContext.IsClient) return;
+
 
             var elapsedTicks = gameTime.GetElapsedTicks(variables);
 

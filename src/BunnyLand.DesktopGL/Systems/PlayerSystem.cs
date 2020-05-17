@@ -8,7 +8,7 @@ using MonoGame.Extended.Entities.Systems;
 
 namespace BunnyLand.DesktopGL.Systems
 {
-    public class PlayerSystem : EntityProcessingSystem
+    public class PlayerSystem : EntityProcessingSystem, IPausable
     {
         private readonly Variables variables;
         private ComponentMapper<Emitter> emitterMapper = null!;

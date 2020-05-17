@@ -15,7 +15,7 @@ using KeyState = BunnyLand.DesktopGL.Enums.KeyState;
 
 namespace BunnyLand.DesktopGL.Systems
 {
-    public class InputSystem : EntityProcessingSystem
+    public class InputSystem : EntityProcessingSystem, IPausable
     {
         private const float ThumbStickDeadZone = 0.1f;
         private readonly IButtonMap buttonMap;
@@ -159,7 +159,7 @@ namespace BunnyLand.DesktopGL.Systems
                 }
 
                 if (input.DirectionalInputsByFrame.Count >= PlayerInput.InitialFrameBuffer) {
-                    input.PlayerKeysByFrame.Remove(currentFrame - PlayerInput.InitialFrameBuffer);
+                    input.DirectionalInputsByFrame.Remove(currentFrame - PlayerInput.InitialFrameBuffer);
                 }
 
                 input.PlayerKeysByFrame[currentFrame] =

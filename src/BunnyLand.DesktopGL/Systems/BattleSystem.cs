@@ -20,27 +20,27 @@ namespace BunnyLand.DesktopGL.Systems
     public class BattleSystem : EntityProcessingSystem
     {
         private static readonly IEnumerable<byte> _playerNumbers = Enumerable.Range(1, 16).Select(i => (byte) i);
-        private readonly IDictionary<int, int> entitiesByPeerId = new Dictionary<int, int>();
+        // private readonly IDictionary<int, int> entitiesByPeerId = new Dictionary<int, int>();
         private readonly IDictionary<byte, int> entitiesByPlayerNumber = new Dictionary<byte, int>();
         private readonly IDictionary<int, int> entitiesBySerializableId = new Dictionary<int, int>();
 
         private readonly EntityFactory entityFactory;
         private readonly GameSettings gameSettings;
+        private readonly MessageHub messageHub;
 
         private readonly List<INotification> newMessages = new List<INotification>();
         private readonly Dictionary<Type, BoundMethod> notificationHandlers;
         private readonly SharedContext sharedContext;
 
-        private ComponentMapper<CollisionBody> bodyMapper = null!;
         private ComponentMapper<PlayerState> playerMapper = null!;
         private ComponentMapper<Serializable> serializableMapper = null!;
-        private bool stateInitializationCompleted;
 
         public BattleSystem(EntityFactory entityFactory, GameSettings gameSettings, MessageHub messageHub, SharedContext sharedContext) :
             base(Aspect.All())
         {
             this.entityFactory = entityFactory;
             this.gameSettings = gameSettings;
+            this.messageHub = messageHub;
             this.sharedContext = sharedContext;
 
             notificationHandlers = new Dictionary<Type, BoundMethod> {
@@ -48,10 +48,21 @@ namespace BunnyLand.DesktopGL.Systems
                 { typeof(UpdateGameMessage), new Action<UpdateGameMessage>(HandleUpdateGame).Method.Bind() },
                 { typeof(PlayerJoinedMessage), new Action<PlayerJoinedMessage>(HandlePlayerJoined).Method.Bind() },
                 { typeof(PlayerLeftMessage), new Action<PlayerLeftMessage>(HandlePlayerLeft).Method.Bind() },
-                { typeof(RespawnPlayerMessage), new Action<RespawnPlayerMessage>(HandleRespawnPlayer).Method.Bind() }
+                { typeof(RespawnPlayerMessage), new Action<RespawnPlayerMessage>(HandleRespawnPlayer).Method.Bind() },
+                { typeof(ReceivedInputsMessage), new Action<ReceivedInputsMessage>(HandleReceivedInputs).Method.Bind()}
             };
 
             messageHub.SubscribeMany(HandleNewMessage, notificationHandlers);
+        }
+
+        private void HandleReceivedInputs(ReceivedInputsMessage msg)
+        {
+            foreach (var (playerNumber, input) in msg.InputsByPlayerNumber)
+            {
+                if (entitiesByPlayerNumber.TryGetValue(playerNumber, out var entity)) {
+                    GetEntity(entity).Attach(input);
+                }
+            }
         }
 
         private void HandleRespawnPlayer(RespawnPlayerMessage msg)
@@ -70,13 +81,15 @@ namespace BunnyLand.DesktopGL.Systems
 
         private void HandlePlayerLeft(PlayerLeftMessage msg)
         {
-            entitiesByPeerId.TryGetValue(msg.PeerId).IfSome(DestroyEntity);
+            // entitiesByPeerId.TryGetValue(msg.PeerId).IfSome(DestroyEntity);
         }
 
         private void HandlePlayerJoined(PlayerJoinedMessage msg)
         {
-            var firstFreePlayerNumber = GetFirstFreePlayerNumber();
-            entityFactory.CreatePlayer(CreateEntity(), GetStartPosition(firstFreePlayerNumber), firstFreePlayerNumber, default, msg.PeerId);
+            // for (var i = 1; i <= msg.PlayerCount; i++) {
+            //     var firstFreePlayerNumber = GetFirstFreePlayerNumber();
+            //     entityFactory.CreatePlayer(CreateEntity(), GetStartPosition(firstFreePlayerNumber), firstFreePlayerNumber, default, msg.PeerId);
+            // }
         }
 
         private byte GetFirstFreePlayerNumber() => _playerNumbers.First(i => !entitiesByPlayerNumber.ContainsKey(i));
@@ -99,14 +112,13 @@ namespace BunnyLand.DesktopGL.Systems
             sharedContext.FrameCounter = msg.FrameCounter;
             if (msg.GameState == null) {
                 SetupEntities();
-            } else if (msg.GameState.Components != null) {
+            } else {
                 SetupEntities(msg.GameState.Components);
             }
         }
 
         private void HandleUpdateGame(UpdateGameMessage msg)
         {
-            if (!stateInitializationCompleted) return;
             foreach (var serializable in msg.Components.SerializableIds) {
                 if (entitiesBySerializableId.TryGetValue(serializable, out var entityId)) {
                     var entity = GetEntity(entityId);
@@ -173,8 +185,6 @@ namespace BunnyLand.DesktopGL.Systems
 
         private void SetupEntities(SerializableComponents gameStateComponents)
         {
-            entityFactory.CreateLevel(CreateEntity(), gameSettings.Width, gameSettings.Height);
-
             foreach (var serializable in gameStateComponents.SerializableIds) {
                 CreateEntity(serializable, gameStateComponents);
             }
@@ -207,6 +217,8 @@ namespace BunnyLand.DesktopGL.Systems
                 entity.Attach(gravityPoint);
             if (gameStateComponents.PlayerInputs.TryGetValue(serializableId, out var playerInput))
                 entity.Attach(playerInput);
+            if (gameStateComponents.PlayerStates.TryGetValue(serializableId, out var playerState))
+                entity.Attach(playerState);
         }
 
         public void RespawnPlayer(byte playerNumber)
@@ -241,7 +253,7 @@ namespace BunnyLand.DesktopGL.Systems
             serializableMapper.TryGet(entityId).IfSome(serializable => entitiesBySerializableId[serializable.Id] = entityId);
             playerMapper.TryGet(entityId).IfSome(player => {
                 entitiesByPlayerNumber[player.PlayerNumber] = entityId;
-                player.PeerId.IfSome(peerId => entitiesByPeerId[peerId] = entityId);
+                // player.PeerIdAndRemotePlayerIndex.IfSome(peerId => entitiesByPeerId[peerId] = entityId);
             });
         }
 
@@ -250,7 +262,7 @@ namespace BunnyLand.DesktopGL.Systems
             serializableMapper.TryGet(entityId).IfSome(serializable => entitiesBySerializableId.Remove(serializable.Id, out _));
             playerMapper.TryGet(entityId).IfSome(player => {
                 entitiesByPlayerNumber.Remove(player.PlayerNumber, out _);
-                player.PeerId.IfSome(peerId => entitiesByPeerId.Remove(peerId, out _));
+                // player.PeerIdAndRemotePlayerIndex.IfSome(peerId => entitiesByPeerId.Remove(peerId, out _));
             });
         }
 
@@ -258,28 +270,29 @@ namespace BunnyLand.DesktopGL.Systems
         {
             serializableMapper = mapperService.GetMapper<Serializable>();
             playerMapper = mapperService.GetMapper<PlayerState>();
-            bodyMapper = mapperService.GetMapper<CollisionBody>();
         }
 
         public override void End()
         {
+            var inputsByPlayerNumber = entitiesByPlayerNumber.Values.Select(GetEntity).Where(e => e.Get<PlayerState>().IsLocal).Select(p => {
+                var input = p.Get<PlayerInput>();
+                var state = p.Get<PlayerState>();
+                return (input, state);
+            }).ToDictionary(t => t.state.PlayerNumber, t => t.input);
+            messageHub.Publish(new InputsUpdatedMessage(inputsByPlayerNumber));
+
             foreach (var message in newMessages) {
                 var notificationHandler = notificationHandlers[message.GetType()];
                 notificationHandler(this, new object[] { message });
             }
 
             newMessages.Clear();
-            if (!stateInitializationCompleted && ActiveEntities.Any()) {
-                stateInitializationCompleted = true;
-            }
-
-            if (stateInitializationCompleted)
-                sharedContext.FrameCounter++;
         }
 
         public override void Process(GameTime gameTime, int entityId)
         {
-            if (sharedContext.IsClient) return;
+            if (sharedContext.IsPaused)
+                return;
 
             var entity = GetEntity(entityId);
             var body = entity.Get<CollisionBody>();

@@ -10,7 +10,7 @@ namespace BunnyLand.DesktopGL.Components
     [MessagePackObject]
     public class PlayerInput
     {
-        public const int InitialFrameBuffer = 60;
+        public const int InitialFrameBuffer = 10;
 
         [IgnoreMember] public int CurrentFrame { get; set; }
 

@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using BunnyLand.DesktopGL.Components;
 using MessagePack;
@@ -14,14 +15,20 @@ namespace BunnyLand.DesktopGL.Serialization
 
         [Key(1)] public SerializableComponents Components { get; }
 
-        public FullGameState(int frameCounter, SerializableComponents components)
+        [Key(2)] public DateTime UtcNow { get; }
+
+        [Key(3)] public DateTime ResumeAtUtc { get; }
+
+        public FullGameState(int frameCounter, SerializableComponents components, DateTime utcNow, DateTime resumeAtUtc)
         {
             FrameCounter = frameCounter;
             Components = components;
+            UtcNow = utcNow;
+            ResumeAtUtc = resumeAtUtc;
         }
 
         public static FullGameState CreateFullGameState(IComponentMapperService componentManager, IEnumerable<int> entities,
-            int frameCounter)
+            int frameCounter, DateTime utcNow, DateTime resumeAt)
         {
             var serializableMapper = componentManager.GetMapper<Serializable>();
             var transformMapper = componentManager.GetMapper<Transform2>();
@@ -34,6 +41,7 @@ namespace BunnyLand.DesktopGL.Serialization
             var healthMapper = componentManager.GetMapper<Health>();
             var levelMapper = componentManager.GetMapper<Level>();
             var playerInputMapper = componentManager.GetMapper<PlayerInput>();
+            var playerStateMapper = componentManager.GetMapper<PlayerState>();
 
             var serializableIds = entities.Select(e => (entityId: e, serializableId: serializableMapper.Get(e).Id)).ToList();
             var transforms = new Dictionary<int, SerializableTransform>();
@@ -46,6 +54,7 @@ namespace BunnyLand.DesktopGL.Serialization
             var healths = new Dictionary<int, Health>();
             var levels = new Dictionary<int, Level>();
             var playerInputs = new Dictionary<int, PlayerInput>();
+            var playerStates = new Dictionary<int, PlayerState>();
 
             foreach (var (entityId, serializableId) in serializableIds) {
                 if (transformMapper.Get(entityId) is { } transform2)
@@ -69,11 +78,14 @@ namespace BunnyLand.DesktopGL.Serialization
                     levels[serializableId] = level;
                 if (playerInputMapper.Get(entityId) is {} playerInput)
                     playerInputs[serializableId] = playerInput;
+                if (playerStateMapper.Get(entityId) is {} playerState)
+                    playerStates[serializableId] = playerState;
             }
 
-            return new FullGameState(frameCounter, new SerializableComponents(serializableIds.Select(t => t.serializableId).ToHashSet(), transforms, movables,
+            var serializableComponents = new SerializableComponents(serializableIds.Select(t => t.serializableId).ToHashSet(), transforms, movables,
                 spriteInfos,
-                collisionBodies, damagings, gravityFields, gravityPoints, healths, playerInputs, levels));
+                collisionBodies, damagings, gravityFields, gravityPoints, healths, playerInputs, levels, playerStates);
+            return new FullGameState(frameCounter, serializableComponents, utcNow, resumeAt);
         }
     }
 }

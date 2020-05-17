@@ -8,7 +8,7 @@ using MonoGame.Extended.Entities.Systems;
 
 namespace BunnyLand.DesktopGL.Systems
 {
-    public class AcceleratorSystem : EntityProcessingSystem
+    public class AcceleratorSystem : EntityProcessingSystem, IPausable
     {
         private readonly GameSettings gameSettings;
 

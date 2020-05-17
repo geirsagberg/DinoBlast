@@ -8,12 +8,12 @@ namespace BunnyLand.DesktopGL.Extensions
     public class WorldBuilderService
     {
         private readonly IServiceProvider serviceProvider;
-        private readonly WorldBuilder worldBuilder;
+        private readonly BunnyWorldBuilder worldBuilder;
 
         public WorldBuilderService(IServiceProvider serviceProvider)
         {
             this.serviceProvider = serviceProvider;
-            worldBuilder = serviceProvider.GetRequiredService<WorldBuilder>();
+            worldBuilder = serviceProvider.GetRequiredService<BunnyWorldBuilder>();
         }
 
         public WorldBuilderService AddSystemService<T>() where T : ISystem

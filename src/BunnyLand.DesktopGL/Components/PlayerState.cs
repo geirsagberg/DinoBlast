@@ -1,22 +1,36 @@
 using BunnyLand.DesktopGL.Enums;
 using LanguageExt;
+using MessagePack;
 using Microsoft.Xna.Framework;
 
 namespace BunnyLand.DesktopGL.Components
 {
+    [MessagePackObject]
     public class PlayerState
     {
-        public byte PlayerNumber { get; set; }
-        public Option<PlayerIndex> LocalPlayerIndex { get; set; }
-        public StandingOn StandingOn { get; set; }
+        [Key(0)] public byte PlayerNumber { get; }
 
-        public bool IsLocal => LocalPlayerIndex.IsSome;
-        public bool IsBraking { get; set; } = true;
-        public Option<int> PeerId { get; set; }
-        public bool IsBoosting { get; set; }
+        [IgnoreMember] public Option<PlayerIndex> LocalPlayerIndex { get; set; }
 
-        public PlayerState(Option<PlayerIndex> playerIndex)
+        [IgnoreMember] public StandingOn StandingOn { get; set; }
+
+        [IgnoreMember] public bool IsLocal => LocalPlayerIndex.IsSome;
+
+        [IgnoreMember] public bool IsBraking { get; set; } = true;
+
+        // [IgnoreMember]
+        // public Option<(int, PlayerIndex)> PeerIdAndRemotePlayerIndex { get; set; }
+
+        [IgnoreMember] public bool IsBoosting { get; set; }
+
+        public PlayerState(byte playerNumber)
         {
+            PlayerNumber = playerNumber;
+        }
+
+        public PlayerState(byte playerNumber, Option<PlayerIndex> playerIndex)
+        {
+            PlayerNumber = playerNumber;
             LocalPlayerIndex = playerIndex;
         }
     }

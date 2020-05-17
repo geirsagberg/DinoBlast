@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Net.Sockets;
 using BunnyLand.DesktopGL.Components;
 using BunnyLand.DesktopGL.Enums;
@@ -19,8 +21,12 @@ namespace BunnyLand.DesktopGL.Systems
     {
         private const int LogBroadcastedBytesEveryNthFrame = 60;
 
+        private const int WaitForNewPlayerThisManyFrames = 10;
+
         private readonly int[] broadcastedBytes = new int[LogBroadcastedBytesEveryNthFrame];
         private readonly GameSettings gameSettings;
+
+        private readonly HashSet<int> joiningPeers = new HashSet<int>();
 
         private readonly MessageHub messageHub;
         private readonly NetManager netServer;
@@ -29,6 +35,7 @@ namespace BunnyLand.DesktopGL.Systems
 
         private byte broadcastedBytesCounter;
         private IComponentMapperService componentMapperService = null!;
+        private GameTime gameTime = new GameTime();
 
         public NetServerSystem(GameSettings gameSettings, MessageHub messageHub, Serializer serializer, SharedContext sharedContext) : base(
             Aspect.All(typeof(Serializable)))
@@ -45,16 +52,17 @@ namespace BunnyLand.DesktopGL.Systems
             };
 
             messageHub.Handle<StartServerRequest, bool>(HandleStartServer);
-            messageHub.Handle<SendInputsRequest>(HandleSendInputs);
+            messageHub.Subscribe<InputsUpdatedMessage>(HandleSendInputs);
             this.messageHub = messageHub;
         }
 
-        private void HandleSendInputs(SendInputsRequest request)
+        private void HandleSendInputs(InputsUpdatedMessage updatedMessage)
         {
-            var inputs = request.InputsByFrame;
-            var writer = new NetDataWriter();
-            writer.Put(NetMessageType.ClientAction, serializer.Serialize(inputs));
-            netServer.SendToAll(writer, DeliveryMethod.Sequenced);
+            if (netServer.IsRunning) {
+                var writer = new NetDataWriter();
+                writer.Put(updatedMessage, serializer);
+                netServer.SendToAll(writer, DeliveryMethod.Sequenced);
+            }
         }
 
         public bool HandleStartServer(StartServerRequest request)
@@ -75,7 +83,16 @@ namespace BunnyLand.DesktopGL.Systems
             var serverListener = new EventBasedNetListener();
             serverListener.ConnectionRequestEvent += request => { request.Accept(); };
             serverListener.PeerConnectedEvent += OnPlayerJoined;
-            serverListener.NetworkReceiveEvent += (peer, reader, method) => { Console.WriteLine("Server received: {0}", reader.GetString(100)); };
+            serverListener.NetworkReceiveEvent += (peer, reader, method) => {
+                // Console.WriteLine("Server received: {0}", reader.GetString(100));
+                if (reader.TryGetByte(out var b)) {
+                    switch ((NetMessageType) b) {
+                        case NetMessageType.FullGameStateAck:
+                            joiningPeers.Remove(peer.Id);
+                            break;
+                    }
+                }
+            };
             serverListener.PeerDisconnectedEvent += (peer, info) => {
                 Console.WriteLine("Peer disconnected {0}, {1}", peer, info);
                 messageHub.Publish(new PlayerLeftMessage(peer.Id));
@@ -100,22 +117,33 @@ namespace BunnyLand.DesktopGL.Systems
             Console.WriteLine("Peer connected: {0}", peer.EndPoint);
             Console.WriteLine("Sending initial world data");
 
-            var state = FullGameState.CreateFullGameState(componentMapperService, ActiveEntities, sharedContext.FrameCounter);
+            var utcNow = DateTime.UtcNow;
+            sharedContext.IsPaused = true;
+
+            var resumeIn = TimeSpan.FromSeconds(1);
+            var resumeAtUtc = utcNow.AddSeconds(1);
+            sharedContext.ResumeAtGameTime = gameTime.TotalGameTime + resumeIn;
+
+            joiningPeers.Add(peer.Id);
+
+            var state = FullGameState.CreateFullGameState(componentMapperService, ActiveEntities, sharedContext.FrameCounter, utcNow, resumeAtUtc);
             var bytes = serializer.Serialize(state);
             var writer = new NetDataWriter();
-            writer.Put((byte) NetMessageType.FullGameState);
-            writer.Put(bytes);
+            writer.Put(NetMessageType.FullGameState, bytes);
             peer.Send(writer, DeliveryMethod.ReliableOrdered);
 
-            messageHub.Publish(new PlayerJoinedMessage(peer.Id));
+            // messageHub.Publish(new PlayerJoinedMessage(peer.Id));
         }
-
 
         public override void Update(GameTime gameTime)
         {
-            BroadcastUpdate();
-
+            this.gameTime = gameTime;
+            // BroadcastUpdate();
             netServer.PollEvents();
+
+            if (sharedContext.IsPaused && sharedContext.ResumeAtGameTime < gameTime.TotalGameTime && joiningPeers.Any()) {
+                throw new Exception("Peers still joining; aborting to avoid desync");
+            }
         }
 
         private void BroadcastUpdate()

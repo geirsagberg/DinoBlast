@@ -11,7 +11,8 @@ namespace BunnyLand.DesktopGL
 {
     public class EntityFactory
     {
-        public Entity CreatePlayer(Entity entity, Vector2 position, byte playerNumber, Option<PlayerIndex> playerIndex, Option<int> peerId = default)
+        public Entity CreatePlayer(Entity entity, Vector2 position, byte playerNumber, Option<PlayerIndex> localPlayerIndex,
+            Option<(int peerId, PlayerIndex remotePlayerIndex)> peerIdAndRemotePlayerIndex = default)
         {
             entity.Attach(new Serializable(entity.Id));
             var transform = new Transform2(position);
@@ -22,7 +23,9 @@ namespace BunnyLand.DesktopGL
 
             entity.Attach(new CollisionBody(new Circle(15f), position, ColliderTypes.Player,
                 ColliderTypes.Player | ColliderTypes.Projectile | ColliderTypes.Static));
-            entity.Attach(new PlayerState(playerIndex) { PeerId = peerId, PlayerNumber = playerNumber });
+            entity.Attach(new PlayerState(playerNumber, localPlayerIndex) {
+                // PeerIdAndRemotePlayerIndex = peerIdAndRemotePlayerIndex
+            });
             entity.Attach(new PlayerInput());
             entity.Attach(new Movable());
             entity.Attach(new Health(100));

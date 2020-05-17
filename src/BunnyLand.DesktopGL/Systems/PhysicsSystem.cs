@@ -11,7 +11,7 @@ using MonoGame.Extended.Entities.Systems;
 
 namespace BunnyLand.DesktopGL.Systems
 {
-    public class PhysicsSystem : EntityProcessingSystem
+    public class PhysicsSystem : EntityProcessingSystem, IPausable
     {
         private readonly Variables variables;
         private readonly SharedContext sharedContext;
@@ -43,7 +43,7 @@ namespace BunnyLand.DesktopGL.Systems
 
         public override void Process(GameTime gameTime, int entityId)
         {
-            if (sharedContext.IsClient) return;
+
 
             var transform = transformMapper.Get(entityId);
             var movable = movableMapper.Get(entityId);

@@ -11,7 +11,7 @@ using MonoGame.Extended.Entities.Systems;
 
 namespace BunnyLand.DesktopGL.Systems
 {
-    public class GravitySystem : EntityProcessingSystem
+    public class GravitySystem : EntityProcessingSystem, IPausable
     {
         private readonly HashSet<int> gravityPointEntities = new HashSet<int>();
         private readonly SharedContext sharedContext;
@@ -22,6 +22,7 @@ namespace BunnyLand.DesktopGL.Systems
 
         public GravitySystem(Variables variables, SharedContext sharedContext) : base(Aspect.All(typeof(Movable), typeof(Transform2)))
         {
+
             this.variables = variables;
             this.sharedContext = sharedContext;
         }
@@ -46,7 +47,7 @@ namespace BunnyLand.DesktopGL.Systems
 
         public override void Process(GameTime gameTime, int entityId)
         {
-            if (sharedContext.IsClient) return;
+
 
             var movable = movableMapper.Get(entityId);
             var transform = transformMapper.Get(entityId);

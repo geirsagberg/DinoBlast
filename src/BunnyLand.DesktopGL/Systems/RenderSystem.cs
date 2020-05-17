@@ -83,7 +83,7 @@ namespace BunnyLand.DesktopGL.Systems
             spriteBatch.Begin();
             foreach (var entity in ActiveEntities) {
                 spriteMapper.TryGet(entity).IfSome(spriteInfo => {
-                    var sprite = spriteByEntity.GetOrAdd(entity, id => CreateSprite(spriteInfo));
+                    var sprite = spriteByEntity.GetOrAdd(entity, (id, si) => CreateSprite(si), spriteInfo);
                     if (sprite is AnimatedSprite animatedSprite) {
                         animatedSprite.Update(elapsedSeconds);
                     }

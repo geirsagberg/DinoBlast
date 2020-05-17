@@ -28,6 +28,8 @@ namespace BunnyLand.DesktopGL
 
         internal new IServiceProvider Services { get; set; } = null!;
 
+        private MessageHub MessageHub => Services.GetRequiredService<MessageHub>();
+
         public BunnyGame(GameSettings gameSettings)
         {
             IsMouseVisible = true;
@@ -81,13 +83,13 @@ namespace BunnyLand.DesktopGL
             services.AddSingleton<ScreenManager>();
 
             services.AddSingleton(provider => new MouseListener(provider.GetService<ViewportAdapter>()));
-            services.AddSingleton(new KeyboardListener(new KeyboardListenerSettings {RepeatPress = false}));
+            services.AddSingleton(new KeyboardListener(new KeyboardListenerSettings { RepeatPress = false }));
             services.AddSingleton(new GamePadListener(new GamePadListenerSettings(PlayerIndex.One)));
             services.AddSingleton(new GamePadListener(new GamePadListenerSettings(PlayerIndex.Two)));
             services.AddSingleton(new GamePadListener(new GamePadListenerSettings(PlayerIndex.Three)));
             services.AddSingleton(new GamePadListener(new GamePadListenerSettings(PlayerIndex.Four)));
             services.AddSingleton(provider =>
-                new InputListener[] {provider.GetService<MouseListener>(), provider.GetService<KeyboardListener>()}
+                new InputListener[] { provider.GetService<MouseListener>(), provider.GetService<KeyboardListener>() }
                     .Concat(provider.GetServices<GamePadListener>()).ToArray());
             services.AddSingleton<InputListenerComponent>();
 
@@ -134,14 +136,10 @@ namespace BunnyLand.DesktopGL
                 LoadScreen<BattleScreen>();
                 MessageHub.Publish(new ResetWorldMessage(msg.GameState));
             });
-            MessageHub.Subscribe<ServerDisconnectedMessage>(msg => {
-                LoadScreen<MenuScreen>();
-            });
+            MessageHub.Subscribe<ServerDisconnectedMessage>(msg => { LoadScreen<MenuScreen>(); });
 
             LoadScreen<MenuScreen>();
         }
-
-        private MessageHub MessageHub => Services.GetRequiredService<MessageHub>();
 
         private void LoadScreen<T>() where T : Screen
         {

@@ -6,6 +6,5 @@ namespace BunnyLand.DesktopGL
     public interface INetMessage
     {
         NetMessageType NetMessageType { get; }
-        byte[] Payload { get; }
     }
 }

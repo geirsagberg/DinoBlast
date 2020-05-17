@@ -5,7 +5,7 @@
         ListServersRequest,
         ListServersResponse,
         FullGameState,
-        FullGameStateUpdate,
-        ClientAction
+        FullGameStateAck,
+        PlayerInputs
     }
 }

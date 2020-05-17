@@ -2,7 +2,7 @@
 using Microsoft.Xna.Framework;
 using MonoGame.Extended;
 
-namespace BunnyLand.DesktopGL.Systems
+namespace BunnyLand.DesktopGL.Utils
 {
     // Based on https://github.com/dmanning23/CollisionBuddy/blob/master/CollisionBuddy/CollisionBuddy.SharedProject/CollisionBuddy.cs, MIT License
     public static class CollisionCheck

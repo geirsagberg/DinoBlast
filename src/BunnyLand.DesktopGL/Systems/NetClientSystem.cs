@@ -7,6 +7,7 @@ using BunnyLand.DesktopGL.Models;
 using BunnyLand.DesktopGL.Serialization;
 using BunnyLand.DesktopGL.Services;
 using LiteNetLib;
+using LiteNetLib.Utils;
 using Microsoft.Xna.Framework;
 using MonoGame.Extended.Entities;
 using MonoGame.Extended.Entities.Systems;
@@ -20,6 +21,7 @@ namespace BunnyLand.DesktopGL.Systems
         private readonly NetManager netClient;
         private readonly Serializer serializer;
         private readonly SharedContext sharedContext;
+        private GameTime gameTime = new GameTime();
 
         private NetPeer? joinedServer;
         private TaskCompletionSource<bool>? joinServerTaskCompletionSource;
@@ -72,7 +74,33 @@ namespace BunnyLand.DesktopGL.Systems
                     switch (netMessageType) {
                         case NetMessageType.FullGameState: {
                             var state = serializer.Deserialize<FullGameState>(reader.GetRemainingBytes());
-                            messageHub.Publish(new StartGameMessage(state));
+                            var ping = peer.Ping;
+                            var serverUtcNow = state.UtcNow.AddMilliseconds(ping / 2.0);
+                            // var utcNow = DateTime.UtcNow;
+                            // var offset = utcNow - serverUtcNow;
+
+                            // Convert serverTime to localTime by adding offset
+
+                            Console.WriteLine($"Ping: {ping}, serverUtcNow: {serverUtcNow}");
+
+                            if (state.ResumeAtUtc > serverUtcNow) {
+                                var resumeIn = state.ResumeAtUtc - serverUtcNow;
+                                sharedContext.ResumeAtGameTime = gameTime.TotalGameTime + resumeIn;
+                                sharedContext.IsPaused = true;
+                                sharedContext.FrameCounter = state.FrameCounter;
+                                messageHub.Publish(new StartGameMessage(state)).GetAwaiter().GetResult();
+                                var writer = new NetDataWriter();
+                                writer.Put((byte) NetMessageType.FullGameStateAck);
+                                peer.Send(writer, DeliveryMethod.ReliableOrdered);
+                            } else {
+                                throw new Exception($"Cannot resume at {state.ResumeAtUtc} - the moment has passed!");
+                            }
+
+                            break;
+                        }
+                        case NetMessageType.PlayerInputs: {
+                            var msg = serializer.Deserialize<InputsUpdatedMessage>(reader.GetRemainingBytes());
+                            messageHub.Publish(new ReceivedInputsMessage(msg.InputsByPlayerNumber)).GetAwaiter().GetResult();
                             break;
                         }
                     }
@@ -113,6 +141,7 @@ namespace BunnyLand.DesktopGL.Systems
 
         public override void Update(GameTime gameTime)
         {
+            this.gameTime = gameTime;
             netClient.PollEvents();
         }
 

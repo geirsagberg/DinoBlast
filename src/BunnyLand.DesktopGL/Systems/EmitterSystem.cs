@@ -11,7 +11,7 @@ using PlayerState = BunnyLand.DesktopGL.Components.PlayerState;
 
 namespace BunnyLand.DesktopGL.Systems
 {
-    public class EmitterSystem : EntityProcessingSystem
+    public class EmitterSystem : EntityProcessingSystem, IPausable
     {
         private readonly EntityFactory entityFactory;
         private readonly SharedContext sharedContext;
@@ -35,7 +35,7 @@ namespace BunnyLand.DesktopGL.Systems
         public override void Process(GameTime gameTime, int entityId)
         {
 
-            if (sharedContext.IsClient) return;
+
 
 
             var elapsedTimeSpan = gameTime.GetElapsedTimeSpan(variables);
