@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Linq;
+﻿using System.Linq;
 using BunnyLand.DesktopGL;
 using BunnyLand.DesktopGL.Components;
 using BunnyLand.DesktopGL.Serialization;
@@ -7,7 +6,6 @@ using FluentAssertions;
 using LiteNetLib.Utils;
 using MessagePack;
 using Microsoft.Xna.Framework;
-using MonoGame.Extended;
 using MonoGame.Extended.Entities;
 using Xunit;
 
@@ -25,15 +23,14 @@ namespace BunnyLand.Tests
             entityFactory.CreatePlayer(entityManager.Create(), new Vector2(200, 400), 1, PlayerIndex.One);
             entityFactory.CreatePlayer(entityManager.Create(), new Vector2(300, 400), 2, PlayerIndex.Two);
 
-            var state = FullGameState.CreateFullGameState(new Serializer(), componentManager, entityManager.Entities);
+            var state = FullGameState.CreateFullGameState(componentManager, entityManager.Entities, 1);
 
             var writer = new NetDataWriter();
 
-            writer.Put(state);
+            writer.Put(MessagePackSerializer.Serialize(state));
             var bytes = writer.CopyData();
             var reader = new NetDataReader(bytes);
-            var target = new FullGameState(new Serializer());
-            target.Deserialize(reader);
+            var target = MessagePackSerializer.Deserialize<FullGameState>(reader.GetRemainingBytes());
 
             target.Components.Should()
                 .BeEquivalentTo(state.Components, o => o.Excluding(c => c.SelectedMemberPath.EndsWith(nameof(CollisionBody.OldPosition))));

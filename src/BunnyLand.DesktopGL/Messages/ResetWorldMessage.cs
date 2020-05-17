@@ -7,9 +7,9 @@ namespace BunnyLand.DesktopGL.Messages
         public FullGameState? GameState { get; }
         public int FrameCounter { get; }
 
-        public ResetWorldMessage(FullGameState? gameState = null, int frameCounter = 0)
+        public ResetWorldMessage(FullGameState? gameState = null)
         {
-            FrameCounter = frameCounter;
+            FrameCounter = gameState?.FrameCounter ?? 0;
             GameState = gameState;
         }
     }

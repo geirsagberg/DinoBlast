@@ -1,15 +1,15 @@
 ﻿using System;
-using System.Linq;
 using System.Net.Sockets;
 using BunnyLand.DesktopGL.Components;
 using BunnyLand.DesktopGL.Enums;
+using BunnyLand.DesktopGL.Extensions;
 using BunnyLand.DesktopGL.Messages;
+using BunnyLand.DesktopGL.Models;
 using BunnyLand.DesktopGL.Serialization;
 using BunnyLand.DesktopGL.Services;
 using LiteNetLib;
 using LiteNetLib.Utils;
 using Microsoft.Xna.Framework;
-using MonoGame.Extended;
 using MonoGame.Extended.Entities;
 using MonoGame.Extended.Entities.Systems;
 
@@ -21,22 +21,21 @@ namespace BunnyLand.DesktopGL.Systems
 
         private readonly int[] broadcastedBytes = new int[LogBroadcastedBytesEveryNthFrame];
         private readonly GameSettings gameSettings;
+
+        private readonly MessageHub messageHub;
         private readonly NetManager netServer;
         private readonly Serializer serializer;
+        private readonly SharedContext sharedContext;
 
         private byte broadcastedBytesCounter;
+        private IComponentMapperService componentMapperService = null!;
 
-        private ComponentMapper<Movable> movableMapper = null!;
-        private ComponentMapper<Serializable> serializableMapper = null!;
-        private ComponentMapper<SpriteInfo> spriteInfoMapper = null!;
-        private ComponentMapper<Transform2> transformMapper = null!;
-        private readonly MessageHub messageHub;
-        private IComponentMapperService mapperService = null!;
-
-        public NetServerSystem(GameSettings gameSettings, MessageHub messageHub, Serializer serializer) : base(Aspect.All(typeof(Serializable)))
+        public NetServerSystem(GameSettings gameSettings, MessageHub messageHub, Serializer serializer, SharedContext sharedContext) : base(
+            Aspect.All(typeof(Serializable)))
         {
             this.gameSettings = gameSettings;
             this.serializer = serializer;
+            this.sharedContext = sharedContext;
 
             var serverListener = CreateServerListener();
             netServer = new NetManager(serverListener) {
@@ -46,7 +45,16 @@ namespace BunnyLand.DesktopGL.Systems
             };
 
             messageHub.Handle<StartServerRequest, bool>(HandleStartServer);
+            messageHub.Handle<SendInputsRequest>(HandleSendInputs);
             this.messageHub = messageHub;
+        }
+
+        private void HandleSendInputs(SendInputsRequest request)
+        {
+            var inputs = request.InputsByFrame;
+            var writer = new NetDataWriter();
+            writer.Put(NetMessageType.ClientAction, serializer.Serialize(inputs));
+            netServer.SendToAll(writer, DeliveryMethod.Sequenced);
         }
 
         public bool HandleStartServer(StartServerRequest request)
@@ -90,14 +98,13 @@ namespace BunnyLand.DesktopGL.Systems
         private void OnPlayerJoined(NetPeer peer)
         {
             Console.WriteLine("Peer connected: {0}", peer.EndPoint);
-
             Console.WriteLine("Sending initial world data");
 
-            var state = FullGameState.CreateFullGameState(serializer, mapperService, ActiveEntities);
-
+            var state = FullGameState.CreateFullGameState(componentMapperService, ActiveEntities, sharedContext.FrameCounter);
+            var bytes = serializer.Serialize(state);
             var writer = new NetDataWriter();
             writer.Put((byte) NetMessageType.FullGameState);
-            writer.Put(state);
+            writer.Put(bytes);
             peer.Send(writer, DeliveryMethod.ReliableOrdered);
 
             messageHub.Publish(new PlayerJoinedMessage(peer.Id));
@@ -133,11 +140,7 @@ namespace BunnyLand.DesktopGL.Systems
 
         public override void Initialize(IComponentMapperService mapperService)
         {
-            this.mapperService = mapperService;
-            serializableMapper = mapperService.GetMapper<Serializable>();
-            transformMapper = mapperService.GetMapper<Transform2>();
-            movableMapper = mapperService.GetMapper<Movable>();
-            spriteInfoMapper = mapperService.GetMapper<SpriteInfo>();
+            componentMapperService = mapperService;
         }
     }
 }

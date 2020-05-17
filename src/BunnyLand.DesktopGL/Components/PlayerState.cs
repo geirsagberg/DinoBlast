@@ -13,6 +13,7 @@ namespace BunnyLand.DesktopGL.Components
         public bool IsLocal => LocalPlayerIndex.IsSome;
         public bool IsBraking { get; set; } = true;
         public Option<int> PeerId { get; set; }
+        public bool IsBoosting { get; set; }
 
         public PlayerState(Option<PlayerIndex> playerIndex)
         {

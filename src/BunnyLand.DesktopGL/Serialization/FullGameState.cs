@@ -1,34 +1,27 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using BunnyLand.DesktopGL.Components;
-using LiteNetLib.Utils;
+using MessagePack;
 using MonoGame.Extended;
 using MonoGame.Extended.Entities;
 
 namespace BunnyLand.DesktopGL.Serialization
 {
-    public class FullGameState : INetSerializable
+    [MessagePackObject]
+    public class FullGameState
     {
-        private readonly Serializer serializer;
+        [Key(0)] public int FrameCounter { get; }
 
-        public SerializableComponents? Components { get; set; }
+        [Key(1)] public SerializableComponents Components { get; }
 
-        public FullGameState(Serializer serializer)
+        public FullGameState(int frameCounter, SerializableComponents components)
         {
-            this.serializer = serializer;
+            FrameCounter = frameCounter;
+            Components = components;
         }
 
-        public void Serialize(NetDataWriter writer)
-        {
-            writer.Put(serializer.Serialize(Components));
-        }
-
-        public void Deserialize(NetDataReader reader)
-        {
-            Components = serializer.Deserialize<SerializableComponents>(reader.GetRemainingBytes());
-        }
-
-        public static FullGameState CreateFullGameState(Serializer serializer, IComponentMapperService componentManager, IEnumerable<int> entities)
+        public static FullGameState CreateFullGameState(IComponentMapperService componentManager, IEnumerable<int> entities,
+            int frameCounter)
         {
             var serializableMapper = componentManager.GetMapper<Serializable>();
             var transformMapper = componentManager.GetMapper<Transform2>();
@@ -78,10 +71,9 @@ namespace BunnyLand.DesktopGL.Serialization
                     playerInputs[serializableId] = playerInput;
             }
 
-            return new FullGameState(serializer) {
-                Components = new SerializableComponents(serializableIds.Select(t => t.serializableId).ToHashSet(), transforms, movables, spriteInfos,
-                    collisionBodies, damagings, gravityFields, gravityPoints, healths, playerInputs, levels)
-            };
+            return new FullGameState(frameCounter, new SerializableComponents(serializableIds.Select(t => t.serializableId).ToHashSet(), transforms, movables,
+                spriteInfos,
+                collisionBodies, damagings, gravityFields, gravityPoints, healths, playerInputs, levels));
         }
     }
 }

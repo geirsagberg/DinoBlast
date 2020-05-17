@@ -12,7 +12,6 @@ using MonoGame.Extended.Entities;
 using MonoGame.Extended.Entities.Systems;
 using MonoGame.Extended.Input.InputListeners;
 using KeyState = BunnyLand.DesktopGL.Enums.KeyState;
-using PlayerState = BunnyLand.DesktopGL.Components.PlayerState;
 
 namespace BunnyLand.DesktopGL.Systems
 {
@@ -21,36 +20,33 @@ namespace BunnyLand.DesktopGL.Systems
         private const float ThumbStickDeadZone = 0.1f;
         private readonly IButtonMap buttonMap;
 
-        // TODO: Can it just be a tuple of vector vector?
-        private readonly Dictionary<PlayerIndex, DirectionalInputs> directionalInputs =
-            Enum
-                .GetValues(typeof(PlayerIndex))
-                .Cast<PlayerIndex>().ToDictionary(i => i,
-                    _ => new DirectionalInputs());
+        private readonly Dictionary<PlayerIndex, DirectionalInputs> directionalInputs = Enum
+            .GetValues(typeof(PlayerIndex))
+            .Cast<PlayerIndex>().ToDictionary(i => i, _ => new DirectionalInputs());
 
         private readonly IDictionary<PlayerIndex, GamePadListener> gamePadListeners;
         private readonly KeyboardListener keyboardListener;
-        private readonly MouseListener mouseListener;
         private readonly IDictionary<PlayerIndex, int> playerEntitiesByIndex = new Dictionary<PlayerIndex, int>();
 
         private readonly Dictionary<PlayerIndex, System.Collections.Generic.HashSet<PlayerKey>> pressedKeys = Enum
             .GetValues(typeof(PlayerIndex))
             .Cast<PlayerIndex>().ToDictionary(i => i, _ => new System.Collections.Generic.HashSet<PlayerKey>());
 
-        private ComponentMapper<PlayerInput> inputMapper;
+        private readonly SharedContext sharedContext;
 
+        private ComponentMapper<PlayerInput> inputMapper = null!;
         private ComponentMapper<PlayerState> playerMapper = null!;
         private ComponentMapper<Transform2> transformMapper = null!;
 
         public InputSystem(MouseListener mouseListener, KeyboardListener keyboardListener,
-            IEnumerable<GamePadListener> gamePadListeners, IButtonMap buttonMap
+            IEnumerable<GamePadListener> gamePadListeners, IButtonMap buttonMap, SharedContext sharedContext
         ) : base(
             Aspect.All(typeof(PlayerState), typeof(PlayerInput)))
         {
-            this.mouseListener = mouseListener;
             this.keyboardListener = keyboardListener;
             this.gamePadListeners = gamePadListeners.ToDictionary(l => l.PlayerIndex);
             this.buttonMap = buttonMap;
+            this.sharedContext = sharedContext;
 
             mouseListener.MouseMoved += OnMouseMoved;
             mouseListener.MouseDown += OnMouseDown;
@@ -77,8 +73,10 @@ namespace BunnyLand.DesktopGL.Systems
 
         private void OnMouseMoved(object? sender, MouseEventArgs e)
         {
-            playerEntitiesByIndex.TryGetValue(PlayerIndex.One).IfSome(entityId => transformMapper.TryGet(entityId).IfSome(
-                movable => { HandleAimInput(PlayerIndex.One, e.Position.ToVector2() - movable.Position); }));
+            playerEntitiesByIndex.TryGetValue(PlayerIndex.One)
+                .IfSome(entityId => transformMapper.TryGet(entityId)
+                    .IfSome(
+                        movable => HandleAimInput(PlayerIndex.One, e.Position.ToVector2() - movable.Position)));
         }
 
         private void OnTriggerMoved(object? sender, GamePadEventArgs e)
@@ -124,16 +122,12 @@ namespace BunnyLand.DesktopGL.Systems
 
         private void HandleAccelerationInput(PlayerIndex index, Vector2 acceleration)
         {
-            playerEntitiesByIndex.TryGetValue(index)
-                .IfSome(player => GetEntity(player).Get<PlayerInput>().DirectionalInputs.AccelerationDirection = acceleration);
+            directionalInputs[index] = new DirectionalInputs(acceleration, directionalInputs[index].AimDirection);
         }
 
         private void HandleAimInput(PlayerIndex index, Vector2 aimVector)
         {
-            if (aimVector.Length() > ThumbStickDeadZone) {
-                playerEntitiesByIndex.TryGetValue(index)
-                    .IfSome(player => GetEntity(player).Get<PlayerInput>().DirectionalInputs.AimDirection = aimVector.NormalizedOrZero());
-            }
+            directionalInputs[index] = new DirectionalInputs(directionalInputs[index].AccelerationDirection, aimVector.NormalizedOrZero());
         }
 
         private void HandlePlayerKeyInput(PlayerIndex index, PlayerKey key, bool released = false)
@@ -153,17 +147,28 @@ namespace BunnyLand.DesktopGL.Systems
         public override void Process(GameTime gameTime, int entityId)
         {
             var state = playerMapper.Get(entityId);
+            var input = inputMapper.Get(entityId);
 
             state.LocalPlayerIndex.IfSome(playerIndex => {
-                var input = inputMapper.Get(entityId);
                 var playerPressedKeys = pressedKeys[playerIndex];
 
-                input.PlayerKeys = UpdatePlayerKeys(input.PlayerKeys, playerPressedKeys);
+                var currentFrame = sharedContext.FrameCounter + sharedContext.FrameOffset;
 
-                if (input.PlayerKeys[PlayerKey.ToggleBrake].JustPressed) {
-                    state.IsBraking = !state.IsBraking;
+                if (input.PlayerKeysByFrame.Count >= PlayerInput.InitialFrameBuffer) {
+                    input.PlayerKeysByFrame.Remove(currentFrame - PlayerInput.InitialFrameBuffer);
                 }
+
+                if (input.DirectionalInputsByFrame.Count >= PlayerInput.InitialFrameBuffer) {
+                    input.PlayerKeysByFrame.Remove(currentFrame - PlayerInput.InitialFrameBuffer);
+                }
+
+                input.PlayerKeysByFrame[currentFrame] =
+                    UpdatePlayerKeys(input.PlayerKeysByFrame.TryGetValue(currentFrame - 1, out var keys) ? keys : PlayerInput.DefaultPlayerKeys(),
+                        playerPressedKeys);
+                input.DirectionalInputsByFrame[currentFrame] = directionalInputs[playerIndex];
             });
+
+            input.CurrentFrame = sharedContext.FrameCounter;
         }
 
         private static Dictionary<PlayerKey, KeyState> UpdatePlayerKeys(

@@ -10,10 +10,27 @@ namespace BunnyLand.DesktopGL.Components
     [MessagePackObject]
     public class PlayerInput
     {
-        [Key(0)]
-        public Dictionary<PlayerKey, KeyState> PlayerKeys { get; set; } =
-            EnumHelper.GetValues<PlayerKey>().ToDictionary(k => k, _ => new KeyState());
+        public const int InitialFrameBuffer = 60;
 
-        [Key(1)] public DirectionalInputs DirectionalInputs { get; set; } = new DirectionalInputs();
+        [IgnoreMember] public int CurrentFrame { get; set; }
+
+        [Key(0)]
+        public Dictionary<int, Dictionary<PlayerKey, KeyState>> PlayerKeysByFrame { get; set; } =
+            new Dictionary<int, Dictionary<PlayerKey, KeyState>>(InitialFrameBuffer);
+
+        [Key(1)] public Dictionary<int, DirectionalInputs> DirectionalInputsByFrame { get; set; } = new Dictionary<int, DirectionalInputs>(InitialFrameBuffer);
+
+        [IgnoreMember]
+        public Dictionary<PlayerKey, KeyState> PlayerKeys => PlayerKeysByFrame.TryGetValue(CurrentFrame, out var keys) ? keys : DefaultPlayerKeys();
+
+        [IgnoreMember]
+        public DirectionalInputs DirectionalInputs => DirectionalInputsByFrame.TryGetValue(CurrentFrame, out var inputs)
+            ? inputs
+            : new DirectionalInputs();
+
+        public static Dictionary<PlayerKey, KeyState> DefaultPlayerKeys()
+        {
+            return EnumHelper.GetValues<PlayerKey>().ToDictionary(k => k, _ => new KeyState());
+        }
     }
 }

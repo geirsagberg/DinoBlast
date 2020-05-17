@@ -8,7 +8,6 @@ using BunnyLand.DesktopGL.Serialization;
 using BunnyLand.DesktopGL.Services;
 using LiteNetLib;
 using Microsoft.Xna.Framework;
-using MonoGame.Extended;
 using MonoGame.Extended.Entities;
 using MonoGame.Extended.Entities.Systems;
 
@@ -25,7 +24,8 @@ namespace BunnyLand.DesktopGL.Systems
         private NetPeer? joinedServer;
         private TaskCompletionSource<bool>? joinServerTaskCompletionSource;
 
-        public NetClientSystem(GameSettings gameSettings, MessageHub messageHub, Serializer serializer, SharedContext sharedContext) : base(Aspect.All(typeof(Serializable)))
+        public NetClientSystem(GameSettings gameSettings, MessageHub messageHub, Serializer serializer, SharedContext sharedContext) : base(
+            Aspect.All(typeof(Serializable)))
         {
             this.gameSettings = gameSettings;
             this.messageHub = messageHub;
@@ -56,8 +56,7 @@ namespace BunnyLand.DesktopGL.Systems
                 if (netClient.Start(gameSettings.ClientPort)) {
                     Console.WriteLine("Client listening at port {0}", gameSettings.ClientPort);
                     sharedContext.IsClient = true;
-                }
-                else
+                } else
                     Console.WriteLine("Client not started!");
             }
         }
@@ -72,15 +71,8 @@ namespace BunnyLand.DesktopGL.Systems
                     // Console.WriteLine($"Received {netMessageType} from {peer.EndPoint}");
                     switch (netMessageType) {
                         case NetMessageType.FullGameState: {
-                            var state = new FullGameState(serializer);
-                            state.Deserialize(reader);
+                            var state = serializer.Deserialize<FullGameState>(reader.GetRemainingBytes());
                             messageHub.Publish(new StartGameMessage(state));
-                            break;
-                        }
-                        case NetMessageType.FullGameStateUpdate: {
-                            var state = new FullGameState(serializer);
-                            state.Deserialize(reader);
-                            messageHub.Publish(new UpdateGameMessage(state.Components!));
                             break;
                         }
                     }

@@ -1,12 +1,10 @@
 using System;
-using System.Collections.Generic;
 using BunnyLand.DesktopGL.Components;
 using BunnyLand.DesktopGL.Enums;
 using Microsoft.Xna.Framework;
 using MonoGame.Extended;
 using MonoGame.Extended.Entities;
 using MonoGame.Extended.Entities.Systems;
-using PlayerState = BunnyLand.DesktopGL.Components.PlayerState;
 
 namespace BunnyLand.DesktopGL.Systems
 {
@@ -17,8 +15,8 @@ namespace BunnyLand.DesktopGL.Systems
         private readonly Variables variables;
         private ComponentMapper<Accelerator> acceleratorMapper;
         private ComponentMapper<Movable> movableMapper;
-        private ComponentMapper<PlayerState> playerMapper;
         private ComponentMapper<PlayerInput> playerInputMapper;
+        private ComponentMapper<PlayerState> playerMapper;
 
         public AcceleratorSystem(GameSettings gameSettings, Variables variables) : base(Aspect.All(typeof(PlayerState), typeof(PlayerInput),
             typeof(Movable)))
@@ -51,7 +49,7 @@ namespace BunnyLand.DesktopGL.Systems
             var intendedAcceleration = input.DirectionalInputs.AccelerationDirection;
 
             movable.Acceleration = player.StandingOn switch {
-                StandingOn.Nothing => ResultAcceleration(input.PlayerKeys, intendedAcceleration, movable.Velocity),
+                StandingOn.Nothing => ResultAcceleration(intendedAcceleration, movable.Velocity, player.IsBoosting),
                 StandingOn.Planet => Vector2.Zero,
                 _ => Vector2.Zero
             };
@@ -62,10 +60,8 @@ namespace BunnyLand.DesktopGL.Systems
                     : 0;
         }
 
-        private Vector2 ResultAcceleration(
-            Dictionary<PlayerKey, KeyState> keys,
-            Vector2 intendedAcceleration,
-            Vector2 currentVelocity)
+        private Vector2 ResultAcceleration(Vector2 intendedAcceleration,
+            Vector2 currentVelocity, bool isBoosting)
         {
             var jetpackMaxSpeed = variables.Global[GlobalVariable.JetpackMaxSpeed];
             var jetpackBoostMaxSpeed = variables.Global[GlobalVariable.JetpackBoostMaxSpeed];
@@ -73,7 +69,6 @@ namespace BunnyLand.DesktopGL.Systems
             var jetpackAcceleration = variables.Global[GlobalVariable.JetpackAcceleration];
             var jetpackBoostAcceleration = variables.Global[GlobalVariable.JetpackBoostAcceleration];
 
-            var isBoosting = keys[PlayerKey.Jump].Pressed;
             var accelerationMultiplier = isBoosting ? jetpackBoostAcceleration : jetpackAcceleration;
 
             var attemptedNewVelocity = currentVelocity + intendedAcceleration * accelerationMultiplier;

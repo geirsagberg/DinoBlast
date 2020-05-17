@@ -273,7 +273,8 @@ namespace BunnyLand.DesktopGL.Systems
                 stateInitializationCompleted = true;
             }
 
-            sharedContext.FrameCounter++;
+            if (stateInitializationCompleted)
+                sharedContext.FrameCounter++;
         }
 
         public override void Process(GameTime gameTime, int entityId)

@@ -1,10 +1,10 @@
 namespace BunnyLand.DesktopGL.Enums
 {
-    public enum PlayerState
-    {
-        Idle,
-        Running,
-        Jumping,
-        Flying
-    }
+    // public enum PlayerState
+    // {
+    //     Idle,
+    //     Running,
+    //     Jumping,
+    //     Flying
+    // }
 }

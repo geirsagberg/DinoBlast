@@ -15,7 +15,6 @@ namespace BunnyLand.DesktopGL.Enums
         [Key(1)] public bool Changed { get; }
 
         [IgnoreMember] public bool JustPressed => Pressed & Changed;
-
         [IgnoreMember] public bool JustReleased => Changed & !Pressed;
     }
 }
