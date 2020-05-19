@@ -1,14 +1,18 @@
 ﻿using System;
+using MessagePack;
 
 namespace BunnyLand.DesktopGL.Components
 {
+    [MessagePackObject]
     public class Emitter
     {
-        public TimeSpan EmitInterval { get; set; }
-        public bool IsEmitting { get; set; }
-        public TimeSpan TimeSinceLastEmit { get; set; }
+        [Key(0)] public TimeSpan EmitInterval { get; set; }
 
-        public EmitterType EmitterType { get; set; }
+        [Key(1)] public bool IsEmitting { get; set; }
+
+        [Key(2)] public TimeSpan TimeSinceLastEmit { get; set; }
+
+        [Key(3)] public EmitterType EmitterType { get; set; }
     }
 
     public enum EmitterType

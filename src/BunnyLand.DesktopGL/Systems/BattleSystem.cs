@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using BunnyLand.DesktopGL.Components;
 using BunnyLand.DesktopGL.Extensions;
@@ -45,23 +46,21 @@ namespace BunnyLand.DesktopGL.Systems
 
             notificationHandlers = new Dictionary<Type, BoundMethod> {
                 { typeof(ResetWorldMessage), new Action<ResetWorldMessage>(HandleResetWorld).Method.Bind() },
-                { typeof(UpdateGameMessage), new Action<UpdateGameMessage>(HandleUpdateGame).Method.Bind() },
+                // { typeof(UpdateGameMessage), new Action<UpdateGameMessage>(HandleUpdateGame).Method.Bind() },
                 { typeof(PlayerJoinedMessage), new Action<PlayerJoinedMessage>(HandlePlayerJoined).Method.Bind() },
                 { typeof(PlayerLeftMessage), new Action<PlayerLeftMessage>(HandlePlayerLeft).Method.Bind() },
                 { typeof(RespawnPlayerMessage), new Action<RespawnPlayerMessage>(HandleRespawnPlayer).Method.Bind() },
-                { typeof(ReceivedInputsMessage), new Action<ReceivedInputsMessage>(HandleReceivedInputs).Method.Bind()}
+                { typeof(ReceivedInputMessage), new Action<ReceivedInputMessage>(HandleReceivedInputs).Method.Bind()}
             };
 
             messageHub.SubscribeMany(HandleNewMessage, notificationHandlers);
         }
 
-        private void HandleReceivedInputs(ReceivedInputsMessage msg)
+        private void HandleReceivedInputs(ReceivedInputMessage msg)
         {
-            foreach (var (playerNumber, input) in msg.InputsByPlayerNumber)
-            {
-                if (entitiesByPlayerNumber.TryGetValue(playerNumber, out var entity)) {
-                    GetEntity(entity).Attach(input);
-                }
+            if (entitiesByPlayerNumber.TryGetValue(msg.PlayerNumber, out var entity)) {
+                msg.Input.CurrentFrame = sharedContext.FrameCounter;
+                GetEntity(entity).Attach(msg.Input);
             }
         }
 
@@ -219,6 +218,10 @@ namespace BunnyLand.DesktopGL.Systems
                 entity.Attach(playerInput);
             if (gameStateComponents.PlayerStates.TryGetValue(serializableId, out var playerState))
                 entity.Attach(playerState);
+            if (gameStateComponents.Emitters.TryGetValue(serializableId, out var emitter))
+                entity.Attach(emitter);
+            if (gameStateComponents.Lifetimes.TryGetValue(serializableId, out var lifetime))
+                entity.Attach(lifetime);
         }
 
         public void RespawnPlayer(byte playerNumber)

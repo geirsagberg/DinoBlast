@@ -85,8 +85,6 @@ namespace BunnyLand.DesktopGL.Systems
 
         public override void Process(GameTime gameTime, int entityId)
         {
-
-
             var elapsedTicks = gameTime.GetElapsedTicks(variables);
 
             bodyMapper.TryGet(entityId).IfSome(body => {
@@ -120,7 +118,7 @@ namespace BunnyLand.DesktopGL.Systems
                             var otherBody = bodyMapper.Get(other);
                             switch (body.ColliderType) {
                                 case ColliderTypes.Player when otherBody.ColliderType == ColliderTypes.Static:
-                                    transform.Position += penetrationVector;
+                                    // transform.Position += penetrationVector;
                                     movable.Velocity += penetrationVector / elapsedTicks;
                                     break;
                                 case ColliderTypes.Projectile:

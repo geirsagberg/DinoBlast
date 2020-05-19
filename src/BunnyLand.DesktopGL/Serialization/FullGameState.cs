@@ -42,6 +42,8 @@ namespace BunnyLand.DesktopGL.Serialization
             var levelMapper = componentManager.GetMapper<Level>();
             var playerInputMapper = componentManager.GetMapper<PlayerInput>();
             var playerStateMapper = componentManager.GetMapper<PlayerState>();
+            var emitterMapper = componentManager.GetMapper<Emitter>();
+            var lifetimeMapper = componentManager.GetMapper<Lifetime>();
 
             var serializableIds = entities.Select(e => (entityId: e, serializableId: serializableMapper.Get(e).Id)).ToList();
             var transforms = new Dictionary<int, SerializableTransform>();
@@ -55,6 +57,8 @@ namespace BunnyLand.DesktopGL.Serialization
             var levels = new Dictionary<int, Level>();
             var playerInputs = new Dictionary<int, PlayerInput>();
             var playerStates = new Dictionary<int, PlayerState>();
+            var emitters = new Dictionary<int, Emitter>();
+            var lifetimes = new Dictionary<int, Lifetime>();
 
             foreach (var (entityId, serializableId) in serializableIds) {
                 if (transformMapper.Get(entityId) is { } transform2)
@@ -80,11 +84,15 @@ namespace BunnyLand.DesktopGL.Serialization
                     playerInputs[serializableId] = playerInput;
                 if (playerStateMapper.Get(entityId) is {} playerState)
                     playerStates[serializableId] = playerState;
+                if (emitterMapper.Get(entityId) is {} emitter)
+                    emitters[serializableId] = emitter;
+                if (lifetimeMapper.Get(entityId) is {} lifetime)
+                    lifetimes[serializableId] = lifetime;
             }
 
             var serializableComponents = new SerializableComponents(serializableIds.Select(t => t.serializableId).ToHashSet(), transforms, movables,
                 spriteInfos,
-                collisionBodies, damagings, gravityFields, gravityPoints, healths, playerInputs, levels, playerStates);
+                collisionBodies, damagings, gravityFields, gravityPoints, healths, playerInputs, levels, playerStates, emitters, lifetimes);
             return new FullGameState(frameCounter, serializableComponents, utcNow, resumeAt);
         }
     }

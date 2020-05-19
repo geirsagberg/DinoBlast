@@ -5,6 +5,7 @@ using System.Linq;
 using BunnyLand.DesktopGL.Components;
 using BunnyLand.DesktopGL.Enums;
 using BunnyLand.DesktopGL.Extensions;
+using BunnyLand.DesktopGL.Models;
 using BunnyLand.DesktopGL.Resources;
 using LanguageExt;
 using Microsoft.Xna.Framework;
@@ -16,7 +17,6 @@ using MonoGame.Extended.Entities;
 using MonoGame.Extended.Entities.Systems;
 using MonoGame.Extended.Sprites;
 using MonoGame.Extended.TextureAtlases;
-using PlayerState = BunnyLand.DesktopGL.Components.PlayerState;
 
 namespace BunnyLand.DesktopGL.Systems
 {
@@ -25,20 +25,23 @@ namespace BunnyLand.DesktopGL.Systems
         private readonly BitmapFont font;
 
         private readonly LinkedList<int> fpsList = new LinkedList<int>();
+        private readonly SharedContext sharedContext;
         private readonly SpriteBatch spriteBatch;
 
         private readonly ConcurrentDictionary<int, Sprite> spriteByEntity = new ConcurrentDictionary<int, Sprite>();
         private readonly Textures textures;
         private readonly Variables variables;
         private ComponentMapper<CollisionBody> collisionMapper = null!;
+
+        private int entitiesCount;
         private ComponentMapper<Health> healthMapper = null!;
+        private ComponentMapper<PlayerInput> inputMapper = null!;
         private ComponentMapper<Level> levelMapper = null!;
         private ComponentMapper<Movable> movableMapper = null!;
         private ComponentMapper<PlayerState> playerMapper = null!;
         private ComponentMapper<SolidColor> solidColorMapper = null!;
         private ComponentMapper<SpriteInfo> spriteMapper = null!;
         private ComponentMapper<Transform2> transformMapper = null!;
-        private ComponentMapper<PlayerInput> inputMapper = null!;
 
         public Option<Level> Level { get; set; }
 
@@ -46,13 +49,15 @@ namespace BunnyLand.DesktopGL.Systems
 
         public Option<PlayerState> Player { get; set; }
 
-        public RenderSystem(SpriteBatch spriteBatch, ContentManager contentManager, Variables variables, Textures textures) : base(Aspect
-            .All(typeof(Transform2))
-            .One(typeof(SpriteInfo), typeof(SolidColor)))
+        public RenderSystem(SpriteBatch spriteBatch, ContentManager contentManager, Variables variables, Textures textures, SharedContext sharedContext) : base(
+            Aspect
+                .All(typeof(Transform2))
+                .One(typeof(SpriteInfo), typeof(SolidColor)))
         {
             this.spriteBatch = spriteBatch;
             this.variables = variables;
             this.textures = textures;
+            this.sharedContext = sharedContext;
             font = contentManager.Load<BitmapFont>("Fonts/bryndan-medium");
         }
 
@@ -73,6 +78,8 @@ namespace BunnyLand.DesktopGL.Systems
         {
             levelMapper.TryGet(entityId).IfSome(level => Level = level);
             playerMapper.TryGet(entityId).IfSome(player => Player = player);
+
+            entitiesCount++;
         }
 
         public override void Draw(GameTime gameTime)
@@ -98,6 +105,12 @@ namespace BunnyLand.DesktopGL.Systems
                     inputMapper.TryGet(entity).IfSome(player => {
                         spriteBatch.DrawLine(transform.Position,
                             transform.Position + player.DirectionalInputs.AimDirection * 100, Color.White);
+
+                        spriteBatch.DrawString(font, $"Aiming: {player.DirectionalInputs.AimDirection}",
+                            new Vector2(1, spriteBatch.GraphicsDevice.Viewport.Height - 70), Color.White);
+                        spriteBatch.DrawString(font, $"Input.CurrentFrame: {player.CurrentFrame}, DirectionalInputs: {player.DirectionalInputsByFrame.Count}",
+                            new Vector2(1, spriteBatch.GraphicsDevice.Viewport.Height - 40),
+                            Color.White);
                     });
                 });
             }
@@ -114,6 +127,10 @@ namespace BunnyLand.DesktopGL.Systems
 
             spriteBatch.DrawString(font, $"IsRunningSlowly: {gameTime.IsRunningSlowly}", new Vector2(1, 90),
                 Color.White);
+
+            spriteBatch.DrawString(font, $"CurrentFrame: {sharedContext.FrameCounter}", new Vector2(1, 120), Color.White);
+
+            spriteBatch.DrawString(font, $"Entities: {entitiesCount}", new Vector2(1, spriteBatch.GraphicsDevice.Viewport.Height - 100), Color.White);
 
             spriteBatch.End();
         }
@@ -146,6 +163,8 @@ namespace BunnyLand.DesktopGL.Systems
         protected override void OnEntityRemoved(int entityId)
         {
             spriteByEntity.Remove(entityId, out _);
+
+            entitiesCount--;
         }
 
         private Sprite CreateSprite(SpriteInfo spriteInfo) => spriteInfo.SpriteType switch {
@@ -251,6 +270,7 @@ namespace BunnyLand.DesktopGL.Systems
                     spriteBatch.DrawLine(transform.WorldPosition, transform.WorldPosition + collision.penetrationVector,
                         Color.Aquamarine);
                 }
+
 
                 // body.CollisionInfo.IfSome(info => {
                 //     spriteBatch.DrawLine(transform.WorldPosition, transform.WorldPosition + info.PenetrationVector,

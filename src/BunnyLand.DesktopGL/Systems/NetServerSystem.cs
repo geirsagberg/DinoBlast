@@ -7,6 +7,7 @@ using BunnyLand.DesktopGL.Enums;
 using BunnyLand.DesktopGL.Extensions;
 using BunnyLand.DesktopGL.Messages;
 using BunnyLand.DesktopGL.Models;
+using BunnyLand.DesktopGL.NetMessages;
 using BunnyLand.DesktopGL.Serialization;
 using BunnyLand.DesktopGL.Services;
 using LiteNetLib;
@@ -20,8 +21,6 @@ namespace BunnyLand.DesktopGL.Systems
     public class NetServerSystem : EntityUpdateSystem
     {
         private const int LogBroadcastedBytesEveryNthFrame = 60;
-
-        private const int WaitForNewPlayerThisManyFrames = 10;
 
         private readonly int[] broadcastedBytes = new int[LogBroadcastedBytesEveryNthFrame];
         private readonly GameSettings gameSettings;
@@ -48,7 +47,8 @@ namespace BunnyLand.DesktopGL.Systems
             netServer = new NetManager(serverListener) {
                 UnconnectedMessagesEnabled = true,
                 AutoRecycle = true,
-                BroadcastReceiveEnabled = true
+                BroadcastReceiveEnabled = true,
+                DisconnectTimeout = 60000
             };
 
             messageHub.Handle<StartServerRequest, bool>(HandleStartServer);
@@ -60,8 +60,11 @@ namespace BunnyLand.DesktopGL.Systems
         {
             if (netServer.IsRunning) {
                 var writer = new NetDataWriter();
-                writer.Put(updatedMessage, serializer);
-                netServer.SendToAll(writer, DeliveryMethod.Sequenced);
+                foreach (var (playerNumber, input) in updatedMessage.InputsByPlayerNumber) {
+                    writer.Put(new InputUpdateNetMessage(playerNumber, input), serializer);
+                    netServer.SendToAll(writer, DeliveryMethod.Sequenced);
+                    writer.Reset();
+                }
             }
         }
 

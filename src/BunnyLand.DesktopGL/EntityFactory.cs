@@ -57,12 +57,14 @@ namespace BunnyLand.DesktopGL
 
         public Entity CreateLevel(Entity entity, float width, float height)
         {
+            entity.Attach(new Serializable(entity.Id));
             entity.Attach(new Level(new RectangleF(0, 0, width, height)));
             return entity;
         }
 
         public Entity CreateBlock(Entity entity, RectangleF rectangleF)
         {
+            entity.Attach(new Serializable(entity.Id));
             var transform = new Transform2(rectangleF.Position);
             entity.Attach(transform);
             entity.Attach(new CollisionBody(new Rectangle(rectangleF.Width, rectangleF.Height), rectangleF.Position, ColliderTypes.Static,

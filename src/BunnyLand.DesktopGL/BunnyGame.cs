@@ -110,8 +110,8 @@ namespace BunnyLand.DesktopGL
             .AddSystemService<GravitySystem>()
             .AddSystemService<PhysicsSystem>()
             .AddSystemService<CollisionSystem>()
-            .AddSystemService<RenderSystem>()
             .AddSystemService<BattleSystem>()
+            .AddSystemService<RenderSystem>()
             .Build();
 
         private T GetService<T>() => Services.GetRequiredService<T>();

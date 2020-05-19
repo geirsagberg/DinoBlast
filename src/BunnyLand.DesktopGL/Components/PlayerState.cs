@@ -10,13 +10,15 @@ namespace BunnyLand.DesktopGL.Components
     {
         [Key(0)] public byte PlayerNumber { get; }
 
+        [Key(1)] public bool IsBraking { get; set; } = true;
+
         [IgnoreMember] public Option<PlayerIndex> LocalPlayerIndex { get; set; }
 
         [IgnoreMember] public StandingOn StandingOn { get; set; }
 
         [IgnoreMember] public bool IsLocal => LocalPlayerIndex.IsSome;
 
-        [IgnoreMember] public bool IsBraking { get; set; } = true;
+
 
         // [IgnoreMember]
         // public Option<(int, PlayerIndex)> PeerIdAndRemotePlayerIndex { get; set; }

@@ -37,11 +37,9 @@ namespace BunnyLand.DesktopGL.Systems
                     emitter.EmitInterval = TimeSpan.FromSeconds(variables.Global[GlobalVariable.FiringInterval]);
                 });
                 playerMapper.TryGet(entityId).IfSome(state => {
-
                     if (input.PlayerKeys[PlayerKey.ToggleBrake].JustPressed) {
                         state.IsBraking = !state.IsBraking;
                     }
-
                     state.IsBoosting = input.PlayerKeys[PlayerKey.Jump].Pressed;
                 });
             });

@@ -1,8 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
 using BunnyLand.DesktopGL;
 using BunnyLand.DesktopGL.Components;
-using BunnyLand.DesktopGL.Messages;
+using BunnyLand.DesktopGL.NetMessages;
 using BunnyLand.DesktopGL.Serialization;
 using FluentAssertions;
 using LiteNetLib.Utils;
@@ -44,16 +43,13 @@ namespace BunnyLand.Tests
         }
 
         [Fact]
-        public void Can_serialize_and_deserialize_InputsUpdatedMessage()
+        public void Can_serialize_and_deserialize_InputUpdateNetMessage()
         {
-            var msg = new InputsUpdatedMessage(new Dictionary<byte, PlayerInput> {
-                { 1, new PlayerInput() }
-            });
+            var msg = new InputUpdateNetMessage(1, new PlayerInput());
             var serializer = new Serializer();
 
             var bytes = serializer.Serialize(msg);
-            var deserialized = serializer.Deserialize<InputsUpdatedMessage>(bytes);
-
+            var deserialized = serializer.Deserialize<InputUpdateNetMessage>(bytes);
 
             deserialized.Should().BeEquivalentTo(msg);
         }

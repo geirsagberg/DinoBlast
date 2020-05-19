@@ -65,8 +65,4 @@
     <ProjectReference Include="..\..\MonoGame.Extended\Source\MonoGame.Extended\MonoGame.Extended.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="NetMessages" />
-  </ItemGroup>
-
 </Project>

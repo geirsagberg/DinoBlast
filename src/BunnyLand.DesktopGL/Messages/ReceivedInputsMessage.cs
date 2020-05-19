@@ -1,15 +1,16 @@
-﻿using System.Collections.Generic;
-using BunnyLand.DesktopGL.Components;
+﻿using BunnyLand.DesktopGL.Components;
 
 namespace BunnyLand.DesktopGL.Messages
 {
-    internal class ReceivedInputsMessage : INotification
+    internal class ReceivedInputMessage : INotification
     {
-        public Dictionary<byte, PlayerInput> InputsByPlayerNumber { get; }
+        public byte PlayerNumber { get; }
+        public PlayerInput Input { get; }
 
-        public ReceivedInputsMessage(Dictionary<byte, PlayerInput> inputsByPlayerNumber)
+        public ReceivedInputMessage(byte playerNumber, PlayerInput input)
         {
-            InputsByPlayerNumber = inputsByPlayerNumber;
+            PlayerNumber = playerNumber;
+            Input = input;
         }
     }
 }

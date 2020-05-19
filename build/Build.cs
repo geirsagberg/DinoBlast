@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using System.IO;
 using BunnyLand.ResourceGenerator;
 using Nuke.Common;
@@ -16,19 +17,14 @@ using static Nuke.Common.Tools.DotNet.DotNetTasks;
 [UnsetVisualStudioEnvironmentVariables]
 class Build : NukeBuild
 {
-    /// Support plugins are available for:
-    /// - JetBrains ReSharper        https://nuke.build/resharper
-    /// - JetBrains Rider            https://nuke.build/rider
-    /// - Microsoft VisualStudio     https://nuke.build/visualstudio
-    /// - Microsoft VSCode           https://nuke.build/vscode
-    public static int Main() => Execute<Build>(x => x.Compile);
+    readonly string BunnyLandDesktopGLPath = "BunnyLand.DesktopGL";
 
     [Parameter("Configuration to build - Default is 'Debug' (local) or 'Release' (server)")]
     readonly Configuration Configuration = IsLocalBuild ? Configuration.Debug : Configuration.Release;
 
-    [Solution] readonly Solution Solution;
     [GitRepository] readonly GitRepository GitRepository;
-    readonly string BunnyLandDesktopGLPath = "BunnyLand.DesktopGL";
+
+    [Solution] readonly Solution Solution;
 
     AbsolutePath SourceDirectory => RootDirectory / "src";
     AbsolutePath TestsDirectory => RootDirectory / "tests";
@@ -57,6 +53,13 @@ class Build : NukeBuild
                 .EnableNoRestore());
         });
 
+    Target StartTwo => _ => _
+        .DependsOn(Compile)
+        .Executes(() => {
+            Process.Start(DotNetPath, "run --no-build --project " + BunnyLandProjectRoot);
+            Process.Start(DotNetPath, "run --no-build --project " + BunnyLandProjectRoot);
+        });
+
     Target GenerateResources => _ => _
         .Executes(() => {
             var contentPath = BunnyLandProjectRoot / "Content";
@@ -82,4 +85,11 @@ class Build : NukeBuild
         });
 
     AbsolutePath BunnyLandProjectRoot => Solution.GetProject(BunnyLandDesktopGLPath)?.Directory;
+
+    /// Support plugins are available for:
+    /// - JetBrains ReSharper        https://nuke.build/resharper
+    /// - JetBrains Rider            https://nuke.build/rider
+    /// - Microsoft VisualStudio     https://nuke.build/visualstudio
+    /// - Microsoft VSCode           https://nuke.build/vscode
+    public static int Main() => Execute<Build>(x => x.Compile);
 }

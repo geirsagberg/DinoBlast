@@ -19,11 +19,14 @@ namespace BunnyLand.DesktopGL.Serialization
         [Key(9)] public Dictionary<int, PlayerInput> PlayerInputs { get; }
         [Key(10)] public Dictionary<int, Level> Levels { get; }
         [Key(11)] public Dictionary<int, PlayerState> PlayerStates { get; }
+        [Key(12)] public Dictionary<int, Emitter> Emitters { get; }
+        [Key(13)] public Dictionary<int, Lifetime> Lifetimes { get; }
 
         public SerializableComponents(HashSet<int> serializableIds, Dictionary<int, SerializableTransform> transforms,
             Dictionary<int, Movable> movables, Dictionary<int, SpriteInfo> spriteInfos, Dictionary<int, CollisionBody> collisionBodies,
             Dictionary<int, Damaging> damagings, Dictionary<int, GravityField> gravityFields, Dictionary<int, GravityPoint> gravityPoints,
-            Dictionary<int, Health> healths, Dictionary<int, PlayerInput> playerInputs, Dictionary<int, Level> levels, Dictionary<int, PlayerState> playerStates)
+            Dictionary<int, Health> healths, Dictionary<int, PlayerInput> playerInputs, Dictionary<int, Level> levels,
+            Dictionary<int, PlayerState> playerStates, Dictionary<int, Emitter> emitters, Dictionary<int, Lifetime> lifetimes)
         {
             SerializableIds = serializableIds;
             Transforms = transforms;
@@ -37,6 +40,8 @@ namespace BunnyLand.DesktopGL.Serialization
             PlayerInputs = playerInputs;
             Levels = levels;
             PlayerStates = playerStates;
+            Emitters = emitters;
+            Lifetimes = lifetimes;
         }
     }
 }

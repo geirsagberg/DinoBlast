@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using BunnyLand.DesktopGL.Components;
 using BunnyLand.DesktopGL.Extensions;
@@ -148,6 +149,8 @@ namespace BunnyLand.DesktopGL.Systems
         {
             var state = playerMapper.Get(entityId);
             var input = inputMapper.Get(entityId);
+            Debug.Assert(sharedContext.FrameCounter > 0);
+            input.CurrentFrame = sharedContext.FrameCounter;
 
             state.LocalPlayerIndex.IfSome(playerIndex => {
                 var playerPressedKeys = pressedKeys[playerIndex];
@@ -167,8 +170,6 @@ namespace BunnyLand.DesktopGL.Systems
                         playerPressedKeys);
                 input.DirectionalInputsByFrame[currentFrame] = directionalInputs[playerIndex];
             });
-
-            input.CurrentFrame = sharedContext.FrameCounter;
         }
 
         private static Dictionary<PlayerKey, KeyState> UpdatePlayerKeys(

@@ -4,6 +4,7 @@ using BunnyLand.DesktopGL.Components;
 using BunnyLand.DesktopGL.Enums;
 using BunnyLand.DesktopGL.Messages;
 using BunnyLand.DesktopGL.Models;
+using BunnyLand.DesktopGL.NetMessages;
 using BunnyLand.DesktopGL.Serialization;
 using BunnyLand.DesktopGL.Services;
 using LiteNetLib;
@@ -39,6 +40,7 @@ namespace BunnyLand.DesktopGL.Systems
                 UnconnectedMessagesEnabled = true,
                 AutoRecycle = true,
                 BroadcastReceiveEnabled = true,
+                DisconnectTimeout = 60000
             };
             messageHub.Handle<JoinServerRequest, bool>(HandleJoinServer);
             messageHub.Subscribe<StartServerSearchMessage>(OnStartServerSearch);
@@ -99,8 +101,8 @@ namespace BunnyLand.DesktopGL.Systems
                             break;
                         }
                         case NetMessageType.PlayerInputs: {
-                            var msg = serializer.Deserialize<InputsUpdatedMessage>(reader.GetRemainingBytes());
-                            messageHub.Publish(new ReceivedInputsMessage(msg.InputsByPlayerNumber)).GetAwaiter().GetResult();
+                            var msg = serializer.Deserialize<InputUpdateNetMessage>(reader.GetRemainingBytes());
+                            messageHub.Publish(new ReceivedInputMessage(msg.PlayerNumber, msg.Input)).GetAwaiter().GetResult();
                             break;
                         }
                     }
