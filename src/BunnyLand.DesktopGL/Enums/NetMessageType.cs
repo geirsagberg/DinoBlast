@@ -6,6 +6,7 @@
         ListServersResponse,
         FullGameState,
         FullGameStateAck,
-        PlayerInputs
+        PlayerInputs,
+        JoinGameRequest
     }
 }

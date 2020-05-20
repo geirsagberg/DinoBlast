@@ -1,7 +1,6 @@
 using System;
 using BunnyLand.DesktopGL.Components;
 using BunnyLand.DesktopGL.Models;
-using LanguageExt;
 using Microsoft.Xna.Framework;
 using MonoGame.Extended;
 using MonoGame.Extended.Entities;
@@ -11,8 +10,7 @@ namespace BunnyLand.DesktopGL
 {
     public class EntityFactory
     {
-        public Entity CreatePlayer(Entity entity, Vector2 position, byte playerNumber, Option<PlayerIndex> localPlayerIndex,
-            Option<(int peerId, PlayerIndex remotePlayerIndex)> peerIdAndRemotePlayerIndex = default)
+        public Entity CreatePlayer(Entity entity, Vector2 position, byte playerNumber, PlayerIndex? localPlayerIndex, int? peerId)
         {
             entity.Attach(new Serializable(entity.Id));
             var transform = new Transform2(position);
@@ -23,9 +21,7 @@ namespace BunnyLand.DesktopGL
 
             entity.Attach(new CollisionBody(new Circle(15f), position, ColliderTypes.Player,
                 ColliderTypes.Player | ColliderTypes.Projectile | ColliderTypes.Static));
-            entity.Attach(new PlayerState(playerNumber, localPlayerIndex) {
-                // PeerIdAndRemotePlayerIndex = peerIdAndRemotePlayerIndex
-            });
+            entity.Attach(new PlayerState { PlayerNumber = playerNumber, PeerId = peerId, LocalPlayerIndex = localPlayerIndex });
             entity.Attach(new PlayerInput());
             entity.Attach(new Movable());
             entity.Attach(new Health(100));

@@ -19,16 +19,19 @@ namespace BunnyLand.DesktopGL.Serialization
 
         [Key(3)] public DateTime ResumeAtUtc { get; }
 
-        public FullGameState(int frameCounter, SerializableComponents components, DateTime utcNow, DateTime resumeAtUtc)
+        [Key(4)] public int YourPeerId { get; }
+
+        public FullGameState(int frameCounter, SerializableComponents components, DateTime utcNow, DateTime resumeAtUtc, int yourPeerId)
         {
             FrameCounter = frameCounter;
             Components = components;
             UtcNow = utcNow;
             ResumeAtUtc = resumeAtUtc;
+            YourPeerId = yourPeerId;
         }
 
         public static FullGameState CreateFullGameState(IComponentMapperService componentManager, IEnumerable<int> entities,
-            int frameCounter, DateTime utcNow, DateTime resumeAt)
+            int frameCounter, DateTime utcNow, DateTime resumeAt, int yourPeerId)
         {
             var serializableMapper = componentManager.GetMapper<Serializable>();
             var transformMapper = componentManager.GetMapper<Transform2>();
@@ -93,7 +96,7 @@ namespace BunnyLand.DesktopGL.Serialization
             var serializableComponents = new SerializableComponents(serializableIds.Select(t => t.serializableId).ToHashSet(), transforms, movables,
                 spriteInfos,
                 collisionBodies, damagings, gravityFields, gravityPoints, healths, playerInputs, levels, playerStates, emitters, lifetimes);
-            return new FullGameState(frameCounter, serializableComponents, utcNow, resumeAt);
+            return new FullGameState(frameCounter, serializableComponents, utcNow, resumeAt, yourPeerId);
         }
     }
 }

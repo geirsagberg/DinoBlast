@@ -15,6 +15,7 @@ namespace BunnyLand.DesktopGL
 
         public override void Update(GameTime gameTime)
         {
+
             foreach (var system in UpdateSystems) {
                 if (system is IPausable && sharedContext.IsPaused)
                     continue;

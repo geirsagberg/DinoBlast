@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using BunnyLand.DesktopGL.Components;
 using BunnyLand.DesktopGL.Extensions;
@@ -16,7 +15,7 @@ using KeyState = BunnyLand.DesktopGL.Enums.KeyState;
 
 namespace BunnyLand.DesktopGL.Systems
 {
-    public class InputSystem : EntityProcessingSystem, IPausable
+    public class InputSystem : EntityProcessingSystem
     {
         private const float ThumbStickDeadZone = 0.1f;
         private readonly IButtonMap buttonMap;
@@ -149,7 +148,6 @@ namespace BunnyLand.DesktopGL.Systems
         {
             var state = playerMapper.Get(entityId);
             var input = inputMapper.Get(entityId);
-            Debug.Assert(sharedContext.FrameCounter > 0);
             input.CurrentFrame = sharedContext.FrameCounter;
 
             state.LocalPlayerIndex.IfSome(playerIndex => {

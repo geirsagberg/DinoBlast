@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using BunnyLand.DesktopGL.Enums;
 using BunnyLand.DesktopGL.Extensions;
@@ -33,5 +32,7 @@ namespace BunnyLand.DesktopGL.Components
         {
             return EnumHelper.GetValues<PlayerKey>().ToDictionary(k => k, _ => new KeyState());
         }
+
+        public bool IsUpToDate() => PlayerKeysByFrame.Keys.DefaultIfEmpty(0).Max() >= CurrentFrame;
     }
 }

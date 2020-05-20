@@ -52,6 +52,7 @@ namespace BunnyLand.DesktopGL.Components
             var otherBounds = otherBody.Bounds;
             if (otherBounds.Intersects(bounds)) return otherBounds.CalculatePenetrationVector(bounds);
 
+            return Vector2.Zero;
             // Swept AABB / Circle algorithm
 
             var velocity = Position - OldPosition;

@@ -21,10 +21,10 @@ namespace BunnyLand.Tests
             var entityFactory = new EntityFactory();
             var serializer = new Serializer();
 
-            entityFactory.CreatePlayer(entityManager.Create(), new Vector2(200, 400), 1, PlayerIndex.One);
-            entityFactory.CreatePlayer(entityManager.Create(), new Vector2(300, 400), 2, PlayerIndex.Two);
+            entityFactory.CreatePlayer(entityManager.Create(), new Vector2(200, 400), 1, PlayerIndex.One, default);
+            entityFactory.CreatePlayer(entityManager.Create(), new Vector2(300, 400), 2, PlayerIndex.Two, default);
 
-            var state = FullGameState.CreateFullGameState(componentManager, entityManager.Entities, 1, DateTime.UtcNow, DateTime.UtcNow.AddSeconds(1));
+            var state = FullGameState.CreateFullGameState(componentManager, entityManager.Entities, 1, DateTime.UtcNow, DateTime.UtcNow.AddSeconds(1), 1);
 
             var writer = new NetDataWriter();
 

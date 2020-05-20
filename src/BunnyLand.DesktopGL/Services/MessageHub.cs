@@ -17,7 +17,7 @@ namespace BunnyLand.DesktopGL.Services
         private IDictionary<Type, List<Delegate>> NotificationHandlers => notificationHandlers;
         private IDictionary<Type, Delegate> RequestHandlers => requestHandlers;
 
-        public async Task Publish<T>(T notification) where T : INotification
+        public void Publish<T>(T notification) where T : INotification
         {
             if (NotificationHandlers.TryGetValue(typeof(T), out var handlers)) {
                 foreach (var handler in handlers) {
@@ -26,7 +26,7 @@ namespace BunnyLand.DesktopGL.Services
                             action(notification);
                             break;
                         case Func<T, Task> func:
-                            await func(notification);
+                            func(notification).GetAwaiter().GetResult();
                             break;
                     }
                 }

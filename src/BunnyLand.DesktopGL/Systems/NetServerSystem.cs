@@ -25,12 +25,12 @@ namespace BunnyLand.DesktopGL.Systems
         private readonly int[] broadcastedBytes = new int[LogBroadcastedBytesEveryNthFrame];
         private readonly GameSettings gameSettings;
 
-        private readonly HashSet<int> joiningPeers = new HashSet<int>();
-
         private readonly MessageHub messageHub;
         private readonly NetManager netServer;
         private readonly Serializer serializer;
         private readonly SharedContext sharedContext;
+
+        private readonly Dictionary<NetPeer, PeerStatus> statusByPeer = new Dictionary<NetPeer, PeerStatus>();
 
         private byte broadcastedBytesCounter;
         private IComponentMapperService componentMapperService = null!;
@@ -85,14 +85,24 @@ namespace BunnyLand.DesktopGL.Systems
         {
             var serverListener = new EventBasedNetListener();
             serverListener.ConnectionRequestEvent += request => { request.Accept(); };
-            serverListener.PeerConnectedEvent += OnPlayerJoined;
+            serverListener.PeerConnectedEvent += OnPeerConnected;
             serverListener.NetworkReceiveEvent += (peer, reader, method) => {
                 // Console.WriteLine("Server received: {0}", reader.GetString(100));
                 if (reader.TryGetByte(out var b)) {
                     switch ((NetMessageType) b) {
                         case NetMessageType.FullGameStateAck:
-                            joiningPeers.Remove(peer.Id);
+                            statusByPeer[peer] = PeerStatus.Joined;
                             break;
+                        case NetMessageType.JoinGameRequest: {
+                            var msg = serializer.Deserialize<JoinGameNetMessage>(reader.GetRemainingBytes());
+                            OnPlayerJoining(peer, msg.PlayerCount);
+                            break;
+                        }
+                        case NetMessageType.PlayerInputs: {
+                            var msg = serializer.Deserialize<InputUpdateNetMessage>(reader.GetRemainingBytes());
+                            messageHub.Publish(new ReceivedInputMessage(msg.PlayerNumber, msg.Input));
+                            break;
+                        }
                     }
                 }
             };
@@ -115,36 +125,51 @@ namespace BunnyLand.DesktopGL.Systems
             return serverListener;
         }
 
-        private void OnPlayerJoined(NetPeer peer)
+        private void OnPeerConnected(NetPeer peer)
         {
             Console.WriteLine("Peer connected: {0}", peer.EndPoint);
-            Console.WriteLine("Sending initial world data");
+        }
 
-            var utcNow = DateTime.UtcNow;
+        private void OnPlayerJoining(NetPeer peer, byte playerCount)
+        {
+            statusByPeer[peer] = PeerStatus.Initial;
+
             sharedContext.IsPaused = true;
 
+            messageHub.Publish(new PlayerJoinedMessage(peer.Id, playerCount));
+        }
+
+
+        private void SendWorldData(NetPeer peer)
+        {
+            var utcNow = DateTime.UtcNow;
             var resumeIn = TimeSpan.FromSeconds(1);
-            var resumeAtUtc = utcNow.AddSeconds(1);
+            var resumeAtUtc = utcNow.Add(resumeIn);
             sharedContext.ResumeAtGameTime = gameTime.TotalGameTime + resumeIn;
 
-            joiningPeers.Add(peer.Id);
 
-            var state = FullGameState.CreateFullGameState(componentMapperService, ActiveEntities, sharedContext.FrameCounter, utcNow, resumeAtUtc);
+            Console.WriteLine("Sending initial world data");
+            var state = FullGameState.CreateFullGameState(componentMapperService, ActiveEntities, sharedContext.FrameCounter, utcNow, resumeAtUtc, peer.Id);
             var bytes = serializer.Serialize(state);
             var writer = new NetDataWriter();
             writer.Put(NetMessageType.FullGameState, bytes);
             peer.Send(writer, DeliveryMethod.ReliableOrdered);
-
-            // messageHub.Publish(new PlayerJoinedMessage(peer.Id));
+            statusByPeer[peer] = PeerStatus.WorldDataSent;
         }
 
         public override void Update(GameTime gameTime)
         {
             this.gameTime = gameTime;
             // BroadcastUpdate();
+
+            foreach (var peer in statusByPeer.Where(kvp => kvp.Value == PeerStatus.Initial).Select(kvp => kvp.Key).ToList()) {
+                SendWorldData(peer);
+            }
+
             netServer.PollEvents();
 
-            if (sharedContext.IsPaused && sharedContext.ResumeAtGameTime < gameTime.TotalGameTime && joiningPeers.Any()) {
+            if (sharedContext.IsPaused && gameTime.TotalGameTime > sharedContext.ResumeAtGameTime
+                && statusByPeer.Values.Any(v => v == PeerStatus.WorldDataSent)) {
                 throw new Exception("Peers still joining; aborting to avoid desync");
             }
         }
@@ -173,5 +198,12 @@ namespace BunnyLand.DesktopGL.Systems
         {
             componentMapperService = mapperService;
         }
+    }
+
+    internal enum PeerStatus
+    {
+        Initial,
+        WorldDataSent,
+        Joined
     }
 }
