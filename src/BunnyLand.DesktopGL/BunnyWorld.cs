@@ -1,4 +1,5 @@
 ﻿using BunnyLand.DesktopGL.Models;
+using BunnyLand.DesktopGL.Utils;
 using Microsoft.Xna.Framework;
 using MonoGame.Extended.Entities;
 
@@ -7,15 +8,16 @@ namespace BunnyLand.DesktopGL
     public class BunnyWorld : World
     {
         private readonly SharedContext sharedContext;
+        private readonly DebugLogger debugLogger;
 
-        protected internal BunnyWorld(SharedContext sharedContext)
+        public BunnyWorld(SharedContext sharedContext, DebugLogger debugLogger)
         {
             this.sharedContext = sharedContext;
+            this.debugLogger = debugLogger;
         }
 
         public override void Update(GameTime gameTime)
         {
-
             foreach (var system in UpdateSystems) {
                 if (system is IPausable && sharedContext.IsPaused)
                     continue;
@@ -28,6 +30,8 @@ namespace BunnyLand.DesktopGL
                 sharedContext.FrameCounter++;
             if (sharedContext.IsPaused && sharedContext.ResumeAtGameTime < gameTime.TotalGameTime)
                 sharedContext.IsPaused = false;
+
+            debugLogger.Flush();
         }
     }
 }

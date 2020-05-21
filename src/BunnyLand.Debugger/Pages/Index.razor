@@ -1,0 +1,55 @@
+﻿@page "/"
+@using System.IO
+@using System.IO.Pipes
+
+@inject NamedPipeServerStream NamedPipeServerStream
+
+@functions {
+  readonly List<string> lines = new List<string>();
+
+  protected override void OnInitialized()
+  {
+    Task.Run(async () => {
+      var streamReader = new StreamReader(NamedPipeServerStream);
+      while (NamedPipeServerStream.IsConnected) {
+        var line = await streamReader.ReadLineAsync();
+        switch (line) {
+          case "START":
+            lock (locker) {
+              lines.Clear();
+            }
+            break;
+          case "END":
+            lock (locker) {
+              json = string.Join('\n', lines);
+            }
+            if (!isWriting)
+              await InvokeAsync(StateHasChanged);
+            break;
+          default:
+            lock (locker)
+              lines.Add(line);
+            break;
+        }
+      }
+    });
+  }
+
+  private readonly object locker = new object();
+
+  private bool isWriting;
+
+  private string json = "";
+}
+
+<h1>BunnyLand Debugger</h1>
+
+<pre style="line-height: 1">
+@{
+  lock (locker) {
+    isWriting = true;
+    @json
+    isWriting = false;
+  }
+}
+</pre>

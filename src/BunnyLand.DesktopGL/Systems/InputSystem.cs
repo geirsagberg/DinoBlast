@@ -4,6 +4,7 @@ using System.Linq;
 using BunnyLand.DesktopGL.Components;
 using BunnyLand.DesktopGL.Extensions;
 using BunnyLand.DesktopGL.Models;
+using BunnyLand.DesktopGL.Utils;
 using LanguageExt;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
@@ -33,13 +34,14 @@ namespace BunnyLand.DesktopGL.Systems
             .Cast<PlayerIndex>().ToDictionary(i => i, _ => new System.Collections.Generic.HashSet<PlayerKey>());
 
         private readonly SharedContext sharedContext;
+        private readonly DebugLogger debugLogger;
 
         private ComponentMapper<PlayerInput> inputMapper = null!;
         private ComponentMapper<PlayerState> playerMapper = null!;
         private ComponentMapper<Transform2> transformMapper = null!;
 
         public InputSystem(MouseListener mouseListener, KeyboardListener keyboardListener,
-            IEnumerable<GamePadListener> gamePadListeners, IButtonMap buttonMap, SharedContext sharedContext
+            IEnumerable<GamePadListener> gamePadListeners, IButtonMap buttonMap, SharedContext sharedContext, DebugLogger debugLogger
         ) : base(
             Aspect.All(typeof(PlayerState), typeof(PlayerInput)))
         {
@@ -47,6 +49,7 @@ namespace BunnyLand.DesktopGL.Systems
             this.gamePadListeners = gamePadListeners.ToDictionary(l => l.PlayerIndex);
             this.buttonMap = buttonMap;
             this.sharedContext = sharedContext;
+            this.debugLogger = debugLogger;
 
             mouseListener.MouseMoved += OnMouseMoved;
             mouseListener.MouseDown += OnMouseDown;
@@ -170,6 +173,8 @@ namespace BunnyLand.DesktopGL.Systems
                 if (!input.DirectionalInputsByFrame.ContainsKey(currentFrame))
                     input.DirectionalInputsByFrame[currentFrame] = directionalInputs[playerIndex];
             });
+
+            debugLogger.AddObject(input);
         }
 
         private static Dictionary<PlayerKey, KeyState> UpdatePlayerKeys(

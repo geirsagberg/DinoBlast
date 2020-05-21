@@ -1,16 +1,17 @@
-﻿using System.Collections.Generic;
-using BunnyLand.DesktopGL.Models;
+﻿using System;
+using System.Collections.Generic;
+using Microsoft.Extensions.DependencyInjection;
 using MonoGame.Extended.Entities.Systems;
 
 namespace BunnyLand.DesktopGL
 {
     public class BunnyWorldBuilder
     {
-        private readonly SharedContext sharedContext;
+        private readonly IServiceProvider serviceProvider;
 
-        public BunnyWorldBuilder(SharedContext sharedContext)
+        public BunnyWorldBuilder(IServiceProvider serviceProvider)
         {
-            this.sharedContext = sharedContext;
+            this.serviceProvider = serviceProvider;
         }
 
         private readonly List<ISystem> _systems = new List<ISystem>();
@@ -23,7 +24,7 @@ namespace BunnyLand.DesktopGL
 
         public BunnyWorld Build()
         {
-            var world = new BunnyWorld(sharedContext);
+            var world = serviceProvider.GetService<BunnyWorld>();
 
             foreach (var system in _systems)
                 world.RegisterSystem(system);
