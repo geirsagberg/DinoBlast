@@ -163,10 +163,12 @@ namespace BunnyLand.DesktopGL.Systems
                     input.DirectionalInputsByFrame.Remove(currentFrame - PlayerInput.InitialFrameBuffer);
                 }
 
-                input.PlayerKeysByFrame[currentFrame] =
-                    UpdatePlayerKeys(input.PlayerKeysByFrame.TryGetValue(currentFrame - 1, out var keys) ? keys : PlayerInput.DefaultPlayerKeys(),
-                        playerPressedKeys);
-                input.DirectionalInputsByFrame[currentFrame] = directionalInputs[playerIndex];
+                if (!input.PlayerKeysByFrame.ContainsKey(currentFrame))
+                    input.PlayerKeysByFrame[currentFrame] =
+                        UpdatePlayerKeys(input.PlayerKeysByFrame.TryGetValue(currentFrame - 1, out var keys) ? keys : PlayerInput.DefaultPlayerKeys(),
+                            playerPressedKeys);
+                if (!input.DirectionalInputsByFrame.ContainsKey(currentFrame))
+                    input.DirectionalInputsByFrame[currentFrame] = directionalInputs[playerIndex];
             });
         }
 

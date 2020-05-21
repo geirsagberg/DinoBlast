@@ -22,7 +22,7 @@ namespace BunnyLand.DesktopGL
             {GlobalVariable.BrakePower, 0.1f},
             {GlobalVariable.InertiaRatio, 1f},
             {GlobalVariable.GlobalMaxSpeed, 100f},
-            {GlobalVariable.GameSpeed, 0.5f},
+            {GlobalVariable.GameSpeed, 1f},
             {GlobalVariable.DebugVectorMultiplier, 10f},
             {GlobalVariable.BulletSpeed, 20f},
             {GlobalVariable.FiringInterval, 0.2f},
