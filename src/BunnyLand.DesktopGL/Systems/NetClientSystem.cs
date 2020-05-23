@@ -66,7 +66,7 @@ namespace BunnyLand.DesktopGL.Systems
         {
             joinServerTaskCompletionSource = new TaskCompletionSource<bool>();
             StartClient();
-            joinedServer = netClient.Connect("localhost", gameSettings.ServerPort, "BunnyLand");
+            joinedServer = netClient.Connect(request.EndPoint.Address.ToString(), request.EndPoint.Port, "BunnyLand");
             return joinServerTaskCompletionSource.Task;
         }
 
