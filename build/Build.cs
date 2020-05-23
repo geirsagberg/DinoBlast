@@ -53,6 +53,14 @@ class Build : NukeBuild
                 .EnableNoRestore());
         });
 
+    Target Start => _ => _
+        .DependsOn(Compile)
+        .Executes(() => {
+            DotNetRun(_ => _
+                .EnableNoBuild()
+                .SetProjectFile(BunnyLandProjectRoot));
+        });
+
     Target StartTwo => _ => _
         .DependsOn(Compile)
         .Executes(() => {
