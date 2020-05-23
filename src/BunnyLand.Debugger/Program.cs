@@ -9,13 +9,8 @@ namespace BunnyLand.Debugger
     {
         public static void Main(string[] args)
         {
-            var pipeServer = new NamedPipeServerStream("bunnyland", PipeDirection.InOut, NamedPipeServerStream.MaxAllowedServerInstances,
-                PipeTransmissionMode.Byte, PipeOptions.Asynchronous);
             var host = CreateHostBuilder(args)
-                .ConfigureServices(services => services.AddSingleton(pipeServer))
                 .Build();
-
-            pipeServer.WaitForConnection();
 
             host.Run();
         }

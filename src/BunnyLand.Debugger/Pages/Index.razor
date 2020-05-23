@@ -1,55 +1,42 @@
 ﻿@page "/"
-@using System.IO
-@using System.IO.Pipes
-
-@inject NamedPipeServerStream NamedPipeServerStream
+@inject DebugSink DebugSink
+@implements IDisposable
 
 @functions {
-  readonly List<string> lines = new List<string>();
 
   protected override void OnInitialized()
   {
-    Task.Run(async () => {
-      var streamReader = new StreamReader(NamedPipeServerStream);
-      while (NamedPipeServerStream.IsConnected) {
-        var line = await streamReader.ReadLineAsync();
-        switch (line) {
-          case "START":
-            lock (locker) {
-              lines.Clear();
-            }
-            break;
-          case "END":
-            lock (locker) {
-              json = string.Join('\n', lines);
-            }
-            if (!isWriting)
-              await InvokeAsync(StateHasChanged);
-            break;
-          default:
-            lock (locker)
-              lines.Add(line);
-            break;
-        }
-      }
+    DebugSink.Change += DebugSinkChange;
+  }
+
+  private void DebugSinkChange(Dictionary<int, string> jsons)
+  {
+    InvokeAsync(() =>
+    {
+      this.jsons = jsons;
+      StateHasChanged();
     });
   }
 
-  private readonly object locker = new object();
+  private Dictionary<int, string> jsons = new Dictionary<int, string>();
 
-  private bool isWriting;
+  public void Dispose()
+  {
+    DebugSink.Change -= DebugSinkChange;
+  }
 
-  private string json = "";
 }
+
 
 <h1>BunnyLand Debugger</h1>
 
-<pre style="line-height: 1">
-@{
-  lock (locker) {
-    isWriting = true;
-    @json
-    isWriting = false;
+<div style="display: flex;">
+  @{
+    foreach (var json in jsons.Values)
+    {
+      <pre style="line-height: 1; width: 400px">
+      @json
+      </pre>
+    }
   }
-}
-</pre>
+</div>

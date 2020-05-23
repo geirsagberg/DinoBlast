@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.IO;
 using System.IO.Pipes;
 using System.Threading.Tasks;
@@ -9,10 +10,6 @@ namespace BunnyLand.DesktopGL.Utils
 {
     public class DebugLogger
     {
-        private const int ConnectTimeout = 1000;
-
-        private readonly object _locker = new object();
-
         private readonly ConcurrentQueue<string> objects = new ConcurrentQueue<string>();
         private readonly NamedPipeClientStream pipeClient;
         private readonly StreamWriter writer;
@@ -23,16 +20,6 @@ namespace BunnyLand.DesktopGL.Utils
         {
             pipeClient = new NamedPipeClientStream(".", "bunnyland", PipeDirection.InOut, PipeOptions.Asynchronous);
             writer = new StreamWriter(pipeClient);
-        }
-
-        public bool Connect()
-        {
-            try {
-                pipeClient.Connect(ConnectTimeout);
-                return true;
-            } catch (TimeoutException) {
-                return false;
-            }
         }
 
         public void AddObject(object obj)
@@ -56,6 +43,8 @@ namespace BunnyLand.DesktopGL.Utils
                         }
 
                         await writer.WriteLineAsync("END");
+                    } catch (Exception e) {
+                        Console.WriteLine(e);
                     } finally {
                         isFlushing = false;
                     }
@@ -65,6 +54,12 @@ namespace BunnyLand.DesktopGL.Utils
                 Task.Run(async () => {
                     try {
                         await pipeClient.ConnectAsync();
+                        var reader = new StreamReader(pipeClient);
+                        var line = await reader.ReadLineAsync();
+                        Console.WriteLine(line);
+                        await writer.WriteLineAsync($"Client process {Process.GetCurrentProcess().Id} connected");
+                    } catch (Exception e) {
+                        Console.WriteLine(e);
                     } finally {
                         isConnecting = false;
                     }

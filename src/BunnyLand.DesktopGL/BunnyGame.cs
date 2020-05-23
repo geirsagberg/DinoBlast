@@ -6,7 +6,6 @@ using BunnyLand.DesktopGL.Resources;
 using BunnyLand.DesktopGL.Screens;
 using BunnyLand.DesktopGL.Services;
 using BunnyLand.DesktopGL.Systems;
-using BunnyLand.DesktopGL.Utils;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
@@ -121,8 +120,6 @@ namespace BunnyLand.DesktopGL
         protected override void Initialize()
         {
             InitializeServices();
-
-            GetService<DebugLogger>().Connect();
 
             base.Initialize();
         }
