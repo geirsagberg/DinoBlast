@@ -175,6 +175,23 @@ namespace BunnyLand.DesktopGL.Systems
             });
 
             debugLogger.AddObject(input);
+
+
+            if (!input.IsUpToDate()) {
+                sharedContext.IsPaused = true;
+                sharedContext.IsSyncing = true;
+            }
+        }
+
+        public override void End()
+        {
+            if (sharedContext.IsPaused && sharedContext.IsSyncing && ActiveEntities.All(id => {
+                var entity = GetEntity(id);
+                return entity.Get<PlayerState>().IsLocal || entity.Get<PlayerInput>().IsUpToDate();
+            })) {
+                sharedContext.IsPaused = false;
+                sharedContext.IsSyncing = false;
+            }
         }
 
         private static Dictionary<PlayerKey, KeyState> UpdatePlayerKeys(

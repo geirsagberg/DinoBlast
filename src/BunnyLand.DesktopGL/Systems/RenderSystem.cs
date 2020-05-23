@@ -105,12 +105,6 @@ namespace BunnyLand.DesktopGL.Systems
                     inputMapper.TryGet(entity).IfSome(player => {
                         spriteBatch.DrawLine(transform.Position,
                             transform.Position + player.DirectionalInputs.AimDirection * 100, Color.White);
-
-                        spriteBatch.DrawString(font, $"Aiming: {player.DirectionalInputs.AimDirection}",
-                            new Vector2(1, spriteBatch.GraphicsDevice.Viewport.Height - 70), Color.White);
-                        spriteBatch.DrawString(font, $"Input.CurrentFrame: {player.CurrentFrame}, DirectionalInputs: {player.DirectionalInputsByFrame.Count}",
-                            new Vector2(1, spriteBatch.GraphicsDevice.Viewport.Height - 40),
-                            Color.White);
                     });
                 });
             }
@@ -129,8 +123,6 @@ namespace BunnyLand.DesktopGL.Systems
                 Color.White);
 
             spriteBatch.DrawString(font, $"CurrentFrame: {sharedContext.FrameCounter}", new Vector2(1, 120), Color.White);
-
-            spriteBatch.DrawString(font, $"Entities: {entitiesCount}", new Vector2(1, spriteBatch.GraphicsDevice.Viewport.Height - 100), Color.White);
 
             spriteBatch.End();
         }

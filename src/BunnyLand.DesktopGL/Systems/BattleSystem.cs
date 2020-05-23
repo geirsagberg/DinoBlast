@@ -228,15 +228,6 @@ namespace BunnyLand.DesktopGL.Systems
             }
 
             newMessages.Clear();
-
-
-            if (sharedContext.IsPaused && sharedContext.IsSyncing && entitiesByPlayerNumber.Values.All(id => {
-                var entity = GetEntity(id);
-                return entity.Get<PlayerState>().IsLocal || entity.Get<PlayerInput>().IsUpToDate();
-            })) {
-                sharedContext.IsPaused = false;
-                sharedContext.IsSyncing = false;
-            }
         }
 
         public override void Process(GameTime gameTime, int entityId)
@@ -258,11 +249,6 @@ namespace BunnyLand.DesktopGL.Systems
                         }
                     }
                 }
-            }
-
-            if (entity.Get<PlayerInput>() is {} input && !input.IsUpToDate()) {
-                sharedContext.IsPaused = true;
-                sharedContext.IsSyncing = true;
             }
         }
 
