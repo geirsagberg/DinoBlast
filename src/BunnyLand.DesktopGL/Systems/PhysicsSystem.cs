@@ -63,7 +63,10 @@ namespace BunnyLand.DesktopGL.Systems
                 const float planetJumpVelocity = 10f;
 
                 if (playerState.IsBoosting) {
-                    movable.Velocity = newNormal.NormalizedCopy() * planetJumpVelocity;
+                    // Jump off planet
+                    var playerInput = GetEntity(entityId).Get<PlayerInput>();
+
+                    movable.Velocity = playerInput.DirectionalInputs.AimDirection.NormalizedCopy() * planetJumpVelocity;
                     transform.Position += movable.Velocity;
                     playerState.StandingOnEntity = null;
                     playerState.StandingOn = StandingOn.Nothing;

@@ -12,9 +12,7 @@ namespace BunnyLand.DesktopGL.Models
             AimDirection = aimDirection;
         }
 
-        [Key(0)]
-        public Vector2 AccelerationDirection { get; }
-        [Key(1)]
-        public Vector2 AimDirection { get; }
+        [Key(0)] public Vector2 AccelerationDirection { get; }
+        [Key(1)] public Vector2 AimDirection { get; }
     }
 }

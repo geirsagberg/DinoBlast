@@ -177,7 +177,7 @@ namespace BunnyLand.DesktopGL.Systems
             entityFactory.CreatePlanet(CreateEntity(), new Vector2(700, 300), 5000, 0.5f);
             entityFactory.CreatePlayer(CreateEntity(), new Vector2(100, 100), GetFirstFreePlayerNumber(), PlayerIndex.One, default);
             // entityFactory.CreatePlayer(CreateEntity(), new Vector2(800, 700), PlayerIndex.Two);
-            // entityFactory.CreatePlanet(CreateEntity(), new Vector2(800, 600), 0, 0.05f);
+            entityFactory.CreatePlanet(CreateEntity(), new Vector2(800, 800), 10000, 1f);
             // entityFactory.CreateBlock(CreateEntity(), new RectangleF(600, 600, 10, 200));
             var playerIndices = EnumHelper.GetValues<PlayerIndex>();
             foreach (var index in playerIndices.Skip(1)) {

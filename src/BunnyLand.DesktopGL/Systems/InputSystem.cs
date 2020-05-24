@@ -172,6 +172,8 @@ namespace BunnyLand.DesktopGL.Systems
                             playerPressedKeys);
                 if (!input.DirectionalInputsByFrame.ContainsKey(currentFrame))
                     input.DirectionalInputsByFrame[currentFrame] = directionalInputs[playerIndex];
+
+                directionalInputs[playerIndex] = new DirectionalInputs(Vector2.Zero, directionalInputs[playerIndex].AimDirection);
             });
 
             debugLogger.AddObject(input);
