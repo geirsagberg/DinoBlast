@@ -19,6 +19,7 @@ namespace BunnyLand.DesktopGL.Systems
         private ComponentMapper<Level> levelMapper = null!;
         private ComponentMapper<Movable> movableMapper = null!;
         private ComponentMapper<Transform2> transformMapper = null!;
+        private ComponentMapper<PlayerState> playerStateMapper = null!;
 
         private Option<Level> Level { get; set; }
 
@@ -39,6 +40,7 @@ namespace BunnyLand.DesktopGL.Systems
             movableMapper = mapperService.GetMapper<Movable>();
             bodyMapper = mapperService.GetMapper<CollisionBody>();
             levelMapper = mapperService.GetMapper<Level>();
+            playerStateMapper = mapperService.GetMapper<PlayerState>();
         }
 
         public override void Process(GameTime gameTime, int entityId)
@@ -46,23 +48,46 @@ namespace BunnyLand.DesktopGL.Systems
             var transform = transformMapper.Get(entityId);
             var movable = movableMapper.Get(entityId);
             var elapsedTicks = gameTime.GetElapsedTicks(variables);
-
-            // Calculate change in velocity
-            var deltaVelocity = (movable.Acceleration + movable.GravityPull) * elapsedTicks;
-            movable.Velocity += deltaVelocity;
-
-            // Apply braking if any
-            movable.Velocity =
-                movable.Velocity.SubtractLength(
-                    Math.Min(movable.Velocity.Length(), movable.BrakingForce * elapsedTicks));
-
-            // Limit to max speed
-            movable.Velocity = movable.Velocity.Truncate(variables.Global[GlobalVariable.GlobalMaxSpeed])
-                * variables.Global[GlobalVariable.InertiaRatio];
-
-            // Update position
             var oldPosition = transform.Position;
-            transform.Position += movable.Velocity * elapsedTicks;
+
+            if (playerStateMapper.Get(entityId) is { StandingOn: StandingOn.Planet } playerState && playerState.StandingOnEntity != null) {
+                var planetTransform = transformMapper.Get(playerState.StandingOnEntity.Value);
+                var normal = transform.Position - planetTransform.Position;
+
+                const float planetSpeed = 2f;
+
+                var newNormal = normal.Rotate(planetSpeed * elapsedTicks * movable.Acceleration.X / normal.Length());
+
+                transform.Position = planetTransform.Position + newNormal;
+
+                const float planetJumpVelocity = 10f;
+
+                if (playerState.IsBoosting) {
+                    movable.Velocity = newNormal.NormalizedCopy() * planetJumpVelocity;
+                    transform.Position += movable.Velocity;
+                    playerState.StandingOnEntity = null;
+                    playerState.StandingOn = StandingOn.Nothing;
+                }
+
+            } else {
+                // Calculate change in velocity
+                var deltaVelocity = (movable.Acceleration + movable.GravityPull) * elapsedTicks;
+                movable.Velocity += deltaVelocity;
+
+                // Apply braking if any
+                movable.Velocity =
+                    movable.Velocity.SubtractLength(
+                        Math.Min(movable.Velocity.Length(), movable.BrakingForce * elapsedTicks));
+
+                // Limit to max speed
+                movable.Velocity = movable.Velocity.Truncate(variables.Global[GlobalVariable.GlobalMaxSpeed])
+                    * variables.Global[GlobalVariable.InertiaRatio];
+
+                // Update position
+                transform.Position += movable.Velocity * elapsedTicks;
+            }
+
+            // Update collision body
             bodyMapper.TryGet(entityId).IfSome(body => {
                 body.OldPosition = oldPosition;
                 body.Position = transform.Position;

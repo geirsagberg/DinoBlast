@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using BunnyLand.DesktopGL.Components;
 using BunnyLand.DesktopGL.Extensions;
@@ -18,10 +19,9 @@ namespace BunnyLand.DesktopGL.Systems
 {
     public class BattleSystem : EntityProcessingSystem
     {
-        private static readonly IEnumerable<byte> _playerNumbers = Enumerable.Range(1, 16).Select(i => (byte) i);
+        private static readonly IEnumerable<byte> PlayerNumbers = Enumerable.Range(1, 16).Select(i => (byte) i);
 
         private readonly IDictionary<byte, int> entitiesByPlayerNumber = new Dictionary<byte, int>();
-        private readonly IDictionary<int, int> entitiesBySerializableId = new Dictionary<int, int>();
 
         private readonly EntityFactory entityFactory;
         private readonly GameSettings gameSettings;
@@ -32,7 +32,6 @@ namespace BunnyLand.DesktopGL.Systems
         private readonly SharedContext sharedContext;
 
         private ComponentMapper<PlayerState> playerMapper = null!;
-        private ComponentMapper<Serializable> serializableMapper = null!;
 
         public BattleSystem(EntityFactory entityFactory, GameSettings gameSettings, MessageHub messageHub, SharedContext sharedContext) :
             base(Aspect.All())
@@ -88,7 +87,7 @@ namespace BunnyLand.DesktopGL.Systems
             }
         }
 
-        private byte GetFirstFreePlayerNumber() => _playerNumbers.First(i => !entitiesByPlayerNumber.ContainsKey(i));
+        private byte GetFirstFreePlayerNumber() => PlayerNumbers.First(i => !entitiesByPlayerNumber.ContainsKey(i));
 
         private static Vector2 GetStartPosition(in int playerNumber) => playerNumber switch {
             1 => new Vector2(100, 100),
@@ -100,7 +99,6 @@ namespace BunnyLand.DesktopGL.Systems
 
         private void HandleResetWorld(ResetWorldMessage msg)
         {
-            entitiesBySerializableId.Clear();
             foreach (var entity in ActiveEntities) {
                 DestroyEntity(entity);
             }
@@ -115,39 +113,40 @@ namespace BunnyLand.DesktopGL.Systems
 
         private void SetupEntities(SerializableComponents gameStateComponents)
         {
-            foreach (var serializable in gameStateComponents.SerializableIds) {
+            foreach (var serializable in gameStateComponents.EntityIds.OrderBy(id => id)) {
                 CreateEntity(serializable, gameStateComponents);
             }
         }
 
-        private void CreateEntity(int serializableId, SerializableComponents gameStateComponents)
+        private void CreateEntity(int entityId, SerializableComponents gameStateComponents)
         {
             var entity = CreateEntity();
-            entity.Attach(new Serializable(serializableId));
-            if (gameStateComponents.Transforms.TryGetValue(serializableId, out var serializableTransform)) {
+            Debug.Assert(entity.Id == entityId, "Expected created ID to match serializable ID");
+
+            if (gameStateComponents.Transforms.TryGetValue(entityId, out var serializableTransform)) {
                 var transform = new Transform2(serializableTransform.Position, serializableTransform.Rotation, serializableTransform.Scale);
                 entity.Attach(transform);
             }
 
-            if (gameStateComponents.Movables.TryGetValue(serializableId, out var movable))
+            if (gameStateComponents.Movables.TryGetValue(entityId, out var movable))
                 entity.Attach(movable);
-            if (gameStateComponents.SpriteInfos.TryGetValue(serializableId, out var spriteInfo))
+            if (gameStateComponents.SpriteInfos.TryGetValue(entityId, out var spriteInfo))
                 entity.Attach(spriteInfo);
-            if (gameStateComponents.Damagings.TryGetValue(serializableId, out var damaging))
+            if (gameStateComponents.Damagings.TryGetValue(entityId, out var damaging))
                 entity.Attach(damaging);
-            if (gameStateComponents.Healths.TryGetValue(serializableId, out var health))
+            if (gameStateComponents.Healths.TryGetValue(entityId, out var health))
                 entity.Attach(health);
-            if (gameStateComponents.Levels.TryGetValue(serializableId, out var level))
+            if (gameStateComponents.Levels.TryGetValue(entityId, out var level))
                 entity.Attach(level);
-            if (gameStateComponents.CollisionBodies.TryGetValue(serializableId, out var collisionBody))
+            if (gameStateComponents.CollisionBodies.TryGetValue(entityId, out var collisionBody))
                 entity.Attach(collisionBody);
-            if (gameStateComponents.GravityFields.TryGetValue(serializableId, out var gravityField))
+            if (gameStateComponents.GravityFields.TryGetValue(entityId, out var gravityField))
                 entity.Attach(gravityField);
-            if (gameStateComponents.GravityPoints.TryGetValue(serializableId, out var gravityPoint))
+            if (gameStateComponents.GravityPoints.TryGetValue(entityId, out var gravityPoint))
                 entity.Attach(gravityPoint);
-            if (gameStateComponents.PlayerInputs.TryGetValue(serializableId, out var playerInput))
+            if (gameStateComponents.PlayerInputs.TryGetValue(entityId, out var playerInput))
                 entity.Attach(playerInput);
-            if (gameStateComponents.PlayerStates.TryGetValue(serializableId, out var playerState)) {
+            if (gameStateComponents.PlayerStates.TryGetValue(entityId, out var playerState)) {
                 if (playerState.PeerId == sharedContext.MyPeerId) {
                     // TODO: multiple players
                     playerState.LocalPlayerIndex = PlayerIndex.One;
@@ -156,9 +155,9 @@ namespace BunnyLand.DesktopGL.Systems
                 entity.Attach(playerState);
             }
 
-            if (gameStateComponents.Emitters.TryGetValue(serializableId, out var emitter))
+            if (gameStateComponents.Emitters.TryGetValue(entityId, out var emitter))
                 entity.Attach(emitter);
-            if (gameStateComponents.Lifetimes.TryGetValue(serializableId, out var lifetime))
+            if (gameStateComponents.Lifetimes.TryGetValue(entityId, out var lifetime))
                 entity.Attach(lifetime);
         }
 
@@ -191,25 +190,20 @@ namespace BunnyLand.DesktopGL.Systems
 
         protected override void OnEntityAdded(int entityId)
         {
-            serializableMapper.TryGet(entityId).IfSome(serializable => entitiesBySerializableId[serializable.Id] = entityId);
             playerMapper.TryGet(entityId).IfSome(player => {
                 entitiesByPlayerNumber[player.PlayerNumber] = entityId;
-                // player.PeerIdAndRemotePlayerIndex.IfSome(peerId => entitiesByPeerId[peerId] = entityId);
             });
         }
 
         protected override void OnEntityRemoved(int entityId)
         {
-            serializableMapper.TryGet(entityId).IfSome(serializable => entitiesBySerializableId.Remove(serializable.Id, out _));
             playerMapper.TryGet(entityId).IfSome(player => {
                 entitiesByPlayerNumber.Remove(player.PlayerNumber, out _);
-                // player.PeerIdAndRemotePlayerIndex.IfSome(peerId => entitiesByPeerId.Remove(peerId, out _));
             });
         }
 
         public override void Initialize(IComponentMapperService mapperService)
         {
-            serializableMapper = mapperService.GetMapper<Serializable>();
             playerMapper = mapperService.GetMapper<PlayerState>();
         }
 

@@ -49,8 +49,9 @@ namespace BunnyLand.DesktopGL.Systems
             var intendedAcceleration = input.DirectionalInputs.AccelerationDirection;
 
             movable.Acceleration = player.StandingOn switch {
-                StandingOn.Nothing => ResultAcceleration(intendedAcceleration, movable.Velocity, player.IsBoosting),
-                StandingOn.Planet => Vector2.Zero,
+                // StandingOn.Nothing => ResultAcceleration(intendedAcceleration, movable.Velocity, player.IsBoosting),
+                StandingOn.Nothing => Vector2.Zero,
+                StandingOn.Planet => GetPlanetMovement(intendedAcceleration),
                 _ => Vector2.Zero
             };
 
@@ -58,6 +59,14 @@ namespace BunnyLand.DesktopGL.Systems
                 && (movable.Acceleration == Vector2.Zero || gameSettings.BrakeWhileJetpacking)
                     ? variables.Global[GlobalVariable.BrakePower]
                     : 0;
+
+            // Testing no brakes;
+            movable.BrakingForce = 0;
+        }
+
+        private static Vector2 GetPlanetMovement(Vector2 intendedAcceleration)
+        {
+            return intendedAcceleration.X > 0 ? new Vector2(1, 0) : intendedAcceleration.X < 0 ? new Vector2(-1, 0) : Vector2.Zero;
         }
 
         private Vector2 ResultAcceleration(Vector2 intendedAcceleration,

@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Linq;
 using System.Threading.Tasks;
-using BunnyLand.DesktopGL.Components;
 using BunnyLand.DesktopGL.Enums;
 using BunnyLand.DesktopGL.Extensions;
 using BunnyLand.DesktopGL.Messages;
@@ -30,7 +29,7 @@ namespace BunnyLand.DesktopGL.Systems
         private TaskCompletionSource<bool>? joinServerTaskCompletionSource;
 
         public NetClientSystem(GameSettings gameSettings, MessageHub messageHub, Serializer serializer, SharedContext sharedContext) : base(
-            Aspect.All(typeof(Serializable)))
+            Aspect.All())
         {
             this.gameSettings = gameSettings;
             this.messageHub = messageHub;

@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Sockets;
-using BunnyLand.DesktopGL.Components;
 using BunnyLand.DesktopGL.Enums;
 using BunnyLand.DesktopGL.Extensions;
 using BunnyLand.DesktopGL.Messages;
@@ -37,7 +36,7 @@ namespace BunnyLand.DesktopGL.Systems
         private GameTime gameTime = new GameTime();
 
         public NetServerSystem(GameSettings gameSettings, MessageHub messageHub, Serializer serializer, SharedContext sharedContext) : base(
-            Aspect.All(typeof(Serializable)))
+            Aspect.All())
         {
             this.gameSettings = gameSettings;
             this.serializer = serializer;

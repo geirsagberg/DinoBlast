@@ -15,6 +15,8 @@ namespace BunnyLand.DesktopGL.Components
 
         [Key(3)] public StandingOn StandingOn { get; set; }
 
+        [Key(4)] public int? StandingOnEntity { get; set; }
+
         [IgnoreMember] public PlayerIndex? LocalPlayerIndex { get; set; }
 
         [IgnoreMember] public bool IsLocal => LocalPlayerIndex.HasValue;

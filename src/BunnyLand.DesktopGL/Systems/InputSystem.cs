@@ -130,7 +130,7 @@ namespace BunnyLand.DesktopGL.Systems
 
         private void HandleAimInput(PlayerIndex index, Vector2 aimVector)
         {
-            directionalInputs[index] = new DirectionalInputs(directionalInputs[index].AccelerationDirection, aimVector.NormalizedOrZero());
+            directionalInputs[index] = new DirectionalInputs(directionalInputs[index].AccelerationDirection, aimVector == Vector2.Zero ? directionalInputs[index].AimDirection : aimVector.NormalizedCopy());
         }
 
         private void HandlePlayerKeyInput(PlayerIndex index, PlayerKey key, bool released = false)

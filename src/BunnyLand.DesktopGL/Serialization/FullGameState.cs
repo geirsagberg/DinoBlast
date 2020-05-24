@@ -33,7 +33,6 @@ namespace BunnyLand.DesktopGL.Serialization
         public static FullGameState CreateFullGameState(IComponentMapperService componentManager, IEnumerable<int> entities,
             int frameCounter, DateTime utcNow, DateTime resumeAt, int yourPeerId)
         {
-            var serializableMapper = componentManager.GetMapper<Serializable>();
             var transformMapper = componentManager.GetMapper<Transform2>();
             var movableMapper = componentManager.GetMapper<Movable>();
             var spriteInfoMapper = componentManager.GetMapper<SpriteInfo>();
@@ -48,7 +47,6 @@ namespace BunnyLand.DesktopGL.Serialization
             var emitterMapper = componentManager.GetMapper<Emitter>();
             var lifetimeMapper = componentManager.GetMapper<Lifetime>();
 
-            var serializableIds = entities.Select(e => (entityId: e, serializableId: serializableMapper.Get(e).Id)).ToList();
             var transforms = new Dictionary<int, SerializableTransform>();
             var movables = new Dictionary<int, Movable>();
             var spriteInfos = new Dictionary<int, SpriteInfo>();
@@ -63,37 +61,39 @@ namespace BunnyLand.DesktopGL.Serialization
             var emitters = new Dictionary<int, Emitter>();
             var lifetimes = new Dictionary<int, Lifetime>();
 
-            foreach (var (entityId, serializableId) in serializableIds) {
+            var entityIds = entities.ToHashSet();
+
+            foreach (var entityId in entityIds) {
                 if (transformMapper.Get(entityId) is { } transform2)
-                    transforms[serializableId] = new SerializableTransform
+                    transforms[entityId] = new SerializableTransform
                         { Position = transform2.Position, Rotation = transform2.Rotation, Scale = transform2.Scale };
                 if (movableMapper.Get(entityId) is {} movable)
-                    movables[serializableId] = movable;
+                    movables[entityId] = movable;
                 if (spriteInfoMapper.Get(entityId) is {} spriteInfo)
-                    spriteInfos[serializableId] = spriteInfo;
+                    spriteInfos[entityId] = spriteInfo;
                 if (collisionBodyMapper.Get(entityId) is {} collisionBody)
-                    collisionBodies[serializableId] = collisionBody;
+                    collisionBodies[entityId] = collisionBody;
                 if (damagingMapper.Get(entityId) is {} damaging)
-                    damagings[serializableId] = damaging;
+                    damagings[entityId] = damaging;
                 if (gravityFieldMapper.Get(entityId) is {} gravityField)
-                    gravityFields[serializableId] = gravityField;
+                    gravityFields[entityId] = gravityField;
                 if (gravityPointMapper.Get(entityId) is {} gravityPoint)
-                    gravityPoints[serializableId] = gravityPoint;
+                    gravityPoints[entityId] = gravityPoint;
                 if (healthMapper.Get(entityId) is {} health)
-                    healths[serializableId] = health;
+                    healths[entityId] = health;
                 if (levelMapper.Get(entityId) is {} level)
-                    levels[serializableId] = level;
+                    levels[entityId] = level;
                 if (playerInputMapper.Get(entityId) is {} playerInput)
-                    playerInputs[serializableId] = playerInput;
+                    playerInputs[entityId] = playerInput;
                 if (playerStateMapper.Get(entityId) is {} playerState)
-                    playerStates[serializableId] = playerState;
+                    playerStates[entityId] = playerState;
                 if (emitterMapper.Get(entityId) is {} emitter)
-                    emitters[serializableId] = emitter;
+                    emitters[entityId] = emitter;
                 if (lifetimeMapper.Get(entityId) is {} lifetime)
-                    lifetimes[serializableId] = lifetime;
+                    lifetimes[entityId] = lifetime;
             }
 
-            var serializableComponents = new SerializableComponents(serializableIds.Select(t => t.serializableId).ToHashSet(), transforms, movables,
+            var serializableComponents = new SerializableComponents(entityIds, transforms, movables,
                 spriteInfos,
                 collisionBodies, damagings, gravityFields, gravityPoints, healths, playerInputs, levels, playerStates, emitters, lifetimes);
             return new FullGameState(frameCounter, serializableComponents, utcNow, resumeAt, yourPeerId);

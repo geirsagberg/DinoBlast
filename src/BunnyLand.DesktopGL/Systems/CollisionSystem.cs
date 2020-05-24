@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using BunnyLand.DesktopGL.Components;
+using BunnyLand.DesktopGL.Enums;
 using BunnyLand.DesktopGL.Extensions;
 using BunnyLand.DesktopGL.Models;
 using BunnyLand.DesktopGL.Services;
@@ -27,12 +28,14 @@ namespace BunnyLand.DesktopGL.Systems
         private readonly Stopwatch stopwatch = new Stopwatch();
         private readonly TimeSpan[] timeSpans = new TimeSpan[LogCollisionDetectionEveryNthFrame];
         private readonly Variables variables;
+
         private ComponentMapper<CollisionBody> bodyMapper = null!;
         private ComponentMapper<Level> levelMapper = null!;
         private ComponentMapper<Movable> movableMapper = null!;
+        private ComponentMapper<PlayerState> playerStateMapper = null!;
+        private ComponentMapper<Transform2> transformMapper = null!;
 
         private int timeSpanCounter;
-        private ComponentMapper<Transform2> transformMapper = null!;
 
         public Option<Level> Level { get; set; }
 
@@ -51,6 +54,7 @@ namespace BunnyLand.DesktopGL.Systems
             movableMapper = mapperService.GetMapper<Movable>();
             levelMapper = mapperService.GetMapper<Level>();
             transformMapper = mapperService.GetMapper<Transform2>();
+            playerStateMapper = mapperService.GetMapper<PlayerState>();
         }
 
         protected override void OnEntityAdded(int entityId)
@@ -103,8 +107,9 @@ namespace BunnyLand.DesktopGL.Systems
                             var otherEntityId = kvp.Key;
                             var otherBody = kvp.Value;
                             var otherTransform = transformMapper.Get(otherEntityId);
+                            var playerState = playerStateMapper.Get(entityId);
                             var otherBounds = otherBody.Bounds;
-                            return otherBody != body && otherBody.CollidesWith.HasFlag(body.ColliderType)
+                            return otherBody != body && body.CollidesWith.HasFlag(otherBody.ColliderType) && playerState?.StandingOnEntity != otherEntityId
                                 // && !checkedPairs.Contains((kvp.Key, entityId))
                                 && otherBounds.Intersects(collisionBounds);
                         }).ToList();
@@ -114,12 +119,23 @@ namespace BunnyLand.DesktopGL.Systems
                             .Where(t => t.Item2 != Vector2.Zero).ToList();
                         // potentialCollisions.ForEach(b => checkedPairs.Add((entityId, b.Key)));
 
-                        foreach (var (other, penetrationVector) in body.Collisions) {
-                            var otherBody = bodyMapper.Get(other);
+                        foreach (var (otherEntityId, penetrationVector) in body.Collisions) {
+                            var otherBody = bodyMapper.Get(otherEntityId);
                             switch (body.ColliderType) {
                                 case ColliderTypes.Player when otherBody.ColliderType == ColliderTypes.Static:
                                     // transform.Position += penetrationVector;
                                     movable.Velocity += penetrationVector / elapsedTicks;
+                                    break;
+                                case ColliderTypes.Player when otherBody.ColliderType == ColliderTypes.WalkableSurface:
+                                    var playerState = playerStateMapper.Get(entityId);
+                                    if (playerState.StandingOnEntity != otherEntityId) {
+                                        playerState.StandingOn = StandingOn.Planet;
+                                        playerState.StandingOnEntity = otherEntityId;
+                                        movable.Velocity = Vector2.Zero;
+                                        movable.Acceleration = Vector2.Zero;
+                                        transform.Position += penetrationVector;
+                                    }
+
                                     break;
                                 case ColliderTypes.Projectile:
                                     transform.Position += penetrationVector;

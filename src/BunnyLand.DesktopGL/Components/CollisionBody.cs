@@ -77,6 +77,7 @@ namespace BunnyLand.DesktopGL.Components
         None = 0,
         Player = 1,
         Static = 1 << 1,
-        Projectile = 1 << 2
+        Projectile = 1 << 2,
+        WalkableSurface = 1 << 3
     }
 }

@@ -10,6 +10,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
+using Microsoft.Xna.Framework.Input;
 using MonoGame.Extended.BitmapFonts;
 using MonoGame.Extended.Entities;
 using MonoGame.Extended.Gui;
@@ -85,10 +86,10 @@ namespace BunnyLand.DesktopGL
 
             services.AddSingleton(provider => new MouseListener(provider.GetService<ViewportAdapter>()));
             services.AddSingleton(new KeyboardListener(new KeyboardListenerSettings { RepeatPress = false }));
-            services.AddSingleton(new GamePadListener(new GamePadListenerSettings(PlayerIndex.One)));
-            services.AddSingleton(new GamePadListener(new GamePadListenerSettings(PlayerIndex.Two)));
-            services.AddSingleton(new GamePadListener(new GamePadListenerSettings(PlayerIndex.Three)));
-            services.AddSingleton(new GamePadListener(new GamePadListenerSettings(PlayerIndex.Four)));
+            services.AddSingleton(new GamePadListener(new GamePadListenerSettings(PlayerIndex.One) { DeadZoneMode = GamePadDeadZone.Circular }));
+            services.AddSingleton(new GamePadListener(new GamePadListenerSettings(PlayerIndex.Two) { DeadZoneMode = GamePadDeadZone.Circular }));
+            services.AddSingleton(new GamePadListener(new GamePadListenerSettings(PlayerIndex.Three) { DeadZoneMode = GamePadDeadZone.Circular }));
+            services.AddSingleton(new GamePadListener(new GamePadListenerSettings(PlayerIndex.Four) { DeadZoneMode = GamePadDeadZone.Circular }));
             services.AddSingleton(provider =>
                 new InputListener[] { provider.GetService<MouseListener>(), provider.GetService<KeyboardListener>() }
                     .Concat(provider.GetServices<GamePadListener>()).ToArray());

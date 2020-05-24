@@ -47,8 +47,6 @@ namespace BunnyLand.DesktopGL.Systems
 
         public override void Process(GameTime gameTime, int entityId)
         {
-
-
             var movable = movableMapper.Get(entityId);
             var transform = transformMapper.Get(entityId);
 
