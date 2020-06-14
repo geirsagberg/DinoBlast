@@ -18,48 +18,39 @@ namespace BunnyLand.DesktopGL.Systems
 {
     public class InputSystem : EntityProcessingSystem
     {
-        private const float ThumbStickDeadZone = 0.1f;
-        private readonly IButtonMap buttonMap;
-
-        private readonly Dictionary<PlayerIndex, DirectionalInputs> directionalInputs = Enum
-            .GetValues(typeof(PlayerIndex))
-            .Cast<PlayerIndex>().ToDictionary(i => i, _ => new DirectionalInputs());
-
-        private readonly IDictionary<PlayerIndex, GamePadListener> gamePadListeners;
-        private readonly KeyboardListener keyboardListener;
-        private readonly IDictionary<PlayerIndex, int> playerEntitiesByIndex = new Dictionary<PlayerIndex, int>();
+        private readonly DebugLogger debugLogger;
 
         private readonly Dictionary<PlayerIndex, System.Collections.Generic.HashSet<PlayerKey>> pressedKeys = Enum
             .GetValues(typeof(PlayerIndex))
             .Cast<PlayerIndex>().ToDictionary(i => i, _ => new System.Collections.Generic.HashSet<PlayerKey>());
 
+        private readonly IButtonMap buttonMap;
+        private readonly IDictionary<PlayerIndex, int> playerEntitiesByIndex = new Dictionary<PlayerIndex, int>();
+
         private readonly SharedContext sharedContext;
-        private readonly DebugLogger debugLogger;
 
         private ComponentMapper<PlayerInput> inputMapper = null!;
         private ComponentMapper<PlayerState> playerMapper = null!;
         private ComponentMapper<Transform2> transformMapper = null!;
+
+        private Point2 previousMousePosition;
 
         public InputSystem(MouseListener mouseListener, KeyboardListener keyboardListener,
             IEnumerable<GamePadListener> gamePadListeners, IButtonMap buttonMap, SharedContext sharedContext, DebugLogger debugLogger
         ) : base(
             Aspect.All(typeof(PlayerState), typeof(PlayerInput)))
         {
-            this.keyboardListener = keyboardListener;
-            this.gamePadListeners = gamePadListeners.ToDictionary(l => l.PlayerIndex);
             this.buttonMap = buttonMap;
             this.sharedContext = sharedContext;
             this.debugLogger = debugLogger;
 
-            mouseListener.MouseMoved += OnMouseMoved;
             mouseListener.MouseDown += OnMouseDown;
             mouseListener.MouseUp += OnMouseUp;
             keyboardListener.KeyPressed += OnKeyPressed;
             keyboardListener.KeyReleased += OnKeyReleased;
-            foreach (var gamePadListener in this.gamePadListeners.Values) {
+            foreach (var gamePadListener in gamePadListeners) {
                 gamePadListener.ButtonDown += OnButtonDown;
                 gamePadListener.ButtonUp += OnButtonUp;
-                gamePadListener.ThumbStickMoved += OnThumbStickMoved;
                 gamePadListener.TriggerMoved += OnTriggerMoved;
             }
         }
@@ -74,31 +65,9 @@ namespace BunnyLand.DesktopGL.Systems
             buttonMap.GetKey(e.Button).IfSome(key => HandlePlayerKeyInput(PlayerIndex.One, key));
         }
 
-        private void OnMouseMoved(object? sender, MouseEventArgs e)
-        {
-            playerEntitiesByIndex.TryGetValue(PlayerIndex.One)
-                .IfSome(entityId => transformMapper.TryGet(entityId)
-                    .IfSome(
-                        movable => HandleAimInput(PlayerIndex.One, e.Position.ToVector2() - movable.Position)));
-        }
-
         private void OnTriggerMoved(object? sender, GamePadEventArgs e)
         {
             // Console.WriteLine($"TriggerMoved: ${e.Button} - ${e.TriggerState}");
-        }
-
-        private void OnThumbStickMoved(object? sender, GamePadEventArgs e)
-        {
-            var button = e.Button;
-            var stickState = e.ThumbStickState;
-            var playerIndex = e.PlayerIndex;
-            var direction = new Vector2(stickState.X, -stickState.Y);
-
-            if (button.HasFlag(Buttons.LeftStick)) {
-                HandleAccelerationInput(playerIndex, direction);
-            } else {
-                HandleAimInput(playerIndex, direction);
-            }
         }
 
         private void OnButtonDown(object? sender, GamePadEventArgs e)
@@ -123,27 +92,12 @@ namespace BunnyLand.DesktopGL.Systems
                 .IfSome(key => HandlePlayerKeyInput(PlayerIndex.One, key, true));
         }
 
-        private void HandleAccelerationInput(PlayerIndex index, Vector2 acceleration)
-        {
-            directionalInputs[index] = new DirectionalInputs(acceleration, directionalInputs[index].AimDirection);
-        }
-
-        private void HandleAimInput(PlayerIndex index, Vector2 aimVector)
-        {
-            directionalInputs[index] = new DirectionalInputs(directionalInputs[index].AccelerationDirection, aimVector == Vector2.Zero ? directionalInputs[index].AimDirection : aimVector.NormalizedCopy());
-        }
-
         private void HandlePlayerKeyInput(PlayerIndex index, PlayerKey key, bool released = false)
         {
             if (released) {
                 pressedKeys[index].Remove(key);
             } else {
                 pressedKeys[index].Add(key);
-            }
-
-            if (key.IsDirectionInput()) {
-                var direction = KeysToDirectionalInput(pressedKeys[index]);
-                HandleAccelerationInput(index, direction);
             }
         }
 
@@ -154,8 +108,6 @@ namespace BunnyLand.DesktopGL.Systems
             input.CurrentFrame = sharedContext.FrameCounter;
 
             state.LocalPlayerIndex.IfSome(playerIndex => {
-                var playerPressedKeys = pressedKeys[playerIndex];
-
                 var currentFrame = sharedContext.FrameCounter + sharedContext.FrameOffset;
 
                 if (input.PlayerKeysByFrame.Count >= PlayerInput.InitialFrameBuffer) {
@@ -166,14 +118,18 @@ namespace BunnyLand.DesktopGL.Systems
                     input.DirectionalInputsByFrame.Remove(currentFrame - PlayerInput.InitialFrameBuffer);
                 }
 
+                var playerPressedKeys = pressedKeys[playerIndex];
+
+
                 if (!input.PlayerKeysByFrame.ContainsKey(currentFrame))
                     input.PlayerKeysByFrame[currentFrame] =
                         UpdatePlayerKeys(input.PlayerKeysByFrame.TryGetValue(currentFrame - 1, out var keys) ? keys : PlayerInput.DefaultPlayerKeys(),
                             playerPressedKeys);
-                if (!input.DirectionalInputsByFrame.ContainsKey(currentFrame))
-                    input.DirectionalInputsByFrame[currentFrame] = directionalInputs[playerIndex];
 
-                directionalInputs[playerIndex] = new DirectionalInputs(Vector2.Zero, directionalInputs[playerIndex].AimDirection);
+
+                if (!input.DirectionalInputsByFrame.ContainsKey(currentFrame)) {
+                    input.DirectionalInputsByFrame[currentFrame] = GetDirectionalInputs(playerIndex, input, currentFrame);
+                }
             });
 
             debugLogger.AddObject(input);
@@ -185,6 +141,35 @@ namespace BunnyLand.DesktopGL.Systems
             }
         }
 
+        private DirectionalInputs GetDirectionalInputs(PlayerIndex playerIndex, PlayerInput input, int currentFrame)
+        {
+            var keyboardDirection = KeysToDirectionalInput(pressedKeys[playerIndex]);
+            var (leftStick, rightStick) = GetThumbSticks(playerIndex);
+            var mousePosition = Mouse.GetState().Position;
+            var mouseAim = playerIndex == PlayerIndex.One && mousePosition != previousMousePosition
+                ? (mousePosition.ToVector2() - transformMapper.Get(playerEntitiesByIndex[playerIndex]).Position).NormalizedOrZero()
+                : Vector2.Zero;
+
+            var acceleration = keyboardDirection != default ? keyboardDirection : leftStick.NormalizedOrZero();
+            var aim = mouseAim != default ? mouseAim : rightStick.NormalizedOrZero();
+            if (aim == Vector2.Zero && input.DirectionalInputsByFrame.ContainsKey(currentFrame - 1))
+                aim = input.DirectionalInputsByFrame[currentFrame - 1].AimDirection;
+
+            var directionalInputs = new DirectionalInputs(acceleration, aim);
+            return directionalInputs;
+        }
+
+        private (Vector2 leftStick, Vector2 rightStick) GetThumbSticks(PlayerIndex playerIndex)
+        {
+            Vector2 flipY(Vector2 vector)
+            {
+                return vector.SetY(-vector.Y);
+            }
+
+            var thumbSticks = GamePad.GetState(playerIndex, GamePadDeadZone.Circular).ThumbSticks;
+            return (flipY(thumbSticks.Left), flipY(thumbSticks.Right));
+        }
+
         public override void End()
         {
             if (sharedContext.IsPaused && sharedContext.IsSyncing && ActiveEntities.All(id => {
@@ -194,6 +179,8 @@ namespace BunnyLand.DesktopGL.Systems
                 sharedContext.IsPaused = false;
                 sharedContext.IsSyncing = false;
             }
+
+            previousMousePosition = Mouse.GetState().Position;
         }
 
         private static Dictionary<PlayerKey, KeyState> UpdatePlayerKeys(
@@ -215,25 +202,11 @@ namespace BunnyLand.DesktopGL.Systems
             return attemptedAcceleration;
         }
 
-        public new void Dispose()
-        {
-            base.Dispose();
-            keyboardListener.KeyPressed -= OnKeyPressed;
-            keyboardListener.KeyReleased -= OnKeyReleased;
-            foreach (var gamePadListener in gamePadListeners.Values) {
-                gamePadListener.ButtonDown -= OnButtonDown;
-                gamePadListener.ButtonUp -= OnButtonUp;
-                gamePadListener.ThumbStickMoved -= OnThumbStickMoved;
-                gamePadListener.TriggerMoved -= OnTriggerMoved;
-            }
-        }
-
         public override void Initialize(IComponentMapperService mapperService)
         {
             playerMapper = mapperService.GetMapper<PlayerState>();
             transformMapper = mapperService.GetMapper<Transform2>();
             inputMapper = mapperService.GetMapper<PlayerInput>();
-            // acceleratorMapper = mapperService.GetMapper<Accelerator>();
         }
 
         protected override void OnEntityAdded(int entityId)
