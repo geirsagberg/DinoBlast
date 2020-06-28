@@ -11,10 +11,12 @@ using LanguageExt;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
+using Microsoft.Xna.Framework.Input;
 using MonoGame.Extended;
 using MonoGame.Extended.BitmapFonts;
 using MonoGame.Extended.Entities;
 using MonoGame.Extended.Entities.Systems;
+using MonoGame.Extended.Input.InputListeners;
 using MonoGame.Extended.Sprites;
 using MonoGame.Extended.TextureAtlases;
 
@@ -24,20 +26,19 @@ namespace BunnyLand.DesktopGL.Systems
     {
         private readonly BitmapFont font;
 
+        private readonly ConcurrentDictionary<int, Sprite> spriteByEntity = new ConcurrentDictionary<int, Sprite>();
+
         private readonly LinkedList<int> fpsList = new LinkedList<int>();
         private readonly SharedContext sharedContext;
         private readonly SpriteBatch spriteBatch;
-
-        private readonly ConcurrentDictionary<int, Sprite> spriteByEntity = new ConcurrentDictionary<int, Sprite>();
         private readonly Textures textures;
         private readonly Variables variables;
         private ComponentMapper<CollisionBody> collisionMapper = null!;
 
-        private int entitiesCount;
         private ComponentMapper<Health> healthMapper = null!;
-        private ComponentMapper<PlayerInput> inputMapper = null!;
         private ComponentMapper<Level> levelMapper = null!;
         private ComponentMapper<Movable> movableMapper = null!;
+        private ComponentMapper<PlayerInput> inputMapper = null!;
         private ComponentMapper<PlayerState> playerMapper = null!;
         private ComponentMapper<SolidColor> solidColorMapper = null!;
         private ComponentMapper<SpriteInfo> spriteMapper = null!;
@@ -49,7 +50,7 @@ namespace BunnyLand.DesktopGL.Systems
 
         public Option<PlayerState> Player { get; set; }
 
-        public RenderSystem(SpriteBatch spriteBatch, ContentManager contentManager, Variables variables, Textures textures, SharedContext sharedContext) : base(
+        public RenderSystem(SpriteBatch spriteBatch, ContentManager contentManager, Variables variables, Textures textures, SharedContext sharedContext, KeyboardListener keyboardListener) : base(
             Aspect
                 .All(typeof(Transform2))
                 .One(typeof(SpriteInfo), typeof(SolidColor)))
@@ -59,6 +60,12 @@ namespace BunnyLand.DesktopGL.Systems
             this.textures = textures;
             this.sharedContext = sharedContext;
             font = contentManager.Load<BitmapFont>("Fonts/bryndan-medium");
+
+            keyboardListener.KeyPressed += (sender, args) => {
+                if (args.Key == Keys.F12) {
+                    sharedContext.ShowDebugInfo = !sharedContext.ShowDebugInfo;
+                }
+            };
         }
 
         public override void Initialize(IComponentMapperService mapperService)
@@ -78,8 +85,6 @@ namespace BunnyLand.DesktopGL.Systems
         {
             levelMapper.TryGet(entityId).IfSome(level => Level = level);
             playerMapper.TryGet(entityId).IfSome(player => Player = player);
-
-            entitiesCount++;
         }
 
         public override void Draw(GameTime gameTime)
@@ -89,25 +94,34 @@ namespace BunnyLand.DesktopGL.Systems
 
             spriteBatch.Begin();
             foreach (var entity in ActiveEntities) {
-                spriteMapper.TryGet(entity).IfSome(spriteInfo => {
-                    var sprite = spriteByEntity.GetOrAdd(entity, (id, si) => CreateSprite(si), spriteInfo);
-                    if (sprite is AnimatedSprite animatedSprite) {
-                        animatedSprite.Update(elapsedSeconds);
-                    }
+                DrawSprite(entity, elapsedSeconds);
+                transformMapper.TryGet(entity).IfSome(transform => DrawAiming(entity, transform));
 
-                    RenderSprite(entity, sprite);
-                });
-                solidColorMapper.TryGet(entity).IfSome(solidColor => { spriteBatch.DrawRectangle(solidColor.Bounds, solidColor.Color); });
-                transformMapper.TryGet(entity).IfSome(transform => {
-                    DrawCollisionBoundsAndInfo(entity, transform);
-                    DrawGravityPull(entity, transform);
-
-                    inputMapper.TryGet(entity).IfSome(player => {
-                        spriteBatch.DrawLine(transform.Position,
-                            transform.Position + player.DirectionalInputs.AimDirection * 100, Color.White);
-                    });
-                });
+                DrawEntityDebugInfo(entity);
             }
+
+            DrawGlobalDebugInfo(gameTime);
+
+            spriteBatch.End();
+        }
+
+        private void DrawSprite(int entity, float elapsedSeconds)
+        {
+            spriteMapper.TryGet(entity).IfSome(spriteInfo =>
+            {
+                var sprite = spriteByEntity.GetOrAdd(entity, (id, si) => CreateSprite(si), spriteInfo);
+                if (sprite is AnimatedSprite animatedSprite)
+                {
+                    animatedSprite.Update(elapsedSeconds);
+                }
+
+                RenderSprite(entity, sprite);
+            });
+        }
+
+        private void DrawGlobalDebugInfo(GameTime gameTime)
+        {
+            if (!sharedContext.ShowDebugInfo) return;
 
             spriteBatch.DrawString(font, "AWSD: Move, Space: Boost, Shift: Toggle Brake/Glide, Ctrl: Shoot",
                 Vector2.One, Color.White);
@@ -123,8 +137,25 @@ namespace BunnyLand.DesktopGL.Systems
                 Color.White);
 
             spriteBatch.DrawString(font, $"CurrentFrame: {sharedContext.FrameCounter}", new Vector2(1, 120), Color.White);
+        }
 
-            spriteBatch.End();
+        private void DrawEntityDebugInfo(int entity)
+        {
+            if (!sharedContext.ShowDebugInfo) return;
+
+            solidColorMapper.TryGet(entity).IfSome(solidColor => { spriteBatch.DrawRectangle(solidColor.Bounds, solidColor.Color); });
+            transformMapper.TryGet(entity).IfSome(transform => {
+                DrawCollisionBoundsAndInfo(entity, transform);
+                DrawGravityPull(entity, transform);
+            });
+        }
+
+        private void DrawAiming(int entity, Transform2 transform)
+        {
+            inputMapper.TryGet(entity).IfSome(playerInput => {
+                spriteBatch.DrawLine(transform.Position,
+                    transform.Position + playerInput.DirectionalInputs.AimDirection * 100, Color.White);
+            });
         }
 
         private void RenderSprite(int entity, Sprite sprite)
@@ -155,8 +186,6 @@ namespace BunnyLand.DesktopGL.Systems
         protected override void OnEntityRemoved(int entityId)
         {
             spriteByEntity.Remove(entityId, out _);
-
-            entitiesCount--;
         }
 
         private Sprite CreateSprite(SpriteInfo spriteInfo) => spriteInfo.SpriteType switch {

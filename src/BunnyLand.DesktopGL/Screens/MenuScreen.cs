@@ -17,9 +17,8 @@ namespace BunnyLand.DesktopGL.Screens
     {
         private readonly GuiSystem guiSystem;
         private readonly MessageHub messageHub;
-        private Label loadingLabel;
+        private Label loadingLabel = new Label();
         private Screen? loadingScreen;
-        private Screen? serverListScreen;
         private StackPanel? serversDialog;
         private StackPanel? serversPanel;
         private Screen? startMenuScreen;
@@ -67,7 +66,7 @@ namespace BunnyLand.DesktopGL.Screens
 
         private Screen SetupLoading()
         {
-            loadingLabel = new Label();
+            loadingLabel.Content = null;
 
             return new Screen {
                 Content = new Canvas {

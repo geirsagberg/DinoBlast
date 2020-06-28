@@ -4,6 +4,7 @@ using System.Linq;
 using BunnyLand.DesktopGL.Controls;
 using BunnyLand.DesktopGL.Enums;
 using BunnyLand.DesktopGL.Messages;
+using BunnyLand.DesktopGL.Models;
 using BunnyLand.DesktopGL.Serialization;
 using BunnyLand.DesktopGL.Services;
 using Microsoft.Xna.Framework;
@@ -19,12 +20,14 @@ namespace BunnyLand.DesktopGL.Screens
         private readonly GuiSystem guiSystem;
         private readonly Variables variables;
         private readonly MessageHub messageHub;
+        private readonly SharedContext sharedContext;
 
-        public BattleScreen(Game game, GuiSystem guiSystem, Variables variables, MessageHub messageHub) : base(game)
+        public BattleScreen(Game game, GuiSystem guiSystem, Variables variables, MessageHub messageHub, SharedContext sharedContext) : base(game)
         {
             this.guiSystem = guiSystem;
             this.variables = variables;
             this.messageHub = messageHub;
+            this.sharedContext = sharedContext;
         }
 
         public override void LoadContent()
@@ -78,7 +81,8 @@ namespace BunnyLand.DesktopGL.Screens
 
         public override void Draw(GameTime gameTime)
         {
-            guiSystem.Draw(gameTime);
+            if (sharedContext.ShowDebugInfo)
+                guiSystem.Draw(gameTime);
         }
     }
 }

@@ -11,5 +11,6 @@ namespace BunnyLand.DesktopGL.Models
         public TimeSpan ResumeAtGameTime { get; set; }
         public bool IsSyncing { get; set; }
         public int? MyPeerId { get; set; }
+        public bool ShowDebugInfo { get; set; }
     }
 }
