@@ -138,6 +138,9 @@ namespace BunnyLand.DesktopGL
                 LoadScreen<BattleScreen>();
                 MessageHub.Publish(new ResetWorldMessage(msg.GameState));
             });
+            MessageHub.Subscribe<ExitGameMessage>(_ => {
+                LoadScreen<MenuScreen>();
+            });
             MessageHub.Subscribe<ServerDisconnectedMessage>(msg => { LoadScreen<MenuScreen>(); });
 
             LoadScreen<MenuScreen>();

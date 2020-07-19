@@ -8,8 +8,10 @@ using BunnyLand.DesktopGL.Models;
 using BunnyLand.DesktopGL.Serialization;
 using BunnyLand.DesktopGL.Services;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Input;
 using MonoGame.Extended.Gui;
 using MonoGame.Extended.Gui.Controls;
+using MonoGame.Extended.Input.InputListeners;
 using MonoGame.Extended.Screens;
 using GuiScreen = MonoGame.Extended.Gui.Screen;
 
@@ -22,12 +24,20 @@ namespace BunnyLand.DesktopGL.Screens
         private readonly MessageHub messageHub;
         private readonly SharedContext sharedContext;
 
-        public BattleScreen(Game game, GuiSystem guiSystem, Variables variables, MessageHub messageHub, SharedContext sharedContext) : base(game)
+        public BattleScreen(Game game, GuiSystem guiSystem, Variables variables, MessageHub messageHub, SharedContext sharedContext, KeyboardListener keyboardListener) : base(game)
         {
             this.guiSystem = guiSystem;
             this.variables = variables;
             this.messageHub = messageHub;
             this.sharedContext = sharedContext;
+            keyboardListener.KeyPressed += KeyboardListenerOnKeyPressed;
+        }
+
+        private void KeyboardListenerOnKeyPressed(object? sender, KeyboardEventArgs e)
+        {
+            if (e.Key == Keys.Escape) {
+                messageHub.Publish(new ExitGameMessage());
+            }
         }
 
         public override void LoadContent()
@@ -76,13 +86,14 @@ namespace BunnyLand.DesktopGL.Screens
 
         public override void Update(GameTime gameTime)
         {
+            guiSystem.ActiveScreen.IsVisible = sharedContext.ShowDebugInfo;
+
             guiSystem.Update(gameTime);
         }
 
         public override void Draw(GameTime gameTime)
         {
-            if (sharedContext.ShowDebugInfo)
-                guiSystem.Draw(gameTime);
+            guiSystem.Draw(gameTime);
         }
     }
 }

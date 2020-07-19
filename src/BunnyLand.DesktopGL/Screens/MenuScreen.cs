@@ -17,7 +17,7 @@ namespace BunnyLand.DesktopGL.Screens
     {
         private readonly GuiSystem guiSystem;
         private readonly MessageHub messageHub;
-        private Label loadingLabel = new Label();
+        private readonly Label loadingLabel = new Label();
         private Screen? loadingScreen;
         private StackPanel? serversDialog;
         private StackPanel? serversPanel;
