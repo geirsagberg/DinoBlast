@@ -13,13 +13,13 @@ namespace BunnyLand.DesktopGL.Systems
 {
     public class PhysicsSystem : EntityProcessingSystem, IPausable
     {
-        private readonly Variables variables;
         private readonly SharedContext sharedContext;
+        private readonly Variables variables;
         private ComponentMapper<CollisionBody> bodyMapper = null!;
         private ComponentMapper<Level> levelMapper = null!;
         private ComponentMapper<Movable> movableMapper = null!;
-        private ComponentMapper<Transform2> transformMapper = null!;
         private ComponentMapper<PlayerState> playerStateMapper = null!;
+        private ComponentMapper<Transform2> transformMapper = null!;
 
         private Option<Level> Level { get; set; }
 
@@ -71,7 +71,6 @@ namespace BunnyLand.DesktopGL.Systems
                     playerState.StandingOnEntity = null;
                     playerState.StandingOn = StandingOn.Nothing;
                 }
-
             } else {
                 // Calculate change in velocity
                 var deltaVelocity = (movable.Acceleration + movable.GravityPull) * elapsedTicks;
@@ -96,9 +95,19 @@ namespace BunnyLand.DesktopGL.Systems
                 body.Position = transform.Position;
             });
 
-            if (movable.WrapAround) {
-                Level.IfSome(level => transform.Wrap(level.Bounds));
-            }
+            Level.IfSome(level => {
+                switch (movable.LevelBoundsBehavior) {
+                    case LevelBoundsBehavior.Wrap:
+                        transform.Wrap(level.Bounds);
+                        break;
+                    case LevelBoundsBehavior.Destroy when transform.WorldPosition.X < 0
+                        || transform.WorldPosition.X >= level.Bounds.Width
+                        || transform.WorldPosition.Y < 0
+                        || transform.WorldPosition.Y >= level.Bounds.Height:
+                        DestroyEntity(entityId);
+                        break;
+                }
+            });
         }
     }
 }

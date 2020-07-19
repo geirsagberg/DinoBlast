@@ -172,13 +172,11 @@ namespace BunnyLand.DesktopGL.Systems
 
         private void SetupEntities()
         {
-            entityFactory.CreateLevel(CreateEntity(), gameSettings.Width, gameSettings.Height);
-            entityFactory.CreatePlanet(CreateEntity(), new Vector2(250, 500), 3000, 0.3f);
-            entityFactory.CreatePlanet(CreateEntity(), new Vector2(700, 300), 5000, 0.5f);
+            EntityFactory.CreateLevel(CreateEntity(), gameSettings.Width, gameSettings.Height);
+            entityFactory.CreatePlanet(CreateEntity(), new Vector2(gameSettings.Width * 0.2f, gameSettings.Height * 0.5f), 3000, 0.3f * gameSettings.Width / 1280);
+            entityFactory.CreatePlanet(CreateEntity(), new Vector2(gameSettings.Width * 0.7f, gameSettings.Height * 0.3f), 5000, 0.5f * gameSettings.Width / 1280);
+            entityFactory.CreatePlanet(CreateEntity(), new Vector2(gameSettings.Width * 0.6f, gameSettings.Height * 0.6f), 7000, 0.4f * gameSettings.Width / 1280);
             entityFactory.CreatePlayer(CreateEntity(), new Vector2(100, 100), GetFirstFreePlayerNumber(), PlayerIndex.One, default);
-            // entityFactory.CreatePlayer(CreateEntity(), new Vector2(800, 700), PlayerIndex.Two);
-            entityFactory.CreatePlanet(CreateEntity(), new Vector2(800, 800), 10000, 1f);
-            // entityFactory.CreateBlock(CreateEntity(), new RectangleF(600, 600, 10, 200));
             var playerIndices = EnumHelper.GetValues<PlayerIndex>();
             foreach (var index in playerIndices.Skip(1)) {
                 if (GamePad.GetState(index).IsConnected) {

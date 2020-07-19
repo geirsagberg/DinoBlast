@@ -58,7 +58,7 @@ namespace BunnyLand.DesktopGL.Systems
                                 .Some(movable => movable.Velocity)
                                 .None(Vector2.Zero)
                             + direction * variables.Global[GlobalVariable.BulletSpeed];
-                        entityFactory.CreateBullet(CreateEntity(), transform.Position + direction * 20, velocity,
+                        EntityFactory.CreateBullet(CreateEntity(), transform.Position + direction * 20, velocity,
                             TimeSpan.FromSeconds(variables.Global[GlobalVariable.BulletLifespan]));
                         break;
                     }

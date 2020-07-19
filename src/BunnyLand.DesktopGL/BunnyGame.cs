@@ -11,6 +11,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using MonoGame.Extended;
 using MonoGame.Extended.BitmapFonts;
 using MonoGame.Extended.Entities;
 using MonoGame.Extended.Gui;
@@ -60,6 +61,8 @@ namespace BunnyLand.DesktopGL
                     .AddClasses().AsImplementedInterfaces().WithSingletonLifetime()
                     ;
             });
+            services.AddSingleton(new OrthographicCamera(new BoxingViewportAdapter(Window, GraphicsDevice, gameSettings.Width, gameSettings.Height))
+                { MinimumZoom = 0.1f, MaximumZoom = 2f });
             services.AddSingleton(gameSettings);
             services.AddSingleton(GraphicsDevice);
             services.AddSingleton(Content);
@@ -113,6 +116,7 @@ namespace BunnyLand.DesktopGL
             .AddSystemService<PhysicsSystem>()
             .AddSystemService<CollisionSystem>()
             .AddSystemService<BattleSystem>()
+            .AddSystemService<CameraSystem>()
             .AddSystemService<RenderSystem>()
             .Build();
 
@@ -138,9 +142,7 @@ namespace BunnyLand.DesktopGL
                 LoadScreen<BattleScreen>();
                 MessageHub.Publish(new ResetWorldMessage(msg.GameState));
             });
-            MessageHub.Subscribe<ExitGameMessage>(_ => {
-                LoadScreen<MenuScreen>();
-            });
+            MessageHub.Subscribe<ExitGameMessage>(_ => { LoadScreen<MenuScreen>(); });
             MessageHub.Subscribe<ServerDisconnectedMessage>(msg => { LoadScreen<MenuScreen>(); });
 
             LoadScreen<MenuScreen>();

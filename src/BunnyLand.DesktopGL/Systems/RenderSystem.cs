@@ -19,6 +19,7 @@ using MonoGame.Extended.Entities.Systems;
 using MonoGame.Extended.Input.InputListeners;
 using MonoGame.Extended.Sprites;
 using MonoGame.Extended.TextureAtlases;
+using Rectangle = Microsoft.Xna.Framework.Rectangle;
 
 namespace BunnyLand.DesktopGL.Systems
 {
@@ -29,6 +30,8 @@ namespace BunnyLand.DesktopGL.Systems
         private readonly ConcurrentDictionary<int, Sprite> spriteByEntity = new ConcurrentDictionary<int, Sprite>();
 
         private readonly LinkedList<int> fpsList = new LinkedList<int>();
+
+        private readonly OrthographicCamera camera;
         private readonly SharedContext sharedContext;
         private readonly SpriteBatch spriteBatch;
         private readonly Textures textures;
@@ -50,7 +53,8 @@ namespace BunnyLand.DesktopGL.Systems
 
         public Option<PlayerState> Player { get; set; }
 
-        public RenderSystem(SpriteBatch spriteBatch, ContentManager contentManager, Variables variables, Textures textures, SharedContext sharedContext, KeyboardListener keyboardListener) : base(
+        public RenderSystem(SpriteBatch spriteBatch, ContentManager contentManager, Variables variables, Textures textures, SharedContext sharedContext,
+            KeyboardListener keyboardListener, OrthographicCamera camera) : base(
             Aspect
                 .All(typeof(Transform2))
                 .One(typeof(SpriteInfo), typeof(SolidColor)))
@@ -59,6 +63,7 @@ namespace BunnyLand.DesktopGL.Systems
             this.variables = variables;
             this.textures = textures;
             this.sharedContext = sharedContext;
+            this.camera = camera;
             font = contentManager.Load<BitmapFont>("Fonts/bryndan-medium");
 
             keyboardListener.KeyPressed += (sender, args) => {
@@ -89,10 +94,11 @@ namespace BunnyLand.DesktopGL.Systems
 
         public override void Draw(GameTime gameTime)
         {
-            GraphicsDevice.Clear(Color.Black);
+
+            spriteBatch.GraphicsDevice.Clear(Color.Black);
             var elapsedSeconds = gameTime.GetElapsedSeconds();
 
-            spriteBatch.Begin();
+            spriteBatch.Begin(transformMatrix: camera.GetViewMatrix());
             foreach (var entity in ActiveEntities) {
                 DrawSprite(entity, elapsedSeconds);
                 transformMapper.TryGet(entity).IfSome(transform => DrawAiming(entity, transform));
@@ -107,11 +113,9 @@ namespace BunnyLand.DesktopGL.Systems
 
         private void DrawSprite(int entity, float elapsedSeconds)
         {
-            spriteMapper.TryGet(entity).IfSome(spriteInfo =>
-            {
+            spriteMapper.TryGet(entity).IfSome(spriteInfo => {
                 var sprite = spriteByEntity.GetOrAdd(entity, (id, si) => CreateSprite(si), spriteInfo);
-                if (sprite is AnimatedSprite animatedSprite)
-                {
+                if (sprite is AnimatedSprite animatedSprite) {
                     animatedSprite.Update(elapsedSeconds);
                 }
 
@@ -177,7 +181,7 @@ namespace BunnyLand.DesktopGL.Systems
             // spriteBatch.DrawRectangle(sprite.GetBoundingRectangle(transform), Color.Beige);
 
             movableMapper.TryGet(entity).IfSome(movable => {
-                if (movable.WrapAround) {
+                if (movable.LevelBoundsBehavior == LevelBoundsBehavior.Wrap) {
                     DrawLevelWrapping(sprite, transform);
                 }
             });

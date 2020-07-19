@@ -19,6 +19,7 @@ namespace BunnyLand.DesktopGL.Systems
     public class InputSystem : EntityProcessingSystem
     {
         private readonly DebugLogger debugLogger;
+        private readonly OrthographicCamera camera;
 
         private readonly Dictionary<PlayerIndex, System.Collections.Generic.HashSet<PlayerKey>> pressedKeys = Enum
             .GetValues(typeof(PlayerIndex))
@@ -36,13 +37,14 @@ namespace BunnyLand.DesktopGL.Systems
         private Point2 previousMousePosition;
 
         public InputSystem(MouseListener mouseListener, KeyboardListener keyboardListener,
-            IEnumerable<GamePadListener> gamePadListeners, IButtonMap buttonMap, SharedContext sharedContext, DebugLogger debugLogger
+            IEnumerable<GamePadListener> gamePadListeners, IButtonMap buttonMap, SharedContext sharedContext, DebugLogger debugLogger, OrthographicCamera camera
         ) : base(
             Aspect.All(typeof(PlayerState), typeof(PlayerInput)))
         {
             this.buttonMap = buttonMap;
             this.sharedContext = sharedContext;
             this.debugLogger = debugLogger;
+            this.camera = camera;
 
             mouseListener.MouseDown += OnMouseDown;
             mouseListener.MouseUp += OnMouseUp;
@@ -147,7 +149,7 @@ namespace BunnyLand.DesktopGL.Systems
             var (leftStick, rightStick) = GetThumbSticks(playerIndex);
             var mousePosition = Mouse.GetState().Position;
             var mouseAim = playerIndex == PlayerIndex.One && mousePosition != previousMousePosition
-                ? (mousePosition.ToVector2() - transformMapper.Get(playerEntitiesByIndex[playerIndex]).Position).NormalizedOrZero()
+                ? (camera.ScreenToWorld(mousePosition.X, mousePosition.Y) - transformMapper.Get(playerEntitiesByIndex[playerIndex]).Position).NormalizedOrZero()
                 : Vector2.Zero;
 
             var acceleration = keyboardDirection != default ? keyboardDirection : leftStick.NormalizedOrZero();

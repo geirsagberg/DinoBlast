@@ -131,7 +131,7 @@ namespace BunnyLand.DesktopGL.Screens
                 var currentSizeIndex = WorldSizes.IndexOf((gameSettings.Width, gameSettings.Height));
                 var (width, height) = currentSizeIndex == -1
                     ? WorldSizes[0]
-                    : WorldSizes[(currentSizeIndex - 1) % WorldSizes.Count];
+                    : WorldSizes[(currentSizeIndex - 1 + WorldSizes.Count) % WorldSizes.Count];
 
                 gameSettings.Width = width;
                 gameSettings.Height = height;

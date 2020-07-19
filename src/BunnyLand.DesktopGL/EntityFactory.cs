@@ -1,5 +1,6 @@
 using System;
 using BunnyLand.DesktopGL.Components;
+using BunnyLand.DesktopGL.Enums;
 using BunnyLand.DesktopGL.Models;
 using Microsoft.Xna.Framework;
 using MonoGame.Extended;
@@ -22,7 +23,7 @@ namespace BunnyLand.DesktopGL
                 ColliderTypes.Player | ColliderTypes.Projectile | ColliderTypes.Static | ColliderTypes.WalkableSurface));
             entity.Attach(new PlayerState { PlayerNumber = playerNumber, PeerId = peerId, LocalPlayerIndex = localPlayerIndex });
             entity.Attach(new PlayerInput());
-            entity.Attach(new Movable());
+            entity.Attach(new Movable{ExpandsCamera = true});
             entity.Attach(new Health(100));
 
             var emitter = new Emitter {
@@ -49,7 +50,7 @@ namespace BunnyLand.DesktopGL
             return entity;
         }
 
-        public Entity CreateLevel(Entity entity, float width, float height)
+        public static Entity CreateLevel(Entity entity, float width, float height)
         {
             entity.Attach(new Level(new RectangleF(0, 0, width, height)));
             return entity;
@@ -65,7 +66,7 @@ namespace BunnyLand.DesktopGL
             return entity;
         }
 
-        public Entity CreateBullet(Entity entity, Vector2 position, Vector2 velocity,
+        public static Entity CreateBullet(Entity entity, Vector2 position, Vector2 velocity,
             TimeSpan lifeSpan)
         {
             var transform = new Transform2(position);
@@ -73,7 +74,7 @@ namespace BunnyLand.DesktopGL
             var movable = new Movable {
                 Velocity = velocity,
                 GravityMultiplier = 0.3f,
-                WrapAround = false
+                LevelBoundsBehavior = LevelBoundsBehavior.Destroy
             };
             entity.Attach(movable);
             var collisionBody = new CollisionBody(new Circle(1), position,
