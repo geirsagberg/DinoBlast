@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Net;
 using System.Threading.Tasks;
 using BunnyLand.DesktopGL.Messages;
@@ -15,18 +16,28 @@ namespace BunnyLand.DesktopGL.Screens
 {
     public class MenuScreen : GameScreen
     {
+        private static readonly List<(int width, int height)> WorldSizes = new List<(int width, int height)> {
+            (800, 600),
+            (1280, 720),
+            (1440, 900),
+            (1920, 1080),
+            (2560, 1440)
+        };
+
+        private readonly GameSettings gameSettings;
         private readonly GuiSystem guiSystem;
-        private readonly MessageHub messageHub;
         private readonly Label loadingLabel = new Label();
+        private readonly MessageHub messageHub;
         private Screen? loadingScreen;
+        private Screen? startMenuScreen;
         private StackPanel? serversDialog;
         private StackPanel? serversPanel;
-        private Screen? startMenuScreen;
 
-        public MenuScreen(Game game, GuiSystem guiSystem, MessageHub messageHub) : base(game)
+        public MenuScreen(Game game, GuiSystem guiSystem, MessageHub messageHub, GameSettings gameSettings) : base(game)
         {
             this.guiSystem = guiSystem;
             this.messageHub = messageHub;
+            this.gameSettings = gameSettings;
 
             messageHub.Subscribe<ServerDiscoveredMessage>(OnServerDiscovered);
         }
@@ -70,7 +81,7 @@ namespace BunnyLand.DesktopGL.Screens
 
             return new Screen {
                 Content = new Canvas {
-                    Items = {loadingLabel}
+                    Items = { loadingLabel }
                 }
             };
         }
@@ -88,9 +99,7 @@ namespace BunnyLand.DesktopGL.Screens
             var startLocalButton = new Button {
                 Content = "Start local game"
             };
-            startLocalButton.Clicked += delegate {
-                messageHub.Publish(new StartGameMessage());
-            };
+            startLocalButton.Clicked += delegate { messageHub.Publish(new StartGameMessage()); };
             menuPanel.Items.Add(startLocalButton);
 
             var startLanGame = new Button {
@@ -105,9 +114,56 @@ namespace BunnyLand.DesktopGL.Screens
             joinLanGame.Clicked += (obj, args) => JoinLanGameClicked();
             menuPanel.Items.Add(joinLanGame);
 
+            var worldSizePanel = new DockPanel {
+                Margin = new Thickness(0, 10)
+            };
+
+            var decreaseWorldSize = new Button {
+                Content = "<",
+                Padding = new Thickness(20, 5)
+            };
+            var worldSize = new Label {
+                Content = $"World: {gameSettings.Width}x{gameSettings.Height}",
+                Margin = new Thickness(10, 0),
+                HorizontalAlignment = HorizontalAlignment.Centre
+            };
+            decreaseWorldSize.Clicked += delegate {
+                var currentSizeIndex = WorldSizes.IndexOf((gameSettings.Width, gameSettings.Height));
+                var (width, height) = currentSizeIndex == -1
+                    ? WorldSizes[0]
+                    : WorldSizes[(currentSizeIndex - 1) % WorldSizes.Count];
+
+                gameSettings.Width = width;
+                gameSettings.Height = height;
+                worldSize.Content = $"World: {gameSettings.Width}x{gameSettings.Height}";
+                worldSizePanel.InvalidateMeasure();
+            };
+            var increaseWorldSize = new Button {
+                Content = ">",
+                Padding = new Thickness(20, 5),
+                AttachedProperties = { { DockPanel.DockProperty, Dock.Right } }
+            };
+            increaseWorldSize.Clicked += delegate {
+                var currentSizeIndex = WorldSizes.IndexOf((gameSettings.Width, gameSettings.Height));
+                var (width, height) = currentSizeIndex == -1
+                    ? WorldSizes[0]
+                    : WorldSizes[(currentSizeIndex + 1) % WorldSizes.Count];
+
+                gameSettings.Width = width;
+                gameSettings.Height = height;
+                worldSize.Content = $"World: {gameSettings.Width}x{gameSettings.Height}";
+                worldSizePanel.InvalidateMeasure();
+            };
+            worldSizePanel.Items.Add(decreaseWorldSize);
+            worldSizePanel.Items.Add(increaseWorldSize);
+            worldSizePanel.Items.Add(worldSize);
+
+
+            menuPanel.Items.Add(worldSizePanel);
+
             return new Screen {
                 Content = new Canvas {
-                    Items = {menuPanel}
+                    Items = { menuPanel }
                 }
             };
         }
