@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using BunnyLand.DesktopGL.Components;
+using BunnyLand.DesktopGL.Enums;
 using BunnyLand.DesktopGL.Extensions;
 using BunnyLand.DesktopGL.Messages;
 using BunnyLand.DesktopGL.Models;
@@ -250,6 +251,7 @@ namespace BunnyLand.DesktopGL.Systems
                 otherEntity.Attach(new Health(100));
                 otherEntity.Attach(new Movable());
                 otherEntity.Attach(new Transform2(GetStartPosition(player.PlayerNumber)));
+                otherEntity.Get<PlayerState>().StandingOn = StandingOn.Nothing;
             });
         }
     }
