@@ -19,7 +19,7 @@ namespace BunnyLand.DesktopGL
             var sprite = new SpriteInfo(SpriteType.Dino1, new Size(127, 90));
             entity.Attach(sprite);
 
-            entity.Attach(new CollisionBody(new Circle(15f), position, ColliderTypes.Player,
+            entity.Attach(new CollisionBody(new Circle(35), position, ColliderTypes.Player,
                 ColliderTypes.Player | ColliderTypes.Projectile | ColliderTypes.Static | ColliderTypes.WalkableSurface));
             entity.Attach(new PlayerState { PlayerNumber = playerNumber, PeerId = peerId, LocalPlayerIndex = localPlayerIndex });
             entity.Attach(new PlayerInput());

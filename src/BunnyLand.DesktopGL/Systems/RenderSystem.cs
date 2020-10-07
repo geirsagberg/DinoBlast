@@ -19,7 +19,6 @@ using MonoGame.Extended.Entities.Systems;
 using MonoGame.Extended.Input.InputListeners;
 using MonoGame.Extended.Sprites;
 using MonoGame.Extended.TextureAtlases;
-using Rectangle = Microsoft.Xna.Framework.Rectangle;
 
 namespace BunnyLand.DesktopGL.Systems
 {
@@ -94,7 +93,6 @@ namespace BunnyLand.DesktopGL.Systems
 
         public override void Draw(GameTime gameTime)
         {
-
             spriteBatch.GraphicsDevice.Clear(Color.Black);
             var elapsedSeconds = gameTime.GetElapsedSeconds();
 
@@ -214,7 +212,8 @@ namespace BunnyLand.DesktopGL.Systems
                 }
             });
             spritesheet.Cycles.Add("running", new SpriteSheetAnimationCycle {
-                Frames = Enumerable.Range(0, 12).Select(i => new SpriteSheetAnimationFrame(i)).ToList()
+                Frames = Enumerable.Range(0, 12).Select(i => new SpriteSheetAnimationFrame(i)).ToList(),
+                FrameDuration = 1f / 12
             });
             var animatedSprite = new AnimatedSprite(spritesheet);
             return animatedSprite;
@@ -232,8 +231,9 @@ namespace BunnyLand.DesktopGL.Systems
                 }
             });
             spriteSheet.Cycles.Add("running",
-                new SpriteSheetAnimationCycle
-                    { Frames = Enumerable.Range(1, 8).Select(i => new SpriteSheetAnimationFrame(1)).ToList() });
+                new SpriteSheetAnimationCycle {
+                    Frames = Enumerable.Range(1, 8).Select(i => new SpriteSheetAnimationFrame(i)).ToList(),
+                });
             var animatedSprite = new AnimatedSprite(spriteSheet);
             return animatedSprite;
         }
