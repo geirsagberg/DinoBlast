@@ -76,11 +76,6 @@
 /processorParam:Quality=Best
 /build:Audio/splat1.wav
 
-#begin Fonts/arial.fnt
-/importer:
-/processor:
-/build:Fonts/arial.fnt
-
 #begin Fonts/arial_0.png
 /importer:TextureImporter
 /processor:TextureProcessor
@@ -93,10 +88,10 @@
 /processorParam:TextureFormat=Color
 /build:Fonts/arial_0.png
 
-#begin Fonts/bryndan-large.fnt
-/importer:BitmapFontImporter
-/processor:BitmapFontProcessor
-/build:Fonts/bryndan-large.fnt
+#begin Fonts/arial.fnt
+/importer:
+/processor:
+/build:Fonts/arial.fnt
 
 #begin Fonts/bryndan-large_0.png
 /importer:TextureImporter
@@ -122,10 +117,10 @@
 /processorParam:TextureFormat=Color
 /build:Fonts/bryndan-large_1.png
 
-#begin Fonts/bryndan-medium.fnt
+#begin Fonts/bryndan-large.fnt
 /importer:BitmapFontImporter
 /processor:BitmapFontProcessor
-/build:Fonts/bryndan-medium.fnt
+/build:Fonts/bryndan-large.fnt
 
 #begin Fonts/bryndan-medium_0.png
 /importer:TextureImporter
@@ -139,10 +134,10 @@
 /processorParam:TextureFormat=Color
 /build:Fonts/bryndan-medium_0.png
 
-#begin Fonts/bryndan-small.fnt
+#begin Fonts/bryndan-medium.fnt
 /importer:BitmapFontImporter
 /processor:BitmapFontProcessor
-/build:Fonts/bryndan-small.fnt
+/build:Fonts/bryndan-medium.fnt
 
 #begin Fonts/bryndan-small_0.png
 /importer:TextureImporter
@@ -155,6 +150,11 @@
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
 /build:Fonts/bryndan-small_0.png
+
+#begin Fonts/bryndan-small.fnt
+/importer:BitmapFontImporter
+/processor:BitmapFontProcessor
+/build:Fonts/bryndan-small.fnt
 
 #begin Textures/Anki.png
 /importer:TextureImporter
@@ -335,6 +335,18 @@
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
 /build:Textures/bunny-sprites.png
+
+#begin Textures/dino1.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Textures/dino1.png
 
 #begin Textures/exp2.png
 /importer:TextureImporter
