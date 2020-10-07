@@ -117,6 +117,7 @@ namespace BunnyLand.DesktopGL.Systems
                 var sprite = spriteByEntity.GetOrAdd(entity, (id, si) => CreateSprite(si), spriteInfo);
                 if (sprite is AnimatedSprite animatedSprite) {
                     animatedSprite.Update(elapsedSeconds);
+                    animatedSprite.Play("running");
                 }
 
                 RenderSprite(entity, sprite);
@@ -166,16 +167,16 @@ namespace BunnyLand.DesktopGL.Systems
         {
             var transform = transformMapper.Get(entity);
 
-            playerMapper.TryGet(entity).IfSome(player => {
-                sprite.Color = player.PlayerNumber switch {
-                    1 => new Color(128, 128, 255),
-                    2 => new Color(255, 128, 128),
-                    3 => Color.Yellow,
-                    4 => Color.Green,
-                    _ => Color.White
-                };
-                healthMapper.TryGet(entity).IfSome(health => { transform.Scale = Vector2.One * health.CurrentHealth / health.MaxHealth; });
-            });
+            // playerMapper.TryGet(entity).IfSome(player => {
+            //     sprite.Color = player.PlayerNumber switch {
+            //         1 => new Color(128, 128, 255),
+            //         2 => new Color(255, 128, 128),
+            //         3 => Color.Yellow,
+            //         4 => Color.Green,
+            //         _ => Color.White
+            //     };
+            //     healthMapper.TryGet(entity).IfSome(health => { transform.Scale = Vector2.One * health.CurrentHealth / health.MaxHealth; });
+            // });
 
             spriteBatch.Draw(sprite, transform);
             // spriteBatch.DrawRectangle(sprite.GetBoundingRectangle(transform), Color.Beige);
@@ -197,8 +198,27 @@ namespace BunnyLand.DesktopGL.Systems
             SpriteType.Anki => new Sprite(textures.miniAnki),
             SpriteType.Planet1 => new Sprite(textures.redplanet),
             SpriteType.Bullet => new Sprite(textures.bullet),
+            SpriteType.Dino1 => GetDinoSprite(),
             _ => throw new ArgumentException("Unknown spriteType")
         };
+
+        private AnimatedSprite GetDinoSprite()
+        {
+            var atlas = TextureAtlas.Create("dino", textures.dino1, 127, 90);
+            var spritesheet = new SpriteSheet {
+                TextureAtlas = atlas
+            };
+            spritesheet.Cycles.Add("idle", new SpriteSheetAnimationCycle {
+                Frames = new List<SpriteSheetAnimationFrame> {
+                    new SpriteSheetAnimationFrame(0)
+                }
+            });
+            spritesheet.Cycles.Add("running", new SpriteSheetAnimationCycle {
+                Frames = Enumerable.Range(0, 12).Select(i => new SpriteSheetAnimationFrame(i)).ToList()
+            });
+            var animatedSprite = new AnimatedSprite(spritesheet);
+            return animatedSprite;
+        }
 
         private AnimatedSprite GetPlayerSprite()
         {

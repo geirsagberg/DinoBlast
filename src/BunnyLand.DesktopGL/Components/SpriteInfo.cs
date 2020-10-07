@@ -27,6 +27,7 @@ namespace BunnyLand.DesktopGL.Components
         Bunny,
         Anki,
         Planet1,
-        Bullet
+        Bullet,
+        Dino1
     }
 }
