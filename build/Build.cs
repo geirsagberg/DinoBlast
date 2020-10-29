@@ -5,6 +5,7 @@ using BunnyLand.ResourceGenerator;
 using Nuke.Common;
 using Nuke.Common.Execution;
 using Nuke.Common.Git;
+using Nuke.Common.IO;
 using Nuke.Common.ProjectModel;
 using Nuke.Common.Tools.DotNet;
 using Nuke.Common.Utilities.Collections;
@@ -26,9 +27,9 @@ class Build : NukeBuild
 
     [Solution] readonly Solution Solution;
 
-    AbsolutePath SourceDirectory => RootDirectory / "src";
-    AbsolutePath TestsDirectory => RootDirectory / "tests";
-    AbsolutePath ArtifactsDirectory => RootDirectory / "artifacts";
+    static AbsolutePath SourceDirectory => RootDirectory / "src";
+    static AbsolutePath TestsDirectory => RootDirectory / "tests";
+    static AbsolutePath ArtifactsDirectory => RootDirectory / "artifacts";
 
     Target Clean => _ => _
         .Before(Restore)
