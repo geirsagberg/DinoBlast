@@ -1,5 +1,5 @@
 # Buildtime
-FROM mcr.microsoft.com/dotnet/core/sdk:2.2 AS build-env
+FROM mcr.microsoft.com/dotnet/nightly/sdk:5.0 AS build-env
 
 WORKDIR /app
 
@@ -10,9 +10,9 @@ COPY . ./
 RUN dotnet publish -c Release -o out
 
 # Runtime
-FROM mcr.microsoft.com/dotnet/core/aspnet:2.2
+FROM mcr.microsoft.com/dotnet/nightly/runtime:5.0
 WORKDIR /app
 
 COPY --from=build-env /app/out .
 
-ENTRYPOINT ["dotnet", "TODO.dll"]
+ENTRYPOINT ["dotnet", "DinoBlast.Puncher.dll"]
