@@ -1,24 +1,34 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using System.Threading;
 using LiteNetLib;
 
-// TODO: Steg 1: Kople n klientar til 1 host. [UTFØRT]
-// TODO: https://github.com/featherhttp/framework for å liste ut servers
-// TODO: Må ha eit begrep om N ServerHosts
-// TODO: Finne ut kvifor ein NatIntroduction fører til både ein internal og external connection
+// TODO: Finne ut kvifor ein NatIntroduction over localhost fører til både ein internal og external connection
 
 /*
  * Kladding:
  * - Token angir eit "rom" ein vil connecte til
- * - Den første som gjer ein request til eit gitt rom blir host => Blir lagt til i _waitingPeers
+ * - Den første som gjer ein request til eit gitt rom blir host => Blir lagt til i _hostWaitPeers
  * - Alle andre som gjer ein request til eit gitt rom blir introdusert med host
- * - Hosts i _waitingPeers blir foreløpig kicked 2 minutt etter at dei blei lagt til (med mindre dei gjer nye requests, som nullstiller timer)
+ * - Hosts i _hostWaitPeers blir foreløpig kicked 1 minutt etter at dei blei lagt til (med mindre dei gjer nye requests, som nullstiller timer)
  */
 
 namespace DinoBlast.Puncher
 {
+    internal struct HostFlagAndToken
+    {
+        public HostFlagAndToken(bool isHost, string token)
+        {
+            IsHost = isHost;
+            Token = token;
+        }
+
+        public readonly bool IsHost;
+        public readonly string Token;
+    }
+
     internal class WaitPeer
     {
         public IPEndPoint InternalAddr { get; }
@@ -42,10 +52,9 @@ namespace DinoBlast.Puncher
     {
         // Inspired by https://github.com/RevenantX/LiteNetLib/blob/master/LibSample/HolePunchServerTest.cs
         private const int ServerPort = 50010;
-        private const string ConnectionKey = "test_key";
-        private static readonly TimeSpan KickTime = new TimeSpan(0, 2, 0);
+        private static readonly TimeSpan KickTime = new TimeSpan(0, 1, 0);
 
-        private readonly Dictionary<string, WaitPeer> _waitingPeers = new Dictionary<string, WaitPeer>();
+        private readonly Dictionary<string, WaitPeer> _hostWaitPeers = new Dictionary<string, WaitPeer>();
         private readonly List<string> _peersToRemove = new List<string>();
         private const IPv6Mode Ipv6Mode = IPv6Mode.Disabled;
 
@@ -55,13 +64,17 @@ namespace DinoBlast.Puncher
         {
             Console.WriteLine($"OnNatIntroductionRequest: {localEndPoint} / {remoteEndPoint} / {token}");
 
+            // The next commented out lines form the foundation of an extension which allows the puncher to differentiate between hosts and clients
+            // var hostFlagAndToken = ExtractHostFlagAndToken(token);
+            // var actualToken = $"{remoteEndPoint.Address}:{remoteEndPoint.Port}#{token}";
+
             // Has someone already volunteered as host for this token?
-            if (_waitingPeers.TryGetValue(token, out var wpeer))
+            if (_hostWaitPeers.TryGetValue(token, out var wpeer))
             {
                 if (wpeer.InternalAddr.Equals(localEndPoint) &&
                     wpeer.ExternalAddr.Equals(remoteEndPoint))
                 {
-                    //
+                    // If the current WaitPeer sends another request, refresh his timer
                     wpeer.Refresh();
                     return;
                 }
@@ -86,7 +99,7 @@ namespace DinoBlast.Puncher
             else
             {
                 Console.WriteLine("Wait peer created. i({0}) e({1})", localEndPoint, remoteEndPoint);
-                _waitingPeers[token] = new WaitPeer(localEndPoint, remoteEndPoint);
+                _hostWaitPeers[token] = new WaitPeer(localEndPoint, remoteEndPoint);
             }
         }
 
@@ -99,27 +112,11 @@ namespace DinoBlast.Puncher
         public void Run()
         {
             Console.WriteLine($"Starting hole punch server at port {ServerPort}...");
-            EventBasedNetListener clientListener = new EventBasedNetListener();
 
-            clientListener.PeerConnectedEvent += peer =>
-            {
-                Console.WriteLine("PeerConnected: " + peer.EndPoint);
-            };
+            // Currently we don't need any of the events that netListener can receive
+            EventBasedNetListener netListener = new EventBasedNetListener();
 
-            clientListener.ConnectionRequestEvent += request =>
-            {
-                request.AcceptIfKey(ConnectionKey);
-            };
-
-            clientListener.PeerDisconnectedEvent += (peer, disconnectInfo) =>
-            {
-                Console.WriteLine("PeerDisconnected: " + disconnectInfo.Reason);
-                if (disconnectInfo.AdditionalData.AvailableBytes > 0)
-                {
-                    Console.WriteLine("Disconnect data: " + disconnectInfo.AdditionalData.GetInt());
-                }
-            };
-            _puncher = new NetManager(clientListener)
+            _puncher = new NetManager(netListener)
             {
                 IPv6Enabled = Ipv6Mode,
                 NatPunchEnabled = true
@@ -129,13 +126,13 @@ namespace DinoBlast.Puncher
 
 
             while (true) {
-                // _puncher.PollEvents();
+                _puncher.PollEvents();
                 _puncher.NatPunchModule.PollEvents();
 
                 DateTime nowTime = DateTime.UtcNow;
 
-                // check old peers
-                foreach (var waitPeer in _waitingPeers)
+                // Check old peers
+                foreach (var waitPeer in _hostWaitPeers)
                 {
                     if (nowTime - waitPeer.Value.RefreshTime > KickTime)
                     {
@@ -143,16 +140,28 @@ namespace DinoBlast.Puncher
                     }
                 }
 
-                // remove
+                // Remove old peers if any
                 for (int i = 0; i < _peersToRemove.Count; i++)
                 {
                     Console.WriteLine("Kicking peer: " + _peersToRemove[i]);
-                    _waitingPeers.Remove(_peersToRemove[i]);
+                    _hostWaitPeers.Remove(_peersToRemove[i]);
                 }
                 _peersToRemove.Clear();
 
                 Thread.Sleep(10);
             }
+        }
+
+        private HostFlagAndToken ExtractHostFlagAndToken(string token)
+        {
+            // Token format should be <IsHost>(#)<ActualToken>
+            var parts = token.Split("(#)");
+            if (parts.Length != 2)
+                throw new Exception($"Token had an unexpected format! token = {token}");
+
+            var isHost = Convert.ToBoolean(parts.First());
+            var actualToken = parts.Last();
+            return new HostFlagAndToken(isHost, actualToken);
         }
     }
 }

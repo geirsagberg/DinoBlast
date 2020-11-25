@@ -10,7 +10,7 @@ namespace DinoBlast.Puncher
         private const string ConnectionKey = "test_key";
         private const IPv6Mode Ipv6Mode = IPv6Mode.Disabled;
 
-        private NetManager _c1;
+        private NetManager _clientNetManager;
 
         public void Run(string puncherServerIp) {
             Console.WriteLine("=== HolePunch Test ===");
@@ -21,6 +21,7 @@ namespace DinoBlast.Puncher
             clientListener.PeerConnectedEvent += peer =>
             {
                 Console.WriteLine("PeerConnected: " + peer.EndPoint);
+                // Can now persist peer in a list, and use peer.SendWithDeliveryEvent(..)
             };
 
             clientListener.ConnectionRequestEvent += request =>
@@ -30,7 +31,7 @@ namespace DinoBlast.Puncher
 
             clientListener.PeerDisconnectedEvent += (peer, disconnectInfo) =>
             {
-                Console.WriteLine("PeerDisconnected: " + disconnectInfo.Reason);
+                Console.WriteLine($"PeerDisconnected ({peer.EndPoint}): {disconnectInfo.Reason}");
                 if (disconnectInfo.AdditionalData.AvailableBytes > 0)
                 {
                     Console.WriteLine("Disconnect data: " + disconnectInfo.AdditionalData.GetInt());
@@ -39,19 +40,23 @@ namespace DinoBlast.Puncher
 
             natPunchListener1.NatIntroductionSuccess += (point, addrType, token) =>
             {
-                var peer = _c1.Connect(point, ConnectionKey);
-                Console.WriteLine($"NatIntroductionSuccess C1. Connecting to C2: {point}, type: {addrType}, connection created: {peer != null}");
+                // TODO: Consider handling that if two peers are on the same PC, and using a hole puncher on localhost, two NAT introductions are initiated:
+                // One over localhost, and one over LAN
+
+                var peer = _clientNetManager.Connect(point, ConnectionKey);
+                Console.WriteLine($"NatIntroductionSuccess. Connecting to other client: {point}, type: {addrType}, connection created: {peer != null}");
+                Console.WriteLine($"Received token: {token}");
             };
 
-            _c1 = new NetManager(clientListener)
+            _clientNetManager = new NetManager(clientListener)
             {
                 IPv6Enabled = Ipv6Mode,
                 NatPunchEnabled = true
             };
-            _c1.NatPunchModule.Init(natPunchListener1);
-            _c1.Start();
+            _clientNetManager.NatPunchModule.Init(natPunchListener1);
+            _clientNetManager.Start();
 
-            _c1.NatPunchModule.SendNatIntroduceRequest(puncherServerIp, PuncherServerPort, "token1");
+            _clientNetManager.NatPunchModule.SendNatIntroduceRequest(puncherServerIp, PuncherServerPort, "token1");
 
             // keep going until ESCAPE is pressed
             Console.WriteLine("Press ESC to quit");
@@ -67,19 +72,19 @@ namespace DinoBlast.Puncher
                     }
                     if (key == ConsoleKey.A)
                     {
-                        Console.WriteLine("C1 stopped");
-                        _c1.DisconnectPeer(_c1.FirstPeer, new byte[] {1,2,3,4});
-                        _c1.Stop();
+                        Console.WriteLine("Client stopped");
+                        _clientNetManager.DisconnectPeer(_clientNetManager.FirstPeer, new byte[] {1,2,3,4});
+                        _clientNetManager.Stop();
                     }
                 }
 
-                _c1.NatPunchModule.PollEvents();
-                _c1.PollEvents();
+                _clientNetManager.NatPunchModule.PollEvents();
+                _clientNetManager.PollEvents();
 
                 Thread.Sleep(10);
             }
 
-            _c1.Stop();
+            _clientNetManager.Stop();
         }
 
     }

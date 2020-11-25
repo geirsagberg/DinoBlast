@@ -10,7 +10,7 @@ namespace DinoBlast.Puncher
                 // Starts 1x test client
                 var testClient = new HolePunchServerTestClient();
                 testClient.Run("35.198.111.159");
-                // testClient.Run("localhost");
+                //testClient.Run("127.0.0.1");
             } else {
                 var server = new HolePunchServer();
                 server.Run();
