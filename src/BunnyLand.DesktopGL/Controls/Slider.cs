@@ -65,7 +65,7 @@ namespace BunnyLand.DesktopGL.Controls
             NotifyChanged();
         }
 
-        public event EventHandler<float> OnSliderChanged;
+        public event EventHandler<float>? OnSliderChanged;
 
         private void SetProgress(PointerEventArgs args)
         {

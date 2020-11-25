@@ -31,7 +31,6 @@ namespace BunnyLand.DesktopGL.Systems
 
         private readonly Dictionary<NetPeer, PeerStatus> statusByPeer = new Dictionary<NetPeer, PeerStatus>();
 
-        private byte broadcastedBytesCounter;
         private IComponentMapperService componentMapperService = null!;
         private GameTime gameTime = new GameTime();
 

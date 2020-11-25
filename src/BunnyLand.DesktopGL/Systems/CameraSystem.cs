@@ -12,8 +12,8 @@ namespace BunnyLand.DesktopGL.Systems
     public class CameraSystem : EntityUpdateSystem
     {
         private readonly OrthographicCamera camera;
-        private ComponentMapper<Transform2> transformMapper;
-        private ComponentMapper<Movable> movableMapper;
+        private ComponentMapper<Transform2> transformMapper = null!;
+        private ComponentMapper<Movable> movableMapper = null!;
 
         public CameraSystem(OrthographicCamera camera) : base(Aspect.All(typeof(Transform2)))
         {
@@ -40,7 +40,7 @@ namespace BunnyLand.DesktopGL.Systems
                 var transform = transformMapper.Get(entity);
                 points.Add(transform.WorldPosition);
 
-                if (movableMapper.Get(entity) is Movable movable && movable.ExpandsCamera) {
+                if (movableMapper.Get(entity) is { ExpandsCamera: true }) {
                     while (camera.Zoom > camera.MinimumZoom
                         && camera.Contains(new Rectangle(transform.Position.ToPoint() - new Point(50, 50), new Point(100, 100))) != ContainmentType.Contains) {
                         camera.ZoomOut(0.01f);

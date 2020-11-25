@@ -24,7 +24,7 @@ namespace BunnyLand.DesktopGL
 
         public BunnyWorld Build()
         {
-            var world = serviceProvider.GetService<BunnyWorld>();
+            var world = serviceProvider.GetRequiredService<BunnyWorld>();
 
             foreach (var system in _systems)
                 world.RegisterSystem(system);

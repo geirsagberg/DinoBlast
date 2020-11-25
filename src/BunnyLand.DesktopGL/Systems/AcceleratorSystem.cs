@@ -13,10 +13,10 @@ namespace BunnyLand.DesktopGL.Systems
         private readonly GameSettings gameSettings;
 
         private readonly Variables variables;
-        private ComponentMapper<Accelerator> acceleratorMapper;
-        private ComponentMapper<Movable> movableMapper;
-        private ComponentMapper<PlayerInput> playerInputMapper;
-        private ComponentMapper<PlayerState> playerMapper;
+        private ComponentMapper<Accelerator> acceleratorMapper = null!;
+        private ComponentMapper<Movable> movableMapper = null!;
+        private ComponentMapper<PlayerInput> playerInputMapper = null!;
+        private ComponentMapper<PlayerState> playerMapper = null!;
 
         public AcceleratorSystem(GameSettings gameSettings, Variables variables) : base(Aspect.All(typeof(PlayerState), typeof(PlayerInput),
             typeof(Movable)))
