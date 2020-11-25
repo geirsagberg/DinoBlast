@@ -1,0 +1,40 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net5.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Apos.Gui" Version="0.15.0" />
+    <PackageReference Include="MonoGame.Extended.Entities" Version="3.8.0" />
+    <PackageReference Include="MonoGame.Framework.DesktopGL" Version="3.8.*" />
+    <PackageReference Include="MonoGame.Content.Builder.Task" Version="3.8.*" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <MonoGameContentReference Include="Content\Content.mgcb" Visible="true" />
+    <MonoGameContentReference Remove="Content\bin\**" />
+    <MonoGameContentReference Remove="Content\obj\**" />
+  </ItemGroup>
+  
+  <ItemGroup>
+    <TrimmerRootAssembly Include="Microsoft.Xna.Framework.Content.ContentTypeReader" Visible="false" />
+  </ItemGroup>
+  
+  <ItemGroup>
+    <Compile Remove="Content\bin\**" />
+    <Compile Remove="Content\obj\**" />
+  </ItemGroup>
+  
+  <ItemGroup>
+    <EmbeddedResource Remove="Content\bin\**" />
+    <EmbeddedResource Remove="Content\obj\**" />
+  </ItemGroup>
+  
+  <ItemGroup>
+    <None Remove="Content\bin\**" />
+    <None Remove="Content\obj\**" />
+  </ItemGroup>
+
+</Project>
