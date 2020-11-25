@@ -10,8 +10,8 @@ namespace DinoBlast.Puncher
             if (args.Contains("--client")) {
                 // Starts 1x test client
                 var testClient = new HolePunchServerTestClient();
-                //testClient.Run("34.107.86.191");
-                testClient.Run("localhost");
+                testClient.Run("35.198.111.159");
+                // testClient.Run("localhost");
             } else {
                 var server = new HolePunchServer();
                 server.Run();

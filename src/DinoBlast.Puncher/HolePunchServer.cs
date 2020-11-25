@@ -127,7 +127,9 @@ namespace DinoBlast.Puncher
             _puncher.Start(ServerPort);
             _puncher.NatPunchModule.Init(this);
 
+
             while (true) {
+                // _puncher.PollEvents();
                 _puncher.NatPunchModule.PollEvents();
 
                 DateTime nowTime = DateTime.UtcNow;
