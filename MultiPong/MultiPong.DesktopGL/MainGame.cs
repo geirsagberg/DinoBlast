@@ -14,8 +14,11 @@ namespace MultiPong.DesktopGL
         private static ComponentFocus _focus;
 
         private readonly Action<Component> _grabFocus = c => { _focus.Focus = c; };
-        private GuiModule _guiModule;
+
         private World _gameModule;
+        private GuiModule _menuGuiModule;
+        private ScreenPanel _screen;
+        private GuiModule _serversGuiModule;
 
         public MainGame()
         {
@@ -41,6 +44,10 @@ namespace MultiPong.DesktopGL
             var fontSystem = FontSystemFactory.Create(GraphicsDevice, 2048, 2048);
             fontSystem.AddFont(File.ReadAllBytes("Content/Fonts/Goldman-Regular.ttf"));
             GuiHelper.Setup(this, fontSystem);
+            _screen = new ScreenPanel { Layout = new LayoutVerticalCenter() };
+            _focus = new ComponentFocus(_screen, Default.ConditionPrevFocus, Default.ConditionNextFocus);
+            _menuGuiModule = new GuiModule(_focus);
+            Components.Add(_menuGuiModule);
         }
 
         protected override void BeginRun()
@@ -50,31 +57,49 @@ namespace MultiPong.DesktopGL
 
         private void ShowMenu()
         {
-            var screen = new ScreenPanel { Layout = new LayoutVerticalCenter() };
-            var container = new Panel { Layout = new LayoutVerticalCenter() };
-            container.AddHoverCondition(Default.ConditionHoverMouse);
-            container.AddAction(Default.IsScrolled, Default.ScrollVertically);
+            _screen.Clear();
+            var container = GetVerticalContainer();
             container.Add(Default.CreateButton("Start Game", _ => {
-                Components.Remove(_guiModule);
+                _screen.Clear();
                 StartGame();
+                return true;
+            }, _grabFocus));
+            container.Add(Default.CreateButton("Join Game", _ => {
+                _screen.Clear();
+                ShowServers();
                 return true;
             }, _grabFocus));
             container.Add(Default.CreateButton("Exit Game", _ => {
                 Exit();
                 return true;
             }, _grabFocus));
-            screen.Add(container);
-            _focus = new ComponentFocus(screen, Default.ConditionPrevFocus, Default.ConditionNextFocus);
+            _screen.Add(container);
+        }
 
-            _guiModule = new GuiModule(_focus);
+        private static Panel GetVerticalContainer()
+        {
+            var container = new Panel { Layout = new LayoutVerticalCenter() };
+            container.AddHoverCondition(Default.ConditionHoverMouse);
+            container.AddAction(Default.IsScrolled, Default.ScrollVertically);
+            return container;
+        }
 
-            Components.Add(_guiModule);
+        private void ShowServers()
+        {
+            _screen.Clear();
+            var container = GetVerticalContainer();
+            container.Add(new Label("Loading..."));
+            container.Add(Default.CreateButton("Cancel", _ => {
+                ShowMenu();
+                return true;
+            }, _grabFocus));
+            _screen.Add(container);
+
+
         }
 
         private void StartGame()
         {
-
-
             _gameModule = new WorldBuilder()
                 .AddSystem(new PhysicsSystem())
                 .Build();
