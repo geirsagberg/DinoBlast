@@ -6,18 +6,20 @@ namespace MultiPong.DesktopGL.Systems
 {
     public class RenderSystem : EntityDrawSystem
     {
-        public RenderSystem() : base(aspect.All())
+        private ComponentMapper<Physical> _physicalMapper;
+
+        public RenderSystem() : base(Aspect.All())
         {
         }
 
         public override void Initialize(IComponentMapperService mapperService)
         {
-            mapperService.GetMapper<>()
+            _physicalMapper = mapperService.GetMapper<Physical>();
         }
 
         public override void Draw(GameTime gameTime)
         {
-            throw new System.NotImplementedException();
+
         }
     }
 }

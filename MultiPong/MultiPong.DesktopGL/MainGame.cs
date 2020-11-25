@@ -38,9 +38,8 @@ namespace MultiPong.DesktopGL
 
         private void SetupGui()
         {
-            using MemoryStream stream = new();
-            TitleContainer.OpenStream("Content/Fonts/Goldman-Regular.ttf").CopyTo(stream);
-            var fontSystem = FontSystemFactory.Create(GraphicsDevice, stream.ToArray(), 2048, 2048);
+            var fontSystem = FontSystemFactory.Create(GraphicsDevice, 2048, 2048);
+            fontSystem.AddFont(File.ReadAllBytes("Content/Fonts/Goldman-Regular.ttf"));
             GuiHelper.Setup(this, fontSystem);
         }
 
