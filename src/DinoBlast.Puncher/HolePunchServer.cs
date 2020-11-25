@@ -4,6 +4,19 @@ using System.Net;
 using System.Threading;
 using LiteNetLib;
 
+// TODO: Steg 1: Kople n klientar til 1 host. [UTFØRT]
+// TODO: https://github.com/featherhttp/framework for å liste ut servers
+// TODO: Må ha eit begrep om N ServerHosts
+// TODO: Finne ut kvifor ein NatIntroduction fører til både ein internal og external connection
+
+/*
+ * Kladding:
+ * - Token angir eit "rom" ein vil connecte til
+ * - Den første som gjer ein request til eit gitt rom blir host => Blir lagt til i _waitingPeers
+ * - Alle andre som gjer ein request til eit gitt rom blir introdusert med host
+ * - Hosts i _waitingPeers blir foreløpig kicked 2 minutt etter at dei blei lagt til (med mindre dei gjer nye requests, som nullstiller timer)
+ */
+
 namespace DinoBlast.Puncher
 {
     internal class WaitPeer
@@ -30,7 +43,7 @@ namespace DinoBlast.Puncher
         // Inspired by https://github.com/RevenantX/LiteNetLib/blob/master/LibSample/HolePunchServerTest.cs
         private const int ServerPort = 50010;
         private const string ConnectionKey = "test_key";
-        private static readonly TimeSpan KickTime = new TimeSpan(0, 1, 0);
+        private static readonly TimeSpan KickTime = new TimeSpan(0, 2, 0);
 
         private readonly Dictionary<string, WaitPeer> _waitingPeers = new Dictionary<string, WaitPeer>();
         private readonly List<string> _peersToRemove = new List<string>();
@@ -41,20 +54,22 @@ namespace DinoBlast.Puncher
         public void OnNatIntroductionRequest(IPEndPoint localEndPoint, IPEndPoint remoteEndPoint, string token)
         {
             Console.WriteLine($"OnNatIntroductionRequest: {localEndPoint} / {remoteEndPoint} / {token}");
+
+            // Has someone already volunteered as host for this token?
             if (_waitingPeers.TryGetValue(token, out var wpeer))
             {
                 if (wpeer.InternalAddr.Equals(localEndPoint) &&
                     wpeer.ExternalAddr.Equals(remoteEndPoint))
                 {
+                    //
                     wpeer.Refresh();
                     return;
                 }
 
                 Console.WriteLine("Wait peer found, sending introduction...");
 
-                // found in list - introduce client and host to eachother
                 Console.WriteLine(
-                    "host - i({0}) e({1})\nclient - i({2}) e({3})",
+                    "Host - i({0}) e({1})\n  ↳ Client - i({2}) e({3})",
                     wpeer.InternalAddr,
                     wpeer.ExternalAddr,
                     localEndPoint,
@@ -67,9 +82,6 @@ namespace DinoBlast.Puncher
                     remoteEndPoint, // client external
                     token // request token
                 );
-
-                // clear dictionary
-                _waitingPeers.Remove(token);
             }
             else
             {
@@ -80,7 +92,7 @@ namespace DinoBlast.Puncher
 
         public void OnNatIntroductionSuccess(IPEndPoint targetEndPoint, NatAddressType type, string token)
         {
-            // ignore we are server
+            // Ignore, since we are the server
             Console.WriteLine("OnNatIntroductionSuccess");
         }
 
