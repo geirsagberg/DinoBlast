@@ -6,6 +6,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DinoBlast.Puncher", "..\src
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Apos.Gui", "..\Apos.Gui\Source\Apos.Gui.csproj", "{D995D4D7-6B81-426B-ACDD-BF907993131E}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DinoBlast.Servers", "..\src\DinoBlast.Servers\DinoBlast.Servers.csproj", "{51A823A6-5538-464C-AA4B-9D8D0A2BF42D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -24,5 +26,9 @@ Global
 		{D995D4D7-6B81-426B-ACDD-BF907993131E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D995D4D7-6B81-426B-ACDD-BF907993131E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D995D4D7-6B81-426B-ACDD-BF907993131E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{51A823A6-5538-464C-AA4B-9D8D0A2BF42D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{51A823A6-5538-464C-AA4B-9D8D0A2BF42D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{51A823A6-5538-464C-AA4B-9D8D0A2BF42D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{51A823A6-5538-464C-AA4B-9D8D0A2BF42D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

@@ -1,11 +1,10 @@
-﻿
-using System.Linq;
+﻿using System.Linq;
 
 namespace DinoBlast.Puncher
 {
-    class Program
+    internal class Program
     {
-        static void Main(string[] args)
+        private static void Main(string[] args)
         {
             if (args.Contains("--client")) {
                 // Starts 1x test client
@@ -16,7 +15,6 @@ namespace DinoBlast.Puncher
                 var server = new HolePunchServer();
                 server.Run();
             }
-
         }
     }
 }
