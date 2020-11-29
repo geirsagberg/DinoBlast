@@ -49,4 +49,6 @@ csharp_new_line_before_finally = false
 csharp_new_line_before_members_in_object_initializers = false
 csharp_new_line_before_members_in_anonymous_types = false
 
+# Space preferences
 csharp_space_after_cast = true
+resharper_space_within_single_line_array_initializer_braces = true

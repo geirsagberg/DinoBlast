@@ -16,7 +16,7 @@ namespace BunnyLand.DesktopGL.Screens
 {
     public class MenuScreen : GameScreen
     {
-        private static readonly List<(int width, int height)> WorldSizes = new List<(int width, int height)> {
+        private static readonly List<(int width, int height)> WorldSizes = new() {
             (800, 600),
             (1280, 720),
             (1440, 900),

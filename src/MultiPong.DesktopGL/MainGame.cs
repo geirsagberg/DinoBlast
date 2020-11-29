@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Threading.Tasks;
 using Apos.Gui;
 using FontStashSharp;
 using Microsoft.Xna.Framework;
@@ -59,12 +60,10 @@ namespace MultiPong.DesktopGL
             _screen.Clear();
             var container = GetVerticalContainer();
             container.Add(Default.CreateButton("Start Game", _ => {
-                _screen.Clear();
                 StartGame();
                 return true;
             }, _grabFocus));
             container.Add(Default.CreateButton("Join Game", _ => {
-                _screen.Clear();
                 ShowServers();
                 return true;
             }, _grabFocus));
@@ -94,11 +93,14 @@ namespace MultiPong.DesktopGL
             }, _grabFocus));
             _screen.Add(container);
 
+            Task.Run(() => {
 
+            });
         }
 
         private void StartGame()
         {
+            _screen.Clear();
             _gameModule = new WorldBuilder()
                 .AddSystem(new PhysicsSystem())
                 .Build();
@@ -106,6 +108,8 @@ namespace MultiPong.DesktopGL
             _gameModule.CreatePaddle(0);
             _gameModule.CreatePaddle(1);
             Components.Add(_gameModule);
+
+
         }
 
         private void SetupWorld()

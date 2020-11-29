@@ -11,8 +11,8 @@ namespace BunnyLand.DesktopGL.Services
     // Inspired by https://github.com/upta/pubsub/blob/master/PubSub/Core/Hub.cs and MediatR
     public class MessageHub
     {
-        private readonly ConcurrentDictionary<Type, List<Delegate>> notificationHandlers = new ConcurrentDictionary<Type, List<Delegate>>();
-        private readonly ConcurrentDictionary<Type, Delegate> requestHandlers = new ConcurrentDictionary<Type, Delegate>();
+        private readonly ConcurrentDictionary<Type, Delegate> requestHandlers = new();
+        private readonly ConcurrentDictionary<Type, List<Delegate>> notificationHandlers = new();
 
         private IDictionary<Type, List<Delegate>> NotificationHandlers => notificationHandlers;
         private IDictionary<Type, Delegate> RequestHandlers => requestHandlers;
