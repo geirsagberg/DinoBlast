@@ -16,9 +16,8 @@ namespace MultiPong.DesktopGL
         private readonly Action<Component> _grabFocus = c => { _focus.Focus = c; };
 
         private World _gameModule;
-        private GuiModule _menuGuiModule;
+        private GuiModule _guiModule;
         private ScreenPanel _screen;
-        private GuiModule _serversGuiModule;
 
         public MainGame()
         {
@@ -46,8 +45,8 @@ namespace MultiPong.DesktopGL
             GuiHelper.Setup(this, fontSystem);
             _screen = new ScreenPanel { Layout = new LayoutVerticalCenter() };
             _focus = new ComponentFocus(_screen, Default.ConditionPrevFocus, Default.ConditionNextFocus);
-            _menuGuiModule = new GuiModule(_focus);
-            Components.Add(_menuGuiModule);
+            _guiModule = new GuiModule(_focus);
+            Components.Add(_guiModule);
         }
 
         protected override void BeginRun()

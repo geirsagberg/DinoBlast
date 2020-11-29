@@ -17,7 +17,7 @@ using LiteNetLib;
 
 namespace DinoBlast.Puncher
 {
-    internal struct HostFlagAndToken
+    internal readonly struct HostFlagAndToken
     {
         public HostFlagAndToken(bool isHost, string token)
         {
@@ -31,6 +31,13 @@ namespace DinoBlast.Puncher
 
     internal class WaitPeer
     {
+        public WaitPeer(IPEndPoint internalAddr, IPEndPoint externalAddr)
+        {
+            Refresh();
+            InternalAddr = internalAddr;
+            ExternalAddr = externalAddr;
+        }
+
         public IPEndPoint InternalAddr { get; }
         public IPEndPoint ExternalAddr { get; }
         public DateTime RefreshTime { get; private set; }
@@ -39,24 +46,17 @@ namespace DinoBlast.Puncher
         {
             RefreshTime = DateTime.UtcNow;
         }
-
-        public WaitPeer(IPEndPoint internalAddr, IPEndPoint externalAddr)
-        {
-            Refresh();
-            InternalAddr = internalAddr;
-            ExternalAddr = externalAddr;
-        }
     }
 
     public class HolePunchServer : INatPunchListener
     {
         // Inspired by https://github.com/RevenantX/LiteNetLib/blob/master/LibSample/HolePunchServerTest.cs
         private const int ServerPort = 50010;
-        private static readonly TimeSpan KickTime = new TimeSpan(0, 1, 0);
-
-        private readonly Dictionary<string, WaitPeer> _hostWaitPeers = new Dictionary<string, WaitPeer>();
-        private readonly List<string> _peersToRemove = new List<string>();
         private const IPv6Mode Ipv6Mode = IPv6Mode.Disabled;
+        private static readonly TimeSpan KickTime = new(0, 1, 0);
+
+        private readonly Dictionary<string, WaitPeer> _hostWaitPeers = new();
+        private readonly List<string> _peersToRemove = new();
 
         private NetManager _puncher;
 
@@ -69,11 +69,9 @@ namespace DinoBlast.Puncher
             // var actualToken = $"{remoteEndPoint.Address}:{remoteEndPoint.Port}#{token}";
 
             // Has someone already volunteered as host for this token?
-            if (_hostWaitPeers.TryGetValue(token, out var wpeer))
-            {
+            if (_hostWaitPeers.TryGetValue(token, out var wpeer)) {
                 if (wpeer.InternalAddr.Equals(localEndPoint) &&
-                    wpeer.ExternalAddr.Equals(remoteEndPoint))
-                {
+                    wpeer.ExternalAddr.Equals(remoteEndPoint)) {
                     // If the current WaitPeer sends another request, refresh his timer
                     wpeer.Refresh();
                     return;
@@ -95,9 +93,7 @@ namespace DinoBlast.Puncher
                     remoteEndPoint, // client external
                     token // request token
                 );
-            }
-            else
-            {
+            } else {
                 Console.WriteLine("Wait peer created. i({0}) e({1})", localEndPoint, remoteEndPoint);
                 _hostWaitPeers[token] = new WaitPeer(localEndPoint, remoteEndPoint);
             }
@@ -114,10 +110,9 @@ namespace DinoBlast.Puncher
             Console.WriteLine($"Starting hole punch server at port {ServerPort}...");
 
             // Currently we don't need any of the events that netListener can receive
-            EventBasedNetListener netListener = new EventBasedNetListener();
+            var netListener = new EventBasedNetListener();
 
-            _puncher = new NetManager(netListener)
-            {
+            _puncher = new NetManager(netListener) {
                 IPv6Enabled = Ipv6Mode,
                 NatPunchEnabled = true
             };
@@ -129,23 +124,19 @@ namespace DinoBlast.Puncher
                 _puncher.PollEvents();
                 _puncher.NatPunchModule.PollEvents();
 
-                DateTime nowTime = DateTime.UtcNow;
+                var nowTime = DateTime.UtcNow;
 
                 // Check old peers
                 foreach (var waitPeer in _hostWaitPeers)
-                {
                     if (nowTime - waitPeer.Value.RefreshTime > KickTime)
-                    {
                         _peersToRemove.Add(waitPeer.Key);
-                    }
-                }
 
                 // Remove old peers if any
-                for (int i = 0; i < _peersToRemove.Count; i++)
-                {
+                for (var i = 0; i < _peersToRemove.Count; i++) {
                     Console.WriteLine("Kicking peer: " + _peersToRemove[i]);
                     _hostWaitPeers.Remove(_peersToRemove[i]);
                 }
+
                 _peersToRemove.Clear();
 
                 Thread.Sleep(10);
