@@ -1,6 +1,5 @@
-﻿namespace BunnyLand.DesktopGL
+﻿namespace BunnyLand.DesktopGL;
+
+public interface IPausable
 {
-    public interface IPausable
-    {
-    }
 }

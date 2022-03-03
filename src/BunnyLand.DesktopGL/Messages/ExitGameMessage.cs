@@ -1,7 +1,6 @@
-namespace BunnyLand.DesktopGL.Messages
+namespace BunnyLand.DesktopGL.Messages;
+
+public class ExitGameMessage : INotification
 {
-    public class ExitGameMessage : INotification
-    {
         
-    }
 }

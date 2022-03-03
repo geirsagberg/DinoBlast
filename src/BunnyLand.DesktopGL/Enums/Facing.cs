@@ -1,8 +1,7 @@
-namespace BunnyLand.DesktopGL.Enums
+namespace BunnyLand.DesktopGL.Enums;
+
+public enum Facing
 {
-    public enum Facing
-    {
-        Right,
-        Left
-    }
+    Right,
+    Left
 }

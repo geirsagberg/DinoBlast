@@ -4,54 +4,54 @@ using BunnyLand.DesktopGL.Components;
 using BunnyLand.DesktopGL.NetMessages;
 using BunnyLand.DesktopGL.Serialization;
 using FluentAssertions;
+using FluentAssertions.Equivalency;
 using LiteNetLib.Utils;
 using Microsoft.Xna.Framework;
 using MonoGame.Extended.Entities;
 using Xunit;
 
-namespace BunnyLand.Tests
+namespace BunnyLand.Tests;
+
+public class SerializationTests
 {
-    public class SerializationTests
+    [Fact]
+    public void Can_serialize_and_deserialize_entities()
     {
-        [Fact]
-        public void Can_serialize_and_deserialize_entities()
-        {
-            var componentManager = new ComponentManager();
-            var entityManager = new EntityManager(componentManager);
-            var entityFactory = new EntityFactory();
-            var serializer = new Serializer();
+        var componentManager = new ComponentManager();
+        var entityManager = new EntityManager(componentManager);
+        var entityFactory = new EntityFactory();
+        var serializer = new Serializer();
 
-            entityFactory.CreatePlayer(entityManager.Create(), new Vector2(200, 400), 1, PlayerIndex.One, default);
-            entityFactory.CreatePlayer(entityManager.Create(), new Vector2(300, 400), 2, PlayerIndex.Two, default);
+        entityFactory.CreatePlayer(entityManager.Create(), new Vector2(200, 400), 1, PlayerIndex.One, default);
+        entityFactory.CreatePlayer(entityManager.Create(), new Vector2(300, 400), 2, PlayerIndex.Two, default);
 
-            var state = FullGameState.CreateFullGameState(componentManager, entityManager.Entities, 1, DateTime.UtcNow, DateTime.UtcNow.AddSeconds(1), 1);
+        var state = FullGameState.CreateFullGameState(componentManager, entityManager.Entities, 1, DateTime.UtcNow, DateTime.UtcNow.AddSeconds(1), 1);
 
-            var writer = new NetDataWriter();
+        var writer = new NetDataWriter();
 
-            writer.Put(serializer.Serialize(state));
-            var bytes = writer.CopyData();
-            var reader = new NetDataReader(bytes);
-            var target = serializer.Deserialize<FullGameState>(reader.GetRemainingBytes());
+        writer.Put(serializer.Serialize(state));
+        var bytes = writer.CopyData();
+        var reader = new NetDataReader(bytes);
+        var target = serializer.Deserialize<FullGameState>(reader.GetRemainingBytes());
 
-            target.Components.Should()
-                .BeEquivalentTo(state.Components, o => o
-                    .Excluding(c => c.SelectedMemberPath.EndsWith(nameof(CollisionBody.OldPosition))
-                        || c.SelectedMemberPath.EndsWith(nameof(PlayerState.LocalPlayerIndex))
-                        || c.SelectedMemberPath.EndsWith(nameof(PlayerState.IsLocal))
-                    )
-                );
-        }
+        target.Components.Should()
+            .BeEquivalentTo(state.Components, o => o
+                .Excluding(c => c.Path.EndsWith(nameof(CollisionBody.OldPosition))
+                    || c.Path.EndsWith(nameof(PlayerState.LocalPlayerIndex))
+                    || c.Path.EndsWith(nameof(PlayerState.IsLocal))
+                )
+            );
+    }
 
-        [Fact]
-        public void Can_serialize_and_deserialize_InputUpdateNetMessage()
-        {
-            var msg = new InputUpdateNetMessage(1, new PlayerInput());
-            var serializer = new Serializer();
+    [Fact]
+    public void Can_serialize_and_deserialize_InputUpdateNetMessage()
+    {
+        var msg = new InputUpdateNetMessage(1, new PlayerInput());
+        var serializer = new Serializer();
 
-            var bytes = serializer.Serialize(msg);
-            var deserialized = serializer.Deserialize<InputUpdateNetMessage>(bytes);
+        var bytes = serializer.Serialize(msg);
+        var deserialized = serializer.Deserialize<InputUpdateNetMessage>(bytes);
 
-            deserialized.Should().BeEquivalentTo(msg);
-        }
+        deserialized.Should().BeEquivalentTo(msg);
     }
 }

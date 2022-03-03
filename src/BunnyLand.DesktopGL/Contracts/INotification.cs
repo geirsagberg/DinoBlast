@@ -1,6 +1,5 @@
-﻿namespace BunnyLand.DesktopGL
+﻿namespace BunnyLand.DesktopGL;
+
+public interface INotification
 {
-    public interface INotification
-    {
-    }
 }

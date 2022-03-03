@@ -1,10 +1,9 @@
 ﻿using BunnyLand.DesktopGL.Enums;
 using LiteNetLib.Utils;
 
-namespace BunnyLand.DesktopGL
+namespace BunnyLand.DesktopGL;
+
+public interface INetMessage
 {
-    public interface INetMessage
-    {
-        NetMessageType NetMessageType { get; }
-    }
+    NetMessageType NetMessageType { get; }
 }

@@ -1,10 +1,9 @@
-namespace BunnyLand.DesktopGL.Enums
+namespace BunnyLand.DesktopGL.Enums;
+
+public enum PlayerInputType
 {
-    public enum PlayerInputType
-    {
-        None,
-        Jump,
-        Move,
-        Aim
-    }
+    None,
+    Jump,
+    Move,
+    Aim
 }

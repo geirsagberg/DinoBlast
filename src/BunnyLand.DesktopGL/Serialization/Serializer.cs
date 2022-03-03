@@ -1,18 +1,17 @@
 ﻿using MessagePack;
 
-namespace BunnyLand.DesktopGL.Serialization
+namespace BunnyLand.DesktopGL.Serialization;
+
+public class Serializer
 {
-    public class Serializer
+    private readonly MessagePackSerializerOptions options;
+
+    public Serializer()
     {
-        private readonly MessagePackSerializerOptions options;
-
-        public Serializer()
-        {
-            options = MessagePackSerializerOptions.Standard.WithCompression(MessagePackCompression.Lz4BlockArray);
-        }
-
-        public byte[] Serialize<T>(T value) => MessagePackSerializer.Serialize(value, options);
-
-        public T Deserialize<T>(in byte[] bytes) => MessagePackSerializer.Deserialize<T>(bytes, options);
+        options = MessagePackSerializerOptions.Standard.WithCompression(MessagePackCompression.Lz4BlockArray);
     }
+
+    public byte[] Serialize<T>(T value) => MessagePackSerializer.Serialize(value, options);
+
+    public T Deserialize<T>(in byte[] bytes) => MessagePackSerializer.Deserialize<T>(bytes, options);
 }

@@ -1,6 +1,5 @@
-﻿namespace BunnyLand.DesktopGL.Messages
+﻿namespace BunnyLand.DesktopGL.Messages;
+
+internal class ServerDisconnectedMessage : INotification
 {
-    internal class ServerDisconnectedMessage : INotification
-    {
-    }
 }

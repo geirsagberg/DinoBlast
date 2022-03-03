@@ -1,17 +1,16 @@
 ﻿using Microsoft.Xna.Framework;
 using MonoGame.Extended;
 
-namespace BunnyLand.DesktopGL.Components
-{
-    public class SolidColor
-    {
-        public Color Color { get; }
-        public RectangleF Bounds { get; }
+namespace BunnyLand.DesktopGL.Components;
 
-        public SolidColor(Color color, RectangleF bounds)
-        {
-            Color = color;
-            Bounds = bounds;
-        }
+public class SolidColor
+{
+    public Color Color { get; }
+    public RectangleF Bounds { get; }
+
+    public SolidColor(Color color, RectangleF bounds)
+    {
+        Color = color;
+        Bounds = bounds;
     }
 }

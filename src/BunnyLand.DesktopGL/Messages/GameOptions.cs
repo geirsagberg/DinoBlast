@@ -1,7 +1,6 @@
-﻿namespace BunnyLand.DesktopGL.Messages
+﻿namespace BunnyLand.DesktopGL.Messages;
+
+internal class GameOptions
 {
-    internal class GameOptions
-    {
-        public OnlineType OnlineType { get; set; }
-    }
+    public OnlineType OnlineType { get; set; }
 }

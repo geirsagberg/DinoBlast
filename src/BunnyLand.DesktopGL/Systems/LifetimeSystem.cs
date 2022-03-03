@@ -5,30 +5,29 @@ using Microsoft.Xna.Framework;
 using MonoGame.Extended.Entities;
 using MonoGame.Extended.Entities.Systems;
 
-namespace BunnyLand.DesktopGL.Systems
+namespace BunnyLand.DesktopGL.Systems;
+
+public class LifetimeSystem : EntityProcessingSystem, IPausable
 {
-    public class LifetimeSystem : EntityProcessingSystem, IPausable
+    private readonly Variables variables;
+    private ComponentMapper<Lifetime> lifetimeMapper = null!;
+
+    public LifetimeSystem(Variables variables) : base(Aspect.All(typeof(Lifetime)))
     {
-        private readonly Variables variables;
-        private ComponentMapper<Lifetime> lifetimeMapper = null!;
+        this.variables = variables;
+    }
 
-        public LifetimeSystem(Variables variables) : base(Aspect.All(typeof(Lifetime)))
-        {
-            this.variables = variables;
-        }
+    public override void Initialize(IComponentMapperService mapperService)
+    {
+        lifetimeMapper = mapperService.GetMapper<Lifetime>();
+    }
 
-        public override void Initialize(IComponentMapperService mapperService)
-        {
-            lifetimeMapper = mapperService.GetMapper<Lifetime>();
-        }
-
-        public override void Process(GameTime gameTime, int entityId)
-        {
-            var lifetime = lifetimeMapper.Get(entityId);
-            lifetime.LifeSpanLeft -= gameTime.GetElapsedTimeSpan(variables);
-            if (lifetime.LifeSpanLeft < TimeSpan.Zero) {
-                DestroyEntity(entityId);
-            }
+    public override void Process(GameTime gameTime, int entityId)
+    {
+        var lifetime = lifetimeMapper.Get(entityId);
+        lifetime.LifeSpanLeft -= gameTime.GetElapsedTimeSpan(variables);
+        if (lifetime.LifeSpanLeft < TimeSpan.Zero) {
+            DestroyEntity(entityId);
         }
     }
 }

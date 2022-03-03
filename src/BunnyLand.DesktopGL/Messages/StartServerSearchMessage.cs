@@ -1,7 +1,6 @@
-namespace BunnyLand.DesktopGL.Messages
-{
-    public class StartServerSearchMessage : INotification
-    {
+namespace BunnyLand.DesktopGL.Messages;
 
-    }
+public class StartServerSearchMessage : INotification
+{
+
 }

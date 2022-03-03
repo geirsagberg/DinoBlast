@@ -2,12 +2,11 @@
 using Microsoft.Xna.Framework.Input;
 using MonoGame.Extended.Input;
 
-namespace BunnyLand.DesktopGL
+namespace BunnyLand.DesktopGL;
+
+public interface IButtonMap
 {
-    public interface IButtonMap
-    {
-        Option<PlayerKey> GetKey(Buttons buttons);
-        Option<PlayerKey> GetKey(Keys keys);
-        Option<PlayerKey> GetKey(MouseButton buttons);
-    }
+    Option<PlayerKey> GetKey(Buttons buttons);
+    Option<PlayerKey> GetKey(Keys keys);
+    Option<PlayerKey> GetKey(MouseButton buttons);
 }

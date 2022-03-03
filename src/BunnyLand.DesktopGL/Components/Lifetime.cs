@@ -1,18 +1,17 @@
 ﻿using System;
 using MessagePack;
 
-namespace BunnyLand.DesktopGL.Components
+namespace BunnyLand.DesktopGL.Components;
+
+[MessagePackObject]
+public class Lifetime
 {
-    [MessagePackObject]
-    public class Lifetime
+    [Key(0)] public TimeSpan LifeSpan { get; }
+
+    [Key(1)] public TimeSpan LifeSpanLeft { get; set; }
+
+    public Lifetime(TimeSpan lifeSpan)
     {
-        [Key(0)] public TimeSpan LifeSpan { get; }
-
-        [Key(1)] public TimeSpan LifeSpanLeft { get; set; }
-
-        public Lifetime(TimeSpan lifeSpan)
-        {
-            LifeSpanLeft = LifeSpan = lifeSpan;
-        }
+        LifeSpanLeft = LifeSpan = lifeSpan;
     }
 }

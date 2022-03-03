@@ -1,18 +1,17 @@
-﻿namespace BunnyLand.Tests
+﻿namespace BunnyLand.Tests;
+
+public class TestBase
 {
-    public class TestBase
+    public TestBase()
     {
-        public TestBase()
-        {
 
-        }
     }
+}
 
-    public class TestBase<TSuT>
+public class TestBase<TSuT>
+{
+    public TestBase()
     {
-        public TestBase()
-        {
 
-        }
     }
 }

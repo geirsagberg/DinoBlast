@@ -1,10 +1,9 @@
-﻿namespace BunnyLand.DesktopGL
-{
-    public interface IRequest<TResponse>
-    {
-    }
+﻿namespace BunnyLand.DesktopGL;
 
-    public interface IRequest
-    {
-    }
+public interface IRequest<TResponse>
+{
+}
+
+public interface IRequest
+{
 }

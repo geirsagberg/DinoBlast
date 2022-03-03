@@ -21,9 +21,7 @@ class Build : NukeBuild
     readonly string BunnyLandDesktopGLPath = "BunnyLand.DesktopGL";
 
     [Parameter("Configuration to build - Default is 'Debug' (local) or 'Release' (server)")]
-    readonly Configuration Configuration = IsLocalBuild ? Configuration.Debug : Configuration.Release;
-
-    [GitRepository] readonly GitRepository GitRepository;
+    readonly string Configuration = IsLocalBuild ? "Debug" : "Release";
 
     [Solution] readonly Solution Solution;
 

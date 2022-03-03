@@ -1,9 +1,8 @@
-namespace BunnyLand.DesktopGL.Enums
+namespace BunnyLand.DesktopGL.Enums;
+
+public enum LevelBoundsBehavior : byte
 {
-    public enum LevelBoundsBehavior : byte
-    {
-        None,
-        Wrap,
-        Destroy
-    }
+    None,
+    Wrap,
+    Destroy
 }

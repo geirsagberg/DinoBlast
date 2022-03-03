@@ -1,8 +1,7 @@
-namespace BunnyLand.DesktopGL.Enums
+namespace BunnyLand.DesktopGL.Enums;
+
+public enum StandingOn
 {
-    public enum StandingOn
-    {
-        Nothing,
-        Planet
-    }
+    Nothing,
+    Planet
 }

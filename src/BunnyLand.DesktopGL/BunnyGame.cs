@@ -20,145 +20,144 @@ using MonoGame.Extended.Screens;
 using MonoGame.Extended.ViewportAdapters;
 using Screen = MonoGame.Extended.Screens.Screen;
 
-namespace BunnyLand.DesktopGL
+namespace BunnyLand.DesktopGL;
+
+public class BunnyGame : Game
 {
-    public class BunnyGame : Game
+    private readonly GameSettings gameSettings;
+
+    internal GraphicsDeviceManager Graphics { get; }
+
+    internal new IServiceProvider Services { get; set; } = null!;
+
+    private MessageHub MessageHub => Services.GetRequiredService<MessageHub>();
+
+    public BunnyGame(GameSettings gameSettings)
     {
-        private readonly GameSettings gameSettings;
+        IsMouseVisible = true;
+        Graphics = new GraphicsDeviceManager(this) {
+            PreferredBackBufferWidth = gameSettings.Width,
+            PreferredBackBufferHeight = gameSettings.Height,
+            PreferMultiSampling = true,
+            SynchronizeWithVerticalRetrace = gameSettings.VSyncEnabled,
+            IsFullScreen = gameSettings.FullScreen
+        };
 
-        internal GraphicsDeviceManager Graphics { get; }
+        Content.RootDirectory = "Content";
+        IsFixedTimeStep = true;
+        TargetElapsedTime = TimeSpan.FromSeconds(1f / 60f);
 
-        internal new IServiceProvider Services { get; set; } = null!;
+        this.gameSettings = gameSettings;
+    }
 
-        private MessageHub MessageHub => Services.GetRequiredService<MessageHub>();
+    private void ConfigureServices(IServiceCollection services)
+    {
+        // Configure services here if they should live for the entire game. Handles Dependency Injection and instance creation.
+        // Services that are added and removed dynamically must use GameServiceContainer, which only supports adding and retrieving instances, not creating.
 
-        public BunnyGame(GameSettings gameSettings)
-        {
-            IsMouseVisible = true;
-            Graphics = new GraphicsDeviceManager(this) {
-                PreferredBackBufferWidth = gameSettings.Width,
-                PreferredBackBufferHeight = gameSettings.Height,
-                PreferMultiSampling = true,
-                SynchronizeWithVerticalRetrace = gameSettings.VSyncEnabled,
-                IsFullScreen = gameSettings.FullScreen
-            };
+        services.Scan(scan => {
+            scan.FromAssemblyOf<BunnyGame>()
+                .AddClasses().AsSelf().WithSingletonLifetime()
+                .AddClasses().AsImplementedInterfaces().WithSingletonLifetime()
+                ;
+        });
+        services.AddSingleton(new OrthographicCamera(new BoxingViewportAdapter(Window, GraphicsDevice, gameSettings.Width, gameSettings.Height))
+            { MinimumZoom = 0.1f, MaximumZoom = 2f });
+        services.AddSingleton(gameSettings);
+        services.AddSingleton(GraphicsDevice);
+        services.AddSingleton(Content);
+        services.AddSingleton<Game>(this);
+        services.AddTransient<WorldBuilder>();
+        services.AddTransient<BunnyWorld>();
+        services.AddTransient<SpriteBatch>();
 
-            Content.RootDirectory = "Content";
-            IsFixedTimeStep = true;
-            TargetElapsedTime = TimeSpan.FromSeconds(1f / 60f);
+        services.AddSingleton<Random>();
 
-            this.gameSettings = gameSettings;
-        }
+        services.AddSingleton(BuildWorld);
+        services.AddSingleton(provider => {
+            var loader = provider.GetRequiredService<ResourceLoader>();
+            var textures = new Textures();
+            loader.Load<Texture2D>(textures);
+            return textures;
+        });
+        services.AddSingleton(provider => {
+            var spriteFonts = new SpriteFonts(provider.GetRequiredService<ContentManager>());
+            spriteFonts.Load();
+            return spriteFonts;
+        });
+        services.AddSingleton<ScreenManager>();
 
-        private void ConfigureServices(IServiceCollection services)
-        {
-            // Configure services here if they should live for the entire game. Handles Dependency Injection and instance creation.
-            // Services that are added and removed dynamically must use GameServiceContainer, which only supports adding and retrieving instances, not creating.
+        services.AddSingleton(provider => new MouseListener(provider.GetService<ViewportAdapter>()));
+        services.AddSingleton(new KeyboardListener(new KeyboardListenerSettings { RepeatPress = false }));
+        services.AddSingleton(new GamePadListener(new GamePadListenerSettings(PlayerIndex.One) { DeadZoneMode = GamePadDeadZone.Circular }));
+        services.AddSingleton(new GamePadListener(new GamePadListenerSettings(PlayerIndex.Two) { DeadZoneMode = GamePadDeadZone.Circular }));
+        services.AddSingleton(new GamePadListener(new GamePadListenerSettings(PlayerIndex.Three) { DeadZoneMode = GamePadDeadZone.Circular }));
+        services.AddSingleton(new GamePadListener(new GamePadListenerSettings(PlayerIndex.Four) { DeadZoneMode = GamePadDeadZone.Circular }));
+        services.AddSingleton(provider =>
+            new InputListener[] { provider.GetService<MouseListener>(), provider.GetService<KeyboardListener>() }
+                .Concat(provider.GetServices<GamePadListener>()).ToArray());
+        services.AddSingleton<InputListenerComponent>();
 
-            services.Scan(scan => {
-                scan.FromAssemblyOf<BunnyGame>()
-                    .AddClasses().AsSelf().WithSingletonLifetime()
-                    .AddClasses().AsImplementedInterfaces().WithSingletonLifetime()
-                    ;
-            });
-            services.AddSingleton(new OrthographicCamera(new BoxingViewportAdapter(Window, GraphicsDevice, gameSettings.Width, gameSettings.Height))
-                { MinimumZoom = 0.1f, MaximumZoom = 2f });
-            services.AddSingleton(gameSettings);
-            services.AddSingleton(GraphicsDevice);
-            services.AddSingleton(Content);
-            services.AddSingleton<Game>(this);
-            services.AddTransient<WorldBuilder>();
-            services.AddTransient<BunnyWorld>();
-            services.AddTransient<SpriteBatch>();
+        services.AddSingleton<ViewportAdapter, DefaultViewportAdapter>();
+        services.AddSingleton<IGuiRenderer>(provider =>
+            new GuiSpriteBatchRenderer(provider.GetRequiredService<GraphicsDevice>(), () => Matrix.Identity));
+        services.AddSingleton<GuiSystem>();
+    }
 
-            services.AddSingleton<Random>();
+    private static World BuildWorld(IServiceProvider provider) => provider.CreateWorld()
+        .AddSystemService<NetServerSystem>()
+        .AddSystemService<NetClientSystem>()
+        .AddSystemService<LifetimeSystem>()
+        .AddSystemService<InputSystem>()
+        .AddSystemService<PlayerSystem>()
+        .AddSystemService<AcceleratorSystem>()
+        .AddSystemService<EmitterSystem>()
+        .AddSystemService<GravitySystem>()
+        .AddSystemService<PhysicsSystem>()
+        .AddSystemService<CollisionSystem>()
+        .AddSystemService<BattleSystem>()
+        .AddSystemService<CameraSystem>()
+        .AddSystemService<RenderSystem>()
+        .Build();
 
-            services.AddSingleton(BuildWorld);
-            services.AddSingleton(provider => {
-                var loader = provider.GetRequiredService<ResourceLoader>();
-                var textures = new Textures();
-                loader.Load<Texture2D>(textures);
-                return textures;
-            });
-            services.AddSingleton(provider => {
-                var spriteFonts = new SpriteFonts(provider.GetRequiredService<ContentManager>());
-                spriteFonts.Load();
-                return spriteFonts;
-            });
-            services.AddSingleton<ScreenManager>();
+    private T GetService<T>() => Services.GetRequiredService<T>();
 
-            services.AddSingleton(provider => new MouseListener(provider.GetService<ViewportAdapter>()));
-            services.AddSingleton(new KeyboardListener(new KeyboardListenerSettings { RepeatPress = false }));
-            services.AddSingleton(new GamePadListener(new GamePadListenerSettings(PlayerIndex.One) { DeadZoneMode = GamePadDeadZone.Circular }));
-            services.AddSingleton(new GamePadListener(new GamePadListenerSettings(PlayerIndex.Two) { DeadZoneMode = GamePadDeadZone.Circular }));
-            services.AddSingleton(new GamePadListener(new GamePadListenerSettings(PlayerIndex.Three) { DeadZoneMode = GamePadDeadZone.Circular }));
-            services.AddSingleton(new GamePadListener(new GamePadListenerSettings(PlayerIndex.Four) { DeadZoneMode = GamePadDeadZone.Circular }));
-            services.AddSingleton(provider =>
-                new InputListener[] { provider.GetService<MouseListener>(), provider.GetService<KeyboardListener>() }
-                    .Concat(provider.GetServices<GamePadListener>()).ToArray());
-            services.AddSingleton<InputListenerComponent>();
+    protected override void Initialize()
+    {
+        InitializeServices();
 
-            services.AddSingleton<ViewportAdapter, DefaultViewportAdapter>();
-            services.AddSingleton<IGuiRenderer>(provider =>
-                new GuiSpriteBatchRenderer(provider.GetRequiredService<GraphicsDevice>(), () => Matrix.Identity));
-            services.AddSingleton<GuiSystem>();
-        }
+        base.Initialize();
+    }
 
-        private static World BuildWorld(IServiceProvider provider) => provider.CreateWorld()
-            .AddSystemService<NetServerSystem>()
-            .AddSystemService<NetClientSystem>()
-            .AddSystemService<LifetimeSystem>()
-            .AddSystemService<InputSystem>()
-            .AddSystemService<PlayerSystem>()
-            .AddSystemService<AcceleratorSystem>()
-            .AddSystemService<EmitterSystem>()
-            .AddSystemService<GravitySystem>()
-            .AddSystemService<PhysicsSystem>()
-            .AddSystemService<CollisionSystem>()
-            .AddSystemService<BattleSystem>()
-            .AddSystemService<CameraSystem>()
-            .AddSystemService<RenderSystem>()
-            .Build();
+    protected override void LoadContent()
+    {
+        Services.RegisterGameComponent<InputListenerComponent>();
+        Services.RegisterGameComponent<World>();
+        Services.RegisterGameComponent<ScreenManager>();
 
-        private T GetService<T>() => Services.GetRequiredService<T>();
+        var bitmapFont = Content.Load<BitmapFont>("Fonts/bryndan-medium");
+        Skin.CreateDefault(bitmapFont);
 
-        protected override void Initialize()
-        {
-            InitializeServices();
+        MessageHub.Subscribe<StartGameMessage>(msg => {
+            LoadScreen<BattleScreen>();
+            MessageHub.Publish(new ResetWorldMessage(msg.GameState));
+        });
+        MessageHub.Subscribe<ExitGameMessage>(_ => { LoadScreen<MenuScreen>(); });
+        MessageHub.Subscribe<ServerDisconnectedMessage>(msg => { LoadScreen<MenuScreen>(); });
 
-            base.Initialize();
-        }
+        LoadScreen<MenuScreen>();
+    }
 
-        protected override void LoadContent()
-        {
-            Services.RegisterGameComponent<InputListenerComponent>();
-            Services.RegisterGameComponent<World>();
-            Services.RegisterGameComponent<ScreenManager>();
+    private void LoadScreen<T>() where T : Screen
+    {
+        GetService<ScreenManager>().LoadScreen(GetService<T>());
+    }
 
-            var bitmapFont = Content.Load<BitmapFont>("Fonts/bryndan-medium");
-            Skin.CreateDefault(bitmapFont);
-
-            MessageHub.Subscribe<StartGameMessage>(msg => {
-                LoadScreen<BattleScreen>();
-                MessageHub.Publish(new ResetWorldMessage(msg.GameState));
-            });
-            MessageHub.Subscribe<ExitGameMessage>(_ => { LoadScreen<MenuScreen>(); });
-            MessageHub.Subscribe<ServerDisconnectedMessage>(msg => { LoadScreen<MenuScreen>(); });
-
-            LoadScreen<MenuScreen>();
-        }
-
-        private void LoadScreen<T>() where T : Screen
-        {
-            GetService<ScreenManager>().LoadScreen(GetService<T>());
-        }
-
-        private void InitializeServices()
-        {
-            var services = new ServiceCollection();
-            ConfigureServices(services);
-            var provider = services.BuildServiceProvider();
-            Services = provider;
-        }
+    private void InitializeServices()
+    {
+        var services = new ServiceCollection();
+        ConfigureServices(services);
+        var provider = services.BuildServiceProvider();
+        Services = provider;
     }
 }

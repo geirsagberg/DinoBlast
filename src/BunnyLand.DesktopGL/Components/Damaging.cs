@@ -1,15 +1,14 @@
 ﻿using MessagePack;
 
-namespace BunnyLand.DesktopGL.Components
-{
-    [MessagePackObject]
-    public class Damaging
-    {
-        [Key(0)] public float Damage { get; }
+namespace BunnyLand.DesktopGL.Components;
 
-        public Damaging(float damage)
-        {
-            Damage = damage;
-        }
+[MessagePackObject]
+public class Damaging
+{
+    [Key(0)] public float Damage { get; }
+
+    public Damaging(float damage)
+    {
+        Damage = damage;
     }
 }

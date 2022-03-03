@@ -1,12 +1,11 @@
-﻿namespace BunnyLand.DesktopGL.Enums
+﻿namespace BunnyLand.DesktopGL.Enums;
+
+public enum NetMessageType : byte
 {
-    public enum NetMessageType : byte
-    {
-        ListServersRequest,
-        ListServersResponse,
-        FullGameState,
-        FullGameStateAck,
-        PlayerInputs,
-        JoinGameRequest
-    }
+    ListServersRequest,
+    ListServersResponse,
+    FullGameState,
+    FullGameStateAck,
+    PlayerInputs,
+    JoinGameRequest
 }

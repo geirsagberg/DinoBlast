@@ -1,9 +1,8 @@
-﻿namespace BunnyLand.DesktopGL.Messages
+﻿namespace BunnyLand.DesktopGL.Messages;
+
+public enum OnlineType
 {
-    public enum OnlineType
-    {
-        Offline,
-        LAN,
-        Internet
-    }
+    Offline,
+    LAN,
+    Internet
 }
