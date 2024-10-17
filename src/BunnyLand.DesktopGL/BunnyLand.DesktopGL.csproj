@@ -44,7 +44,7 @@
   <ItemGroup>
     <PackageReference Include="LanguageExt.Core" Version="4.0.3" />
     <PackageReference Include="LiteNetLib" Version="0.9.5.2" />
-    <PackageReference Include="MessagePack" Version="2.3.85" />
+    <PackageReference Include="MessagePack" Version="2.5.187" />
     <PackageReference Include="MessagePackAnalyzer" Version="2.3.85" />
     <PackageReference Include="Microsoft.Extensions.Configuration" Version="6.0.0" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="6.0.0" />
